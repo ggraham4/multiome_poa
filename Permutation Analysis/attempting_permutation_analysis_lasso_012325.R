@@ -92,12 +92,12 @@ pivoted_data<- degs_expression%>%
               values_from = mean)
 
 training_data <- pivoted_data[!is.na(pivoted_data$fish.class),]
-training_data <- training_data[complete.cases(training_data[, 5:ncol(training_data)]), ]
+training_data <- training_data[,5:ncol(training_data)]
 
-x.training <- as.matrix(na.omit(training_data[,5:ncol(training_data)]))
+x.training <- as.matrix(training_data)
   if(ncol(x.training)<2){return(NULL)}
 
-y.training <- training_data$fish.class
+y.training <- pivoted_data$fish.class[!is.na(pivoted_data$fish.class)]
 
 lasso <-suppressWarnings(cv.glmnet(y = y.training, x = x.training, family = "binomial", alpha = 1, lambda = NULL))
 
@@ -124,6 +124,8 @@ real.data <- data.frame(probabilities = mean(probabilities),
                         sexes = 'real')
 
 pivoted_data2 <- pivoted_data
+pivoted_data2$fish.class <- NA
+
 perm_function <- function(arg, 
                           pivoted_data=pivoted_data2){
   message(arg)
@@ -133,9 +135,8 @@ perm_function <- function(arg,
 pivoted_data$fish.class <- ifelse(pivoted_data$fake_sex == 'M',0,pivoted_data$fish.class)
   training_data <- pivoted_data[!is.na(pivoted_data$fish.class),]
   
-training_data <- training_data[complete.cases(training_data[, 5:ncol(training_data)-1]), ]
+x.training <-as.matrix(training_data[,5:(ncol(training_data)-1)])
 
-x.training <- as.matrix(na.omit(training_data[,5:ncol(training_data)]))
   if(ncol(x.training)<2){return(NULL)}
 
 y.training <- training_data$fish.class
@@ -148,9 +149,9 @@ lasso.final <- suppressWarnings(glmnet(x=x.training, y=y.training, alpha = 1, fa
                       lambda = min))
 
 test_data <- pivoted_data[is.na(pivoted_data$fish.class),]
-test_data <- test_data[complete.cases(test_data[, 5:ncol(test_data)]), ]
+test_data <- as.matrix(test_data[, 5:(ncol(test_data)-1)])
 
-x.test <- as.matrix(na.omit(test_data[,5:ncol(test_data)]))
+x.test <- test_data
   if(ncol(x.test)<2){return(NULL)}
 
 probabilities <- lasso.final %>% predict(newx = x.test, type = 'response')
@@ -185,7 +186,7 @@ p.value <- sum(final_test$probabilities>final_test$probabilities[final_test$sexe
 if(final_test$probabilities[final_test$sexes=='real']<0.5){
 p.value <- sum(final_test$probabilities<final_test$probabilities[final_test$sexes=='real'])/nrow(final_test)
 }
-cat('\np.value = ',p.value)
+cat('\np.value = ',p.value,'\n')
 
 return(final_test)
 }
@@ -194,4 +195,5 @@ clust_19_perms <- lasso_scorer_permute(deg_data = cluster_19_data,
                                        cluster = 19,
                                        n_iter = 1:5000)
 
+clust_19_perms$probabilities[clust_19_perms$sexes =='real']
 
