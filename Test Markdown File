@@ -1,0 +1,24 @@
+---
+title: "Test Markdown File"
+author: "Gabriel Graham"
+date: "01 23 25"
+output: 
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, setup, include=FALSE}
+print('hello world')
+```
+
+```{r}
+print(rnorm(1000,10,10))
+```
+
