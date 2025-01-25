@@ -12,10 +12,18 @@
   library(scran)
   library(emmeans)
   library(openxlsx)
+  library(ggplot2)
+  library(Polychrome)
+  P40 <- createPalette(40, c("#FF0000", "#00FF00", "#0000FF"), range = c(30, 80))
+swatch(P40)
+names(P40) <- NULL
+
   mean_expression_cluster_plot<- readRDS('Functions/mean_expression_cluster_plot.rds')
 prop_cluster_plot<- readRDS( 'Functions/prop_cluster_plot.rds')
 mean_expression_cluster_data<- readRDS('Functions/mean_expression_cluster_data.rds')
 clown_go<- readRDS('Functions/clown_go')
+define_degs<- readRDS('Functions/define_degs')
+
 }
 
 obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
@@ -166,10 +174,6 @@ neg.bin.mult <- function(obj,
   return(results)
 }
 
-clust_19_degs <- neg.bin.mult(obj,
-                              19,
-                              'harmony.wnn_res0.4_clusters')
-
 for (i in 31:0) {
   print(i)
   output <- neg.bin.mult(obj,
@@ -177,4 +181,110 @@ for (i in 31:0) {
                          'harmony.wnn_res0.4_clusters')
   write.csv(output, paste0('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/012425 Neg Bin w Doms Lower Stringency/cluster_', i, '.csv'))
 }
+
+together_data <- data.frame()
+for(i in 0:31){
+  data <- get(paste0('results_cluster',i))
+  data$cluster <- i
+  together_data <- rbind(together_data, data)
+}
+
+together_data_defined <- define_degs(together_data)
+
+together_data_defined_summed <- together_data_defined%>%
+  subset(!is.na(class))%>%
+  group_by(class, cluster)%>%
+  summarize(class_count = n())
+
+ggplot(together_data_defined_summed, aes(x = cluster, y = class_count, fill = class)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Cluster", y = "Number of DEGs") +
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))+
+    scale_x_continuous(breaks = c(0:31))+
+  scale_y_continuous()+
+  scale_fill_manual(values = P40)
+
+
+together_data_chisq <-  together_data_defined%>%
+  subset(!is.na(class))%>%
+  group_by(cluster)%>%
+  summarize(class_count = n())
+
+total_sum <- sum(together_data_chisq$class_count)
+mean_sum <- total_sum / nrow(together_data_chisq)
+
+chisq_test <- chisq.test(together_data_chisq$class_count, p = rep(1/nrow(together_data_chisq), nrow(together_data_chisq)))
+
+expected <- chisq_test$expected
+
+residuals <- (together_data_chisq$class_count - expected) / sqrt(expected)
+
+together_data_chisq$residuals <- residuals
+
+together_data_chisq$significant <- together_data_chisq$residuals > 2
+
+together_data_chisq$issignif <- ifelse(together_data_chisq$significant==T, '*',NA)
+
+together_data_defined_summed_plot <- together_data_defined_summed%>%
+  right_join(together_data_chisq, by = 'cluster')
+
+ggplot(together_data_defined_summed_plot, aes(x = cluster, y = class_count.x, fill = class)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Cluster", y = "Number of DEGs") +
+  geom_bar(position="stack", stat="identity")+
+  theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))+
+    scale_x_continuous(breaks = c(0:31))+
+  scale_y_continuous()+
+  scale_fill_manual(values = P40)+
+  geom_text(aes(label = issignif, y = class_count.y), size = 10)
+
+degs_data <- together_data_defined[!is.na(together_data_defined$class),c(1,13,14)]
+
+library(clusterProfiler)
+
+
+clust_2_go <- clown_go(degs_data$gene[degs_data$cluster==2])
+dotplot(clust_2_go)
+
+clust_3_go <- clown_go(degs_data$gene[degs_data$cluster==3])
+dotplot(clust_3_go)
+
+clust_6_go <- clown_go(degs_data$gene[degs_data$cluster==6])
+dotplot(clust_6_go)
+
+clust_7_go <- clown_go(degs_data$gene[degs_data$cluster==7])
+dotplot(clust_7_go)
+clust_7_go$geneID
+
+clust_8_go <- clown_go(degs_data$gene[degs_data$cluster==8])
+dotplot(clust_8_go)
+clust_8_go$geneID
+clust_8_degs <- degs_data$gene[degs_data$cluster==8]
+
+library(biomaRt)
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+biomart_basic <-
+  getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'entrezgene_description'))
+
+named_8 <- biomart_basic[biomart_basic$entrezgene_accession %in%clust_8_degs,]
+
+
+clust_14_go <- clown_go(degs_data$gene[degs_data$cluster==14])
+dotplot(clust_14_go)
+clust_14_degs <- degs_data$gene[degs_data$cluster==14]
+clust_14_go$geneID
+
+biomart_basic[biomart_basic$entrezgene_accession %in%clust_14_degs,]
+
+
+clust_19_go <- clown_go(degs_data$gene[degs_data$cluster==19])
+dotplot(clust_19_go)
+
+clust_29_go <- clown_go(degs_data$gene[degs_data$cluster==29])
+dotplot(clust_29_go)
 
