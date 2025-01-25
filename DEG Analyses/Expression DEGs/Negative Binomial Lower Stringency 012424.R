@@ -284,9 +284,9 @@ biomart_basic[biomart_basic$entrezgene_accession %in%clust_14_degs,]
 
 clust_19_go <- clown_go(degs_data$gene[degs_data$cluster==19])
 dotplot(clust_19_go)
+
 clust_19_degs <- degs_data$gene[degs_data$cluster==19]
 named_19 <- biomart_basic[biomart_basic$entrezgene_accession %in%clust_19_degs,]
-
 
 clust_29_go <- clown_go(degs_data$gene[degs_data$cluster==29])
 dotplot(clust_29_go)
