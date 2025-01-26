@@ -1,4 +1,3 @@
-#KTicular DEGs
 {
   library(parallel)
   library(clusterProfiler)
@@ -11,7 +10,7 @@
   library(MASS)
   library(SeuratObject)
   library(Signac)
-  library(glmGamPoi)
+  library('glmGamPoi')
   library(scran)
   library(parallel)
   library(factoextra)
@@ -25,94 +24,145 @@
   library(CytoTRACE)
   library(ggrepel)
   
-  library(Polychrome)
-P40 <- createPalette(40, c("#FF0000", "#00FF00", "#0000FF"), range = c(30, 80))
-swatch(P40)
-names(P40) <- NULL
-
-mean_expression_cluster_plot<- readRDS('Functions/mean_expression_cluster_plot.rds')
-prop_cluster_plot<- readRDS( 'Functions/prop_cluster_plot.rds')
-define_degs_prop<- readRDS('Functions/define_degs_prop.rds')
-mean_expression_cluster_data<- readRDS('Functions/mean_expression_cluster_data.rds')
-prop_deg_function.rds<- readRDS('Functions/DEG_functions/prop_deg_function.rds')
-define_behavior_degs<- readRDS('Functions/define_behavior_degs')
-clown_go<- readRDS('Functions/clown_go')
-define_kt_degs<- readRDS('Functions/define_kt_degs')
-
 }
 
-obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+obj <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
+KT_deg_function <- function(object = obj, 
+                              cluster = 19,
+                              clustering = 'harmony.wnn_res0.4_clusters'){
+  start <- Sys.time()
+  library(lme4)
+  library(dplyr)
+  library(parallelsugar)
+  
+  options(dplyr.summarise.inform = FALSE)
+  
+  #extract counts matrix 
+  counts <- t(as.matrix(object@assays$RNA$data[, object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")]))
+  
+  
+  
+  filtered_cols_matrix <- counts[,which(colSums(counts) != 0)]
+  
+  meta_data <- data.frame(
+    cells = rownames(object@meta.data[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D"),]),
+    Status = object@meta.data$Status[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")],
+    individual =object@meta.data$individual[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")],
+    KT = object@meta.data$Log_11KT[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")]
+  )
+  
+  genes <- colnames(filtered_cols_matrix)
+  genes <- genes[!is.na(genes)]
+  
+  n_genes <- length(genes)
+  
+  
+  deg_function <- function(gene){
+    
+    message(paste0('gene ', which(genes == gene), ' of ', n_genes))
+    
+    gene_expression <- filtered_cols_matrix[, gene]
+    meta_data$gene <- gene_expression
+    
+    joined_data_restrictions <- meta_data%>%
+      group_by(Status)%>%
+      summarize(expression = sum(gene))
+    
+    if (any(joined_data_restrictions$expression < 1)) return(NULL)
+    
+    joined_data_for_model <- meta_data%>%
+      group_by(Status, individual)%>%
+      summarize(expression = mean(gene),
+                se_expression = sd(gene)/sqrt(n()),
+                KT = mean(KT)
+      )%>%na.omit()
+    
+    if (length(unique(joined_data_for_model$expression)) == 1) return(NULL)
+    
+    ###KT model
+    KT_model <- lm(expression~KT*Status, data=joined_data_for_model)
+    
+    #summary
+    KT_summary <- summary(KT_model)
+    KT_coefs <- as.data.frame(KT_summary$coefficients)
+    
+    #aov
+    KT_aov <- as.data.frame(anova(KT_model, test= 'Chisq'))
+    KT_aov$term <- rownames(KT_aov)
+    
+    #values 
+    KT_estimate <- KT_coefs[2,1]
+    KT_summary_p.value <- KT_coefs[2,4]
+    KT_anova_p.value <- KT_aov$`Pr(>F)`[KT_aov$term=='KT']
+    
+    m_d_estimate <- KT_coefs[3,1]
+    m_d_p.value <- KT_coefs[3,4]
+    status_anova_p.value <- KT_aov$`Pr(>F)`[KT_aov$term=='Status']
+    
+    
+    interaction_estimate <- KT_coefs[4,1]
+    interaction_summary_p.value <- KT_coefs[4,4]
+    interaction_anova_p.value <-  KT_aov$`Pr(>F)`[KT_aov$term=='KT:Status']
+    
+    
+    
+    data_for_output <- data.frame(cluster = cluster,
+                                  gene = gene,
+                                  KT_estimate=KT_estimate,
+                                  KT_summary_p.value=KT_summary_p.value,
+                                  KT_anova_p.value=KT_anova_p.value,
+                                  m_d_estimate=m_d_estimate,
+                                  m_d_p.value = m_d_p.value,
+                                  status_anova_p.value=status_anova_p.value,
+                                  interaction_estimate=interaction_estimate,
+                                  interaction_summary_p.value=interaction_summary_p.value,
+                                  interaction_anova_p.value=interaction_anova_p.value
+    )
+    return(data_for_output)
+  }
+  
+  #deg_output <- parallelsugar::mclapply(X=genes, FUN=deg_function,mc.cores= detectCores()-1)
+  deg_output <- lapply(X=genes, FUN=deg_function)
+  
+  deg_output2 <- do.call(rbind, deg_output)
+  
+  deg_output2$KT_summary_q.value <- p.adjust(deg_output2$KT_summary_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$KT_anova_q.value <- p.adjust(deg_output2$KT_anova_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$m_d_q.value <- p.adjust(deg_output2$m_d_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$status_anova_q.value <- p.adjust(deg_output2$status_anova_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$interaction_summary_q.value <- p.adjust(deg_output2$interaction_summary_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$interaction_anova_q.value <- p.adjust(deg_output2$interaction_anova_p.value, 'fdr', nrow(deg_output2))
+  
+  
+  
+  return(deg_output2)
+  
+  
+}
 
-together_data <- data.frame()
-for (i in c(0:31)) {
+
+for(i in 0:31){
+  start <- Sys.time()
   print(i)
-    data <- read.csv( 
-              paste0('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/012425 KT DEGs/KT_results_cluster_', i, '.csv'))
-       data <- define_kt_degs(data)
-    assign(paste0('KT_degs_cluster_', i), data, envir = .GlobalEnv)
-    together_data <- rbind(together_data, data)
-
+  
+  kt_data <- KT_deg_function(object = obj, 
+                                     cluster = i,
+                                     clustering = 'harmony.wnn_res0.4_clusters')
+  assign(paste0('kt_results_cluster_',i), kt_data, envir = .GlobalEnv)
+  
+  write.csv(kt_data,paste0('X:/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/012425 KT DEGs/KT_results_cluster_',i,'.csv'))
+  end <- Sys.time()
+  print(end-start)
 }
 
-together_data_summed <- together_data%>%
-    subset(!is.na(class)&cluster !=30)%>%
-  group_by(cluster, class)%>%
-  summarize(class_count = n())
 
-ggplot(together_data_summed, aes(x = cluster, y = class_count, fill = class)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Cluster", y = "Number of DEGs") +
-  geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))+
-    scale_x_continuous(breaks = c(0:31))+
-  scale_y_continuous()+
-  scale_fill_manual(values = P40)
 
-### What are these DEGs ####
-all_degs <- together_data$gene[together_data$cluster !=30 & together_data$cluster!=15 & together_data$issignif=='*'& !is.na(together_data$issignif)]
-ensembl <- useEnsembl(biomart = "genes", 
-                      dataset = "aocellaris_gene_ensembl")
-biomart_basic <- getBM(
-    mart = ensembl, #working mart 
-    attributes = c("entrezgene_accession",
-                   'entrezgene_description'))
 
-named <- biomart_basic[biomart_basic$entrezgene_accession %in%all_degs,]
 
-###are there any repeated DEGs
-length(all_degs)
-length(unique(all_degs))
-# no
 
-together_data$class2 <- ifelse(together_data$m_d_q.value<0.05, '*','no')
-together_data$gene[together_data$class2 == '*']
 
-together_data_summed2 <- together_data%>%
-    subset(class2 == '*'&cluster !=30)%>%
-  group_by(cluster, class2)%>%
-  summarize(class_count = n())
 
-ggplot(together_data_summed2, aes(x = cluster, y = class_count, fill = class2)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Cluster", y = "Number of DEGs") +
-  geom_bar(position="stack", stat="identity")+
-  theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))+
-    scale_x_continuous(breaks = c(0:31))+
-  scale_y_continuous()+
-  scale_fill_manual(values = P40)
 
-names2 <- together_data$gene[together_data$class2=='*' & !is.na(together_data$class2)&together_data$cluster !=30]
-named2 <- biomart_basic[biomart_basic$entrezgene_accession %in%names2,]
-
-### what about anova status
-together_data$class3 <- ifelse(together_data$status_anova_q.value<0.05,'*','no')
-status_anova_genes <- together_data$gene[together_data$class3 =='*'& together_data$cluster !=30]
-#ok a lot
-
-together_data_summed3 <- together_data%>%
-    subset(class3 == '*'&cluster !=30)%>%
-  group_by(cluster, class3)%>%
-  summarize(class_count = n()) 
 
 
 
