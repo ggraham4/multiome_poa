@@ -13,6 +13,10 @@
   library(emmeans)
   library(openxlsx)
   library(ggplot2)
+  library(stringr)
+  library(forcats)
+  library(clusterProfiler)
+library(biomaRt)
   library(Polychrome)
   P40 <- createPalette(40, c("#FF0000", "#00FF00", "#0000FF"), range = c(30, 80))
 swatch(P40)
@@ -182,9 +186,11 @@ for (i in 31:0) {
   write.csv(output, paste0('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/012425 Neg Bin w Doms Lower Stringency/cluster_', i, '.csv'))
 }
 
+### ANALYSIS ####
 together_data <- data.frame()
 for(i in 0:31){
-  data <- get(paste0('results_cluster',i))
+  data <- read.csv(paste0('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/012425 Neg Bin w Doms Lower Stringency/cluster_', i, '.csv'))
+  #data <- get(paste0('results_cluster',i))
   data$cluster <- i
   together_data <- rbind(together_data, data)
 }
@@ -205,25 +211,18 @@ ggplot(together_data_defined_summed, aes(x = cluster, y = class_count, fill = cl
   scale_y_continuous()+
   scale_fill_manual(values = P40)
 
-
+#### Chisq test for enrichment ####
 together_data_chisq <-  together_data_defined%>%
   subset(!is.na(class))%>%
   group_by(cluster)%>%
   summarize(class_count = n())
-
 total_sum <- sum(together_data_chisq$class_count)
 mean_sum <- total_sum / nrow(together_data_chisq)
-
 chisq_test <- chisq.test(together_data_chisq$class_count, p = rep(1/nrow(together_data_chisq), nrow(together_data_chisq)))
-
 expected <- chisq_test$expected
-
 residuals <- (together_data_chisq$class_count - expected) / sqrt(expected)
-
 together_data_chisq$residuals <- residuals
-
 together_data_chisq$significant <- together_data_chisq$residuals > 2
-
 together_data_chisq$issignif <- ifelse(together_data_chisq$significant==T, '*',NA)
 
 together_data_defined_summed_plot <- together_data_defined_summed%>%
@@ -239,10 +238,15 @@ ggplot(together_data_defined_summed_plot, aes(x = cluster, y = class_count.x, fi
   scale_fill_manual(values = P40)+
   geom_text(aes(label = issignif, y = class_count.y), size = 10)
 
-degs_data <- together_data_defined[!is.na(together_data_defined$class),c(1,13,14)]
+degs_data <- together_data_defined[!is.na(together_data_defined$class),c(2,14,15)]
 
-library(clusterProfiler)
-
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+biomart_basic <-
+  getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'entrezgene_description'))
 
 clust_2_go <- clown_go(degs_data$gene[degs_data$cluster==2])
 dotplot(clust_2_go)
@@ -256,20 +260,15 @@ dotplot(clust_6_go)
 clust_7_go <- clown_go(degs_data$gene[degs_data$cluster==7])
 dotplot(clust_7_go)
 clust_7_go$geneID
+clust_7_degs <- degs_data$gene[degs_data$cluster==7]
+named_7 <- biomart_basic[biomart_basic$entrezgene_accession %in%clust_7_degs,]
+
 
 clust_8_go <- clown_go(degs_data$gene[degs_data$cluster==8])
 dotplot(clust_8_go)
 clust_8_go$geneID
 clust_8_degs <- degs_data$gene[degs_data$cluster==8]
 
-library(biomaRt)
-ensembl <- useEnsembl(biomart = "genes", 
-                      dataset = "aocellaris_gene_ensembl")
-biomart_basic <-
-  getBM(
-    mart = ensembl, #working mart 
-    attributes = c("entrezgene_accession",
-                   'entrezgene_description'))
 
 named_8 <- biomart_basic[biomart_basic$entrezgene_accession %in%clust_8_degs,]
 
@@ -284,10 +283,333 @@ biomart_basic[biomart_basic$entrezgene_accession %in%clust_14_degs,]
 
 clust_19_go <- clown_go(degs_data$gene[degs_data$cluster==19])
 dotplot(clust_19_go)
-
 clust_19_degs <- degs_data$gene[degs_data$cluster==19]
 named_19 <- biomart_basic[biomart_basic$entrezgene_accession %in%clust_19_degs,]
 
+
 clust_29_go <- clown_go(degs_data$gene[degs_data$cluster==29])
 dotplot(clust_29_go)
+
+
+### are any DEGs repeated ####
+length(unique(degs_data$gene))
+length(degs_data$gene)###Oh several are repeated
+
+degs_data$gene%>%table()%>%sort()
+
+##### wdfy2 ####
+degs_data$cluster[degs_data$gene == 'wdfy2']
+degs_data$class[degs_data$gene == 'wdfy2']
+
+mean_expression_cluster_plot(obj,
+                             'wdfy2',
+                             3)
+
+mean_expression_cluster_plot(obj,
+                             'wdfy2',
+                             6)
+
+mean_expression_cluster_plot(obj,
+                             'wdfy2',
+                             15)
+mean_expression_cluster_plot(obj,
+                             'wdfy2',
+                             19)
+
+##### LOC111567884 #####
+
+degs_data$cluster[degs_data$gene == 'LOC111567884']
+degs_data$class[degs_data$gene == 'LOC111567884']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111567884',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC111567884',
+                             0)
+
+mean_expression_cluster_plot(obj,
+                             'LOC111567884',
+                             9)
+mean_expression_cluster_plot(obj,
+                             'LOC111567884',
+                             23)
+
+### LOC111565980 ####
+degs_data$cluster[degs_data$gene == 'LOC111565980']
+degs_data$class[degs_data$gene == 'LOC111565980']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111565980',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC111565980',
+                             1)
+mean_expression_cluster_plot(obj,
+                             'LOC111565980',
+                             4)
+
+mean_expression_cluster_plot(obj,
+                             'LOC111565980',
+                             14)
+### tcf7l2 ####
+degs_data$cluster[degs_data$gene == 'tcf7l2']
+degs_data$class[degs_data$gene == 'tcf7l2']
+biomart_basic[biomart_basic$entrezgene_accession %in%'tcf7l2',]
+
+mean_expression_cluster_plot(obj,
+                             'tcf7l2',
+                             17)
+mean_expression_cluster_plot(obj,
+                             'tcf7l2',
+                             18)
+###slc8a3 ####
+degs_data$cluster[degs_data$gene == 'slc8a3']
+degs_data$class[degs_data$gene == 'slc8a3']
+biomart_basic[biomart_basic$entrezgene_accession %in%'slc8a3',]
+
+mean_expression_cluster_plot(obj,
+                             'slc8a3',
+                             6)
+
+mean_expression_cluster_plot(obj,
+                             'slc8a3',
+                             16)
+
+### slc8a1b ###
+degs_data$cluster[degs_data$gene == 'slc8a1b']
+degs_data$class[degs_data$gene == 'slc8a1b']
+biomart_basic[biomart_basic$entrezgene_accession %in%'slc8a1b',]
+
+mean_expression_cluster_plot(obj,
+                             'slc8a1b',
+                             7)
+
+mean_expression_cluster_plot(obj,
+                             'slc8a1b',
+                             8)
+
+
+#### si:dkey-21e13.3 ####
+
+degs_data$cluster[degs_data$gene == 'si:dkey-21e13.3']
+degs_data$class[degs_data$gene == 'si:dkey-21e13.3']
+biomart_basic[biomart_basic$entrezgene_accession %in%'si:dkey-21e13.3',]
+
+mean_expression_cluster_plot(obj,
+                             'si:dkey-21e13.3',
+                             5)
+
+mean_expression_cluster_plot(obj,
+                             'si:dkey-21e13.3',
+                             6)
+
+### si:ch211-200p22.4   ####
+
+degs_data$cluster[degs_data$gene == 'si:ch211-200p22.4']
+degs_data$class[degs_data$gene == 'si:ch211-200p22.4']
+biomart_basic[biomart_basic$entrezgene_accession %in%'si:ch211-200p22.4',]
+
+mean_expression_cluster_plot(obj,
+                             'si:ch211-200p22.4',
+                             10)
+mean_expression_cluster_plot(obj,
+                             'si:ch211-200p22.4',
+                             31)
+###  prkcaa ####
+degs_data$cluster[degs_data$gene == 'prkcaa']
+degs_data$class[degs_data$gene == 'prkcaa']
+biomart_basic[biomart_basic$entrezgene_accession %in%'prkcaa',]
+
+mean_expression_cluster_plot(obj,
+                             'prkcaa',
+                             3)
+mean_expression_cluster_plot(obj,
+                             'prkcaa',
+                             4)
+
+### olfm1b ####
+
+degs_data$cluster[degs_data$gene == 'olfm1b']
+degs_data$class[degs_data$gene == 'olfm1b']
+biomart_basic[biomart_basic$entrezgene_accession %in%'olfm1b',]
+
+#ignoring this one cause cluster 30 doesnt count
+ ### mpped2a ####
+degs_data$cluster[degs_data$gene == 'mpped2a']
+degs_data$class[degs_data$gene == 'mpped2a']
+biomart_basic[biomart_basic$entrezgene_accession %in%'mpped2a',]
+
+#ignoring cause 15 doesnt count
+
+#### meis1b ####
+degs_data$cluster[degs_data$gene == 'meis1b']
+degs_data$class[degs_data$gene == 'meis1b']
+biomart_basic[biomart_basic$entrezgene_accession %in%'meis1b',]
+
+mean_expression_cluster_plot(obj,
+                             'meis1b',
+                             6)
+mean_expression_cluster_plot(obj,
+                             'meis1b',
+                             22)
+
+### LOC129350740 ####
+degs_data$cluster[degs_data$gene == 'LOC129350740']
+degs_data$class[degs_data$gene == 'LOC129350740']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC129350740',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC129350740',
+                             8)
+
+mean_expression_cluster_plot(obj,
+                             'LOC129350740',
+                             9)
+
+#### LOC129349260 #####
+degs_data$cluster[degs_data$gene == 'LOC129349260']
+degs_data$class[degs_data$gene == 'LOC129349260']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC129349260',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC129349260',
+                             6)
+
+mean_expression_cluster_plot(obj,
+                             'LOC129349260',
+                             14)
+
+### LOC129348729 ####
+degs_data$cluster[degs_data$gene == 'LOC129348729']
+degs_data$class[degs_data$gene == 'LOC129348729']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC129348729',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC129348729',
+                             2)
+
+mean_expression_cluster_plot(obj,
+                             'LOC129348729',
+                             13)
+
+### LOC129348286 ####
+degs_data$cluster[degs_data$gene == 'LOC129348286']
+degs_data$class[degs_data$gene == 'LOC129348286']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC129348286',]
+
+#Im so tired of these uncharacterized LOCs I’m gonna just look at named genes now
+### LOC111584813 ####
+degs_data$cluster[degs_data$gene == 'LOC111584813']
+degs_data$class[degs_data$gene == 'LOC111584813']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111584813',]
+
+#### LOC111584642 ####
+degs_data$cluster[degs_data$gene == 'LOC111584642']
+degs_data$class[degs_data$gene == 'LOC111584642']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111584642',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC111584642',
+                             4)
+
+mean_expression_cluster_plot(obj,
+                             'LOC111584642',
+                             6)
+###LOC111568891 ###
+
+degs_data$cluster[degs_data$gene == 'LOC111568891']
+degs_data$class[degs_data$gene == 'LOC111568891']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111568891',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC111568891',
+                             1)
+mean_expression_cluster_plot(obj,
+                             'LOC111568891',
+                             8)
+
+### LOC111567620 ####
+degs_data$cluster[degs_data$gene == 'LOC111567620']
+degs_data$class[degs_data$gene == 'LOC111567620']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111567620',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC111567620',
+                             8)
+mean_expression_cluster_plot(obj,
+                             'LOC111567620',
+                             19)
+### LOC111564853 ####
+degs_data$cluster[degs_data$gene == 'LOC111564853']
+degs_data$class[degs_data$gene == 'LOC111564853']
+biomart_basic[biomart_basic$entrezgene_accession %in%'LOC111564853',]
+
+mean_expression_cluster_plot(obj,
+                             'LOC111564853',
+                             2)
+mean_expression_cluster_plot(obj,
+                             'LOC111564853',
+                             8)
+### kcnip3a ###
+degs_data$cluster[degs_data$gene == 'kcnip3a']
+degs_data$class[degs_data$gene == 'kcnip3a']
+biomart_basic[biomart_basic$entrezgene_accession %in%'kcnip3a',]
+#ignore cause 30 is fake
+
+#### igf2bp1 ####
+degs_data$cluster[degs_data$gene == 'igf2bp1']
+degs_data$class[degs_data$gene == 'igf2bp1']
+biomart_basic[biomart_basic$entrezgene_accession %in%'igf2bp1',]
+
+mean_expression_cluster_plot(obj,
+                             'igf2bp1',
+                             0)
+mean_expression_cluster_plot(obj,
+                             'igf2bp1',
+                             1)
+ ### efna3b ####
+degs_data$cluster[degs_data$gene == 'efna3b']
+degs_data$class[degs_data$gene == 'efna3b']
+biomart_basic[biomart_basic$entrezgene_accession %in%'efna3b',]
+
+
+mean_expression_cluster_plot(obj,
+                             'efna3b',
+                             3)
+mean_expression_cluster_plot(obj,
+                             'efna3b',
+                             18)
+
+### cntn4 ####
+degs_data$cluster[degs_data$gene == 'cntn4']
+degs_data$class[degs_data$gene == 'cntn4']
+biomart_basic[biomart_basic$entrezgene_accession %in%'cntn4',]
+#15 is fake, move on
+
+### chgb ####
+degs_data$cluster[degs_data$gene == 'chgb']
+degs_data$class[degs_data$gene == 'chgb']
+biomart_basic[biomart_basic$entrezgene_accession %in%'chgb',]
+#30 is fake
+
+### cdh13 ####
+degs_data$cluster[degs_data$gene == 'cdh13']
+degs_data$class[degs_data$gene == 'cdh13']
+biomart_basic[biomart_basic$entrezgene_accession %in%'cdh13',]
+
+mean_expression_cluster_plot(obj,
+                             'cdh13',
+                             8)
+mean_expression_cluster_plot(obj,
+                             'cdh13',
+                             29)
+
+### brinp3a.1 ####
+degs_data$cluster[degs_data$gene == 'brinp3a.1']
+degs_data$class[degs_data$gene == 'brinp3a.1']
+biomart_basic[biomart_basic$entrezgene_accession %in%'brinp3a.1',]
+
+mean_expression_cluster_plot(obj,
+                             'brinp3a.1',
+                             2)
+mean_expression_cluster_plot(obj,
+                             'brinp3a.1',
+                             6)
 
