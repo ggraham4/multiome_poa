@@ -5,7 +5,7 @@ mean_expression_cluster_data <- function(object, gene, cluster, clustering = 'ha
   Counts_of_interest <- as.data.frame(counts[,gene])
     Counts_of_interest$expression <- Counts_of_interest[,1]
   Counts_of_interest$individual <- object@meta.data$individual[object@meta.data[[clustering]] == cluster]
-    Counts_of_interest$Status <- object@meta.data$individual[object@meta.data[[clustering]] == cluster]
+    Counts_of_interest$Status <- object@meta.data$Status[object@meta.data[[clustering]] == cluster]
 
   results <-Counts_of_interest%>%
     group_by(individual, Status)%>%

@@ -81,4 +81,43 @@ DotPlot(object = obj,
           
 
 
+mean_tacr3a <- mean_expression_cluster_data(obj,
+                                            'tacr3a',
+                                            19)
+mean_kt <- data.frame(kt = obj@meta.data$Log_11KT,
+                      individual = obj@meta.data$individual)%>%
+  group_by(individual)%>%
+  summarize(kt= mean(kt))
+
+mean_tacr3a%>%
+  right_join(mean_kt, by='individual')%>%
+  ggplot(aes(x = kt, y = mean, color = Sex))+
+  geom_smooth(method = 'lm')+
+  geom_pointrange(aes(x = kt, y = mean, ymin =mean-se, ymax = mean+se))
+
+
+mean_tac3a <- mean_expression_cluster_data(obj,
+                                            'tac3a',
+                                            19)
+mean_tac3a%>%
+  right_join(mean_kt, by='individual')%>%
+  ggplot(aes(x = kt, y = mean, color = Sex))+
+  geom_smooth(method = 'lm')+
+  geom_pointrange(aes(x = kt, y = mean, ymin =mean-se, ymax = mean+se))
+
+
+pgr_tacr3a <- mean_expression_cluster_data(obj,
+                                            'pgr',
+                                            19)%>%
+  right_join(mean_tacr3a, by= 'individual')
+
+    ggplot(pgr_tacr3a,aes(x = mean.y, y = mean.x, color = Sex.y))+
+  geom_smooth(method = 'lm')+
+      geom_point()+
+      labs(x = 'tacr3a',y = 'pgr')
+  
+
+
+
+
 
