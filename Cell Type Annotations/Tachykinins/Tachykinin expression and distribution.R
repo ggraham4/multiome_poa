@@ -63,7 +63,14 @@ genes <- c('elavl3',
           'esr1',
           'esr2a',
           'esr2b',
-          'ar')
+          'ar',
+          'LOC111571064',
+          'gnrh2',
+          'gnrh3',
+           'gnrhr1',
+          'LOC111568468', #gnrhr2
+          'gnrhr4'
+          )
 
 DotPlot(object = obj, 
                  group.by = "harmony.wnn_res0.4_clusters", 
