@@ -172,6 +172,7 @@ hub_df <- GetHubGenes(seurat_obj, n_hubs = 10)
 head(hub_df)
 
 #saveRDS(seurat_obj, file='~/Desktop/snRNA-seq R Files 122524/hdWGCNA_object.rds')
+#seurat_obj <- readRDS('~/Desktop/snRNA-seq R Files 122524/hdWGCNA_object.rds')
 
 #### Compute hub signature score
 seurat_obj <- ModuleExprScore(
@@ -183,6 +184,7 @@ seurat_obj <- ModuleExprScore(
 # make a featureplot of hMEs for each module
 plot_list <- ModuleFeaturePlot(
   seurat_obj,
+  reduction = 'harmony_wnn.umap',
   features='hMEs', # plot the hMEs
   order=TRUE # order so the points with highest hMEs are on top
 )
@@ -190,5 +192,112 @@ plot_list <- ModuleFeaturePlot(
 # stitch together with patchwork
 wrap_plots(plot_list, ncol=6)
 
+subset_19_obj <-   subset(seurat_obj,harmony.wnn_res0.4_clusters==19) 
+#this doesnt rly work tbh
+ModuleRadarPlot(
+  subset_19_obj,
+  barcodes =  rownames(subset_19_obj@meta.data),
+  axis.label.size=4,
+  grid.label.size=4
+)
+
+###Modules <- 
+MEs <- GetMEs(seurat_obj, harmonized=TRUE)
+modules <- GetModules(seurat_obj)
+mods <- levels(modules$module); mods <- mods[mods != 'grey']
+
+# add hMEs to Seurat meta-data:
+seurat_obj@meta.data <- cbind(seurat_obj@meta.data, MEs)
+
+DotPlot(seurat_obj, features=mods, group.by = 'harmony.wnn_res0.4_clusters')+
+  coord_flip()
+
+####module 19-m7 contains tacr3a
+genes_19_7 <- modules$gene_name[modules$module=='19-M7']
+clown_go(genes_19_7)%>%dotplot()
+
+module_go_function <- function(module_name){
+  genes <-  modules$gene_name[modules$module==module_name]
+ return(clown_go(genes)%>%dotplot())
+  }
+module_go_function('19-M3')
+module_go_function('19-M19')
+module_go_function('19-M2')
+module_go_function('19-M7')
+module_go_function('19-M18')
 
 
+modules%>%
+  group_by(module)%>%
+  subset(module!='grey')%>%
+  summarize(n = n())%>%
+  plot()
+
+#m7 is the largest by far, 
+
+### More plotting ####
+seurat_obj@misc$active_wgcna
+seurat_obj@misc[["tutorial"]][["wgcna_net"]][["TOMFiles"]] <-'/Users/ggraham/Desktop/snRNA-seq R Files 122524/TOM/19_TOM.rda'
+
+ModuleNetworkPlot(
+  seurat_obj,
+  outdir = '/Users/ggraham/Desktop/snRNA-seq R Files 122524/TOM/',
+   n_inner = 20, # number of genes in inner ring
+    n_outer = 30, # number of genes in outer ring
+    n_conns = Inf, # show all of the connections
+    plot_size=c(10,10), # larger plotting area
+    vertex.label.cex=1 # font size
+)
+
+options('future.globals.maxSize'=Inf)
+# hubgene network
+HubGeneNetworkPlot(
+  seurat_obj,
+  n_hubs = 3, n_other=5,
+  edge_prop = 0.75,
+  mods = 'all',
+  return_graph = T
+)
+
+# get the list of modules:
+modules <- GetModules(seurat_obj)
+mods <- levels(modules$module); mods <- mods[mods != 'grey']
+
+# hubgene network
+HubGeneNetworkPlot(
+  seurat_obj,
+  n_hubs = 10, n_other=20,
+  edge_prop = 0.75,
+  mods = mods[c(3,7,23)] # only select 5 modules
+)
+
+###aplying umap
+seurat_obj <- RunModuleUMAP(
+  seurat_obj,
+  n_hubs = length(unique(modules$module))-1, # number of hub genes to include for the UMAP embedding
+  n_neighbors=15, # neighbors parameter for UMAP
+  min_dist=0.1 # min distance between points in UMAP space
+)
+
+umap_df <- GetModuleUMAP(seurat_obj)
+
+ggplot(umap_df, aes(x=UMAP1, y=UMAP2)) +
+  geom_point(
+   color=umap_df$color, # color each point by WGCNA module
+   size=umap_df$kME*2 # size of each point based on intramodular connectivity
+  ) +
+  umap_theme()
+
+ModuleUMAPPlot(
+  seurat_obj,
+  edge.alpha=0.25,
+  sample_edges=TRUE,
+  edge_prop=0.1, # proportion of edges to sample (20% here)
+  label_hubs=2 ,# how many hub genes to plot per module?
+  keep_grey_edges=FALSE
+
+)
+
+#https://smorabit.github.io/hdWGCNA/articles/network_visualizations.html
+
+#saveRDS(seurat_obj, file='~/Desktop/snRNA-seq R Files 122524/hdWGCNA_object.rds')
