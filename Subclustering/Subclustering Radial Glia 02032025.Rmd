@@ -1,0 +1,376 @@
+---
+title: "Reclustering Radial Glia"
+output: html_document
+date: "2025-02-04"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+Libraries
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+{
+  library(parallel)
+  library(clusterProfiler)
+  library(blme)
+  library(Seurat)
+  library(tidyverse)
+  library(tidyr)
+  library(lme4)
+  library(dplyr)
+  library(MASS)
+  library(SeuratObject)
+  library(Signac)
+  library(glmGamPoi)
+  library(scran)
+  library(parallel)
+  library(factoextra)
+  library(readxl)
+  library(factoextra)
+  library(forcats)
+  library(ggrepel)
+  library(biomaRt)
+  library(openxlsx)
+  library(emmeans)
+  library(CytoTRACE)
+  library(ggrepel)
+  library(tidyverse)
+  library(cowplot)
+  library(patchwork)
+  library(Polychrome)
+  library(scCustomize)
+
+P40 <- createPalette(40, c("#FF0000", "#00FF00", "#0000FF"), range = c(30, 80))
+swatch(P40)
+names(P40) <- NULL
+
+mean_expression_cluster_plot<- readRDS('Functions/mean_expression_cluster_plot.rds')
+prop_cluster_plot<- readRDS( 'Functions/prop_cluster_plot.rds')
+define_degs_prop<- readRDS('Functions/define_degs_prop.rds')
+mean_expression_cluster_data<- readRDS('Functions/mean_expression_cluster_data.rds')
+prop_deg_function.rds<- readRDS('Functions/DEG_functions/prop_deg_function.rds')
+define_behavior_degs<- readRDS('Functions/define_behavior_degs')
+clown_go<- readRDS('Functions/clown_go')
+define_degs<- readRDS('Functions/define_degs')
+
+library(hdWGCNA)
+library(WGCNA)
+
+}
+
+```
+
+Load in the Seurat Object and Subset to Radial Glia, find subclusters
+
+```{r}
+obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+radial_glia <- subset(obj, harmony.wnn_res0.4_clusters==2)
+radial_glia <- FindSubCluster(radial_glia, cluster = 2, subcluster.name = 'sub', graph.name = 'harmony.wsnn')
+```
+
+Identify the subtypes from
+<https://journals.biologists.com/dev/article/147/1/dev185595/222950/Single-cell-sequencing-of-radial-glia-progeny>
+
+Find markers first
+
+```{r}
+glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
+```
+
+Make a heatmap
+
+```{r}
+top_glia_markers <- split(glia_markers,f= glia_markers$cluster)
+markers <- data.frame()
+for(i in unique(glia_markers$cluster)){
+  data <- top_glia_markers[[i]]
+  top_marker_gene <- data$gene[data$p_val_adj == min(data$p_val_adj)]
+  out_data <- data.frame(top_marker_gene = top_marker_gene,
+                         cluster = i)
+  markers <- rbind(markers, out_data)
+}
+
+```
+
+```{r}
+print(DotPlot(radial_glia, features=markers$top_marker_gene, group.by = 'sub')+
+  coord_flip())
+print(markers)
+```
+
+2_0 = latent-transforming growth factor beta-binding protein 4 2_1 =
+HERV-H LTR-associating protein 1 2_2= uncharacterized LOC111568382 2_3 =
+uncharacterized LOC118469603 2_4 = uncharacterized LOC111576017 2_5 =
+
+Im realizing a better way to do this is to do GO of all significant find
+all markers gees
+
+```{r}
+degs_2_0 <- glia_markers$gene[glia_markers$p_val_adj<0.05& glia_markers$cluster=='2_0']
+go_2_0 <- clown_go(degs_2_0)
+dotplot(go_2_0)
+
+for(i in 0:9){
+degs_2_1 <- glia_markers$gene[glia_markers$p_val_adj<0.05& glia_markers$cluster==paste0('2_',i)]
+go_2_1 <- clown_go(degs_2_1)
+print(dotplot(go_2_1)+ labs(title = paste0('2_',i)))
+}
+
+
+```
+
+So it seems like 0) progenitor? 1) migrating cells? 2) migrating cells
+3) migrating cells? 4) migrating cells? 5) wtf does cell differetiation
+mean 6) Alright these are all the same huh 7) ooh wnt interesting 8)
+Same old 9) ok 2_9 is interesting, it seems a lot like mature(ing)
+neurons
+
+```{r}
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+
+biomart_ocellaris <-
+  getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'ensembl_gene_id'))
+
+ensembl_rerio <- useEnsembl(biomart = "genes", 
+                      dataset = "drerio_gene_ensembl")
+biomart_drerio <- 
+  getBM(
+        mart = ensembl_rerio, #working mart 
+        attributes = c('external_gene_name',
+                   "aocellaris_homolog_associated_gene_name",
+                   'aocellaris_homolog_ensembl_gene'
+                   ))
+
+joined <- biomart_ocellaris%>%
+  right_join(biomart_drerio, join_by('ensembl_gene_id'=='aocellaris_homolog_ensembl_gene'))
+
+drerio_to_ocellaris <- function(gene){
+  output_gene <- joined$entrezgene_accession[joined$external_gene_name==gene]
+  
+  return(output_gene)
+  }
+
+
+radial_glia_markers_paper <- na.omit(unique(c(
+  drerio_to_ocellaris('fabp7a'),
+            drerio_to_ocellaris('her4.1'),
+    drerio_to_ocellaris('her4.2'),
+      drerio_to_ocellaris('atp1a1b'),
+      drerio_to_ocellaris('slc1a2b'),
+      drerio_to_ocellaris('fgfbp3'),
+      drerio_to_ocellaris('her6'),
+      drerio_to_ocellaris('her4.4'),
+      drerio_to_ocellaris('mdka'),
+      drerio_to_ocellaris('glula'),
+      drerio_to_ocellaris('slc1a3b'),
+      drerio_to_ocellaris('s100b'),
+       drerio_to_ocellaris('cx43'),
+       drerio_to_ocellaris('s100b'),
+      drerio_to_ocellaris('her15.2'),
+      drerio_to_ocellaris('her15.1'),
+      drerio_to_ocellaris('her9'),
+      drerio_to_ocellaris('selenop'),
+      drerio_to_ocellaris('dla'),
+      drerio_to_ocellaris('atp1b4'),
+      drerio_to_ocellaris('fads2'),
+      drerio_to_ocellaris('efhd1'),
+      drerio_to_ocellaris('cox4i2'),
+      drerio_to_ocellaris('lix1'),
+      drerio_to_ocellaris('ptn'),
+      drerio_to_ocellaris('s1pr1')
+           )))
+
+DotPlot(radial_glia, features=radial_glia_markers_paper, group.by = 'sub')+
+  coord_flip()
+
+```
+
+Pretty confident radial glia are at least
+
+2_0 2_3 2_8
+
+```{r}
+nbn1_markers_paper <- na.omit(unique(c(
+  drerio_to_ocellaris('tubb5'),
+    drerio_to_ocellaris('cd99l2'),
+      drerio_to_ocellaris('cnp'),
+      drerio_to_ocellaris('ppp1r14ba'),
+      drerio_to_ocellaris('tuba2'),
+      drerio_to_ocellaris('tmsb'),
+      drerio_to_ocellaris('tuba1a'),
+      drerio_to_ocellaris('tuba1c'),
+      drerio_to_ocellaris('tuba2b'),
+      drerio_to_ocellaris('vat1'),
+      drerio_to_ocellaris('fscn1a'),
+       drerio_to_ocellaris('hnrnpa0l'),
+       drerio_to_ocellaris('mex3b'),
+      drerio_to_ocellaris('marcksb'),
+      drerio_to_ocellaris('fkbp2'),
+      drerio_to_ocellaris('hn1b'),
+      drerio_to_ocellaris('kdm5bb'),
+      drerio_to_ocellaris('mllt11'),
+      drerio_to_ocellaris('gpm6ab'),
+      drerio_to_ocellaris('rcan1a'),
+      drerio_to_ocellaris('zfpm2a'),
+      drerio_to_ocellaris('dpysl5a'),
+      drerio_to_ocellaris('tubb4b'),
+      drerio_to_ocellaris('elavl3'),
+      drerio_to_ocellaris('rps6'),
+      drerio_to_ocellaris('nme2b.1'),
+        drerio_to_ocellaris('jun'),
+      drerio_to_ocellaris('cct4')
+
+           )))
+
+DotPlot(radial_glia, features=nbn1_markers_paper, group.by = 'sub')+
+  coord_flip()
+
+
+```
+
+2_9 is the most likely to be NBN1 from the paper
+
+```{r}
+nbn2_markers_paper <- na.omit(unique(c(
+  drerio_to_ocellaris('ebf3a'),
+    drerio_to_ocellaris('kcnj19a'),
+      drerio_to_ocellaris('tbr1b'),
+      drerio_to_ocellaris('msi2b'),
+      drerio_to_ocellaris('podxl2'),
+      drerio_to_ocellaris('rtn4r'),
+      drerio_to_ocellaris('stxbp1b'),
+      drerio_to_ocellaris('etv5a'),
+      drerio_to_ocellaris('camk1gb'),
+      drerio_to_ocellaris('hmp19'),
+      drerio_to_ocellaris('cdh8'),
+       drerio_to_ocellaris('tp53i11b'),
+       drerio_to_ocellaris('atp1b1b'),
+      drerio_to_ocellaris('c1qtnf4'),
+      drerio_to_ocellaris('tmeff2a'),
+      drerio_to_ocellaris('khdrbs2'),
+      drerio_to_ocellaris('BX957331.1'),
+      drerio_to_ocellaris('pcp4l1'),
+      drerio_to_ocellaris('si:ch211-202a12.4'),
+      drerio_to_ocellaris('uncx4.1'),
+      drerio_to_ocellaris('ptprn2'),
+      drerio_to_ocellaris('edil3a'),
+      drerio_to_ocellaris('snap25b'),
+      drerio_to_ocellaris('zfhx4'),
+      drerio_to_ocellaris('elavl4'),
+      drerio_to_ocellaris('oxct1a'),
+        drerio_to_ocellaris('uncx'),
+      drerio_to_ocellaris('hsp70l'),
+        drerio_to_ocellaris('hsp70.1'),
+      drerio_to_ocellaris('grm8b')
+           )))
+
+DotPlot(radial_glia, features=nbn2_markers_paper, group.by = 'sub')+
+  coord_flip()
+```
+
+Ok so I guess 2_9 is both NB clusters from that paper... great
+
+What other astrocyte markers can I look at?
+
+```{r}
+Idents(radial_glia) <- 'sub'
+DimPlot(object = radial_glia, label = T)
+```
+
+```{r}
+markers_2_9 <- glia_markers[glia_markers$p_val_adj<0.05& glia_markers$cluster=='2_9',]
+```
+
+Interesting, npy is a marker cckar is also a marker also expresses gaba
+markers what other clusters express these markers?
+
+```{r}
+marks <- c('npy',
+           'cckar')
+DotPlot(obj, features=marks, group.by = 'harmony.wnn_res0.4_clusters')+
+  coord_flip()+
+theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1))
+
+```
+
+It COULD be cluster 19, that is the only one that expresses both, I
+would love to do trajectory analysis on this Cluster 5 is also a
+possibility
+
+For now, I'm going to bed, things I want to do
+
+1)  Prop differences
+2)  Neg Binom + GO
+3)  Trajectory Analysis
+4)  Lasso
+5)  Continuity
+6)  CytoTRACE
+7)  Better astrocyte markers, brain aromatase?
+
+Proportion Differences (I guess using glmer like zack suggested?)
+```{r}
+cluster_data <- radial_glia@meta.data[radial_glia@meta.data$Status %in% c('D','F','M'),]
+
+cluster_data_grouped <- cluster_data%>%
+  group_by(individual, Status, sub)%>%
+  summarize(n_cells = n())
+
+cluster_data_totals <- cluster_data_grouped%>%
+  group_by(individual, Status)%>%
+  summarize(total_cells = sum(n_cells))
+
+cluster_data_combined <- cluster_data_grouped%>%
+  full_join(cluster_data_totals, join_by('individual','Status'))%>%
+  summarize(total_cells = total_cells,
+            n_cells = n_cells,
+    cells_not_in_cluster = total_cells - n_cells)
+
+model_matrix <- matrix(NA, nrow(cluster_data_combined), 2)
+model_matrix[,1] <- cluster_data_combined$n_cells
+model_matrix[,2] <- cluster_data_combined$cells_not_in_cluster
+
+glmer_model_radial_glia_status <- glmer(model_matrix~Status + (1|individual), 
+                                 family = binomial('logit'), data = cluster_data_combined)
+#summary(glmer_model_radial_glia_status)
+#car::Anova(glmer_model_radial_glia_status, type = 'III')
+
+glmer_model_radial_glia_status_by_sub <- glmer(model_matrix~Status*sub + (1|individual), 
+                                 family = binomial('logit'), data = cluster_data_grouped)
+
+#summary(glmer_model_radial_glia_status_by_sub)
+car::Anova(glmer_model_radial_glia_status_by_sub, type = 'III')
+
+print(
+  pairs(
+    emmeans(glmer_model_radial_glia_status_by_sub, c('Status','sub')),
+    by = 'sub',adjust ='none')
+)
+
+library(sjPlot)
+print(plot_model(glmer_model_radial_glia_status_by_sub))
+
+clust_data_plot <- cluster_data_grouped%>%right_join(cluster_data_combined, by = 'individual')%>%
+  group_by(Status.y, sub)%>%
+  summarize(prop = sum(n_cells.x) / sum(total_cells))%>%
+  distinct()
+clust_data_plot$Status.y <- factor(clust_data_plot$Status.y, levels = c('M','D','F'))
+print(ggplot(clust_data_plot, aes(x = sub,y, y =prop, group_by = Status.y))+
+  geom_bar(aes(fill = Status.y), position = position_dodge(), stat = 'identity'))
+
+```
+
+Pairwise differences in 
+
+2_1 - depleated in females
+2_2 - wow this is exploding in females
+2_3 - depleated in dominants
+2_4 - bigger in dominants
+2_6 - depleated in females
+
+
