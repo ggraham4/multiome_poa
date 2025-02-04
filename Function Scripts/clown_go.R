@@ -16,12 +16,18 @@ biomart_basic <-
 term2gene =biomart_basic[, c("go_id", "entrezgene_accession")]
 term2desc=biomart_basic[, c("go_id", "name_1006")]
 
-saveRDS(term2gene, '/volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/R/Gabe/Term2gene.rds')
-saveRDS(term2desc, '/volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/R/Gabe/Term2desc.rds')
-
 clown_go <- function(significant.list, whole.list = NULL){ #list must be SYMBOL
-  term2gene <- readRDS('/volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/R/Gabe/Term2gene.rds')
-  term2desc<- readRDS( '/volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/R/Gabe/Term2desc.rds')
+  
+  if (!require(biomaRt)) BiocManager::install('biomaRt')
+    if (!require(clusterProfiler)) BiocManager::install('clusterProfiler')
+
+library(biomaRt)
+ library(clusterProfiler)
+ 
+  
+  
+  term2gene <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2gene.rds')
+  term2desc<- readRDS( '/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2desc.rds')
   
   ego2 <- enricher(significant.list, 
                    TERM2GENE=term2gene, 
