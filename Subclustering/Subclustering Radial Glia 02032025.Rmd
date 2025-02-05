@@ -73,6 +73,7 @@ radial_glia <- FindSubCluster(radial_glia, cluster = 2, subcluster.name = 'sub',
 Identify the subtypes from
 <https://journals.biologists.com/dev/article/147/1/dev185595/222950/Single-cell-sequencing-of-radial-glia-progeny>
 
+### Characterize subclusters
 Find markers first
 
 ```{r}
@@ -372,5 +373,152 @@ Pairwise differences in
 2_3 - depleated in dominants
 2_4 - bigger in dominants
 2_6 - depleated in females
+
+I need to do more to prove what exactly these cells are before asking questions about 2_2 and 2_1
+
+```{r}
+misc_markers <- na.omit(unique(c(
+  'LOC111577263', # brain aromatase
+  'gfap',
+  'elavl3', #neuron marker
+  'gad2',#GABA 
+   'LOC111588076', #gad1
+   'LOC111584103', #glut marker
+   'slc17a6b', #glut marker
+     'slc17a7a', #glut marker,
+  'pgr',
+  'npy',
+  'LOC111562384',
+  'cckb',
+  'cckar',
+  'cckbra',
+  'cckbrb',
+  'tac1',
+  'tacr3a',
+  'npy',
+  'LOC111577296', #scg2b or something
+  'LOC111575776' #penka
+           )))
+
+DotPlot(radial_glia, features=misc_markers, group.by = 'sub')+
+  coord_flip()+
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")+
+  scale_x_discrete(labels= c('cyp19a1b',
+                             'gfap',
+                             'elavl3',
+                             'gad2',
+                             'gad1',
+                             'vglut2.1',
+                             'slc17a6b (GLUT)',
+                             'slc17a7a (GLUT)',
+                             'pgr',
+                             'npy',
+                             'ccka',
+                             'cckb',
+                             'cckar',
+                             'cckbra',
+                             'cckbrb',
+                             'tac1',
+                             'tacr3a',
+                             'scg2b',
+                             'penka'))+
+  DotPlot(subset(obj, harmony.wnn_res0.4_clusters ==5),features=misc_markers, group.by = 'harmony.wnn_res0.4_clusters')+
+  coord_flip()+
+theme(axis.text.y=element_blank())+
+  labs(x = '')
+```
+Ok so as we know, 
+2_9 are new neurons; interestingly, they are GABAergic neurons that express brain aromatase, npy, and cckbra, tac1, and secretogranin-2b. This aligns STRONGLY with cluster 5 I want to see if trajectory analysis confirms this
+
+
+
+Add Radial Glia Labels to Whole Object
+```{r}
+
+obj$sub <- NA
+obj$sub <- ifelse(obj$harmony.wnn_res0.4_clusters==2, radial_glia$sub, NA)
+
+print(DimPlot(obj, group.by = 'sub'))
+print(DimPlot(obj, group.by = 'harmony.wnn_res0.4_clusters', label =T))
+```
+WOAH OK thats something, it looks like some of these cells are also populating cluster 0/1, cluster 3, cluster 6, and cluster 5
+
+###Trajectory Analysis 
+
+Subset object
+```{r}
+  library(monocle3)
+subset_obj <- obj[,!obj$harmony.wnn_res0.4_clusters %in% c(4, 29, 14, 18, 26, 22)] #remove nonneuronal clusters
+subset_obj <- subset_obj[,!(subset_obj$harmony.wnn_res0.4_clusters == 2 & subset_obj$sub != "2_9") ] #subset out everything but 2_9
+
+DimPlot(subset_obj, group.by = 'harmony.wnn_res0.4_clusters', label = T)
+                    
+```
+Trajectory Analysis
+```{r}
+gene_meta_data <- data.frame(row.names = rownames(subset_obj@assays$RNA$data),
+                                                  gene_short_name=
+                                                    rownames(subset_obj@assays$RNA$data)
+)
+
+gene_meta_data$cell_type <- ifelse(gene_meta_data$gene_short_name == 'LOC111577263', 'radial glia', NA)
+                                                  
+cds <- new_cell_data_set(subset_obj@assays$RNA$data,
+                         cell_metadata = subset_obj@meta.data,
+                         gene_metadata =gene_meta_data)
+## Step 1: Normalize and pre-process the data
+cds <- preprocess_cds(cds, num_dim = 100)
+
+## Step 2: Remove batch effects with cell alignment
+#cds <- align_cds(cds, alignment_group = "batch") #this isnt working but Im using the data column anyway
+
+## Step 3: Reduce the dimensions using UMAP
+cds <- reduce_dimension(cds)
+
+## Step 4: Cluster the cells
+cds <- cluster_cells(cds)
+                    
+## Step 5: Learn a graph
+cds <- learn_graph(cds)
+
+## Step 6: Order cells
+get_earliest_principal_node <- function(cds=cds2, var=c('2_9')){
+  cell_ids <- which(colData(cds)[, "sub"] %in% var)
+  
+  closest_vertex <-
+  cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds), ])
+  root_pr_nodes <-
+  igraph::V(principal_graph(cds)[["UMAP"]])$name[as.numeric(names
+  (which.max(table(closest_vertex[cell_ids,]))))]
+  
+  root_pr_nodes
+}
+cds <- order_cells(cds, root_pr_nodes=get_earliest_principal_node(cds))
+
+
+plot_cells(cds, color_cells_by = 'pseudotime')
+plot_cells(cds, genes = 'LOC111577263', show_trajectory_graph = F)
+plot_cells(cds, color_cells_by= 'cell_type', show_trajectory_graph = F)
+
+```
+
+#Characterize the other subclusters
+
+2_8 are gfap expressing astorcyte like radial glia, as are maybe 2_5
+2_1 - 2_3 strongly express brain aromatase; 2_3 expresses cckb; what are the differences between 2_1 and 2_2?
+
+```{r}
+differences_1_2 <- FindMarkers(radial_glia, ident.1 = '2_1',
+                               ident.2 = '2_2')
+```
+```{r}
+differences_1_2$gene <- rownames(differences_1_2)
+degs_1_2 <- differences_1_2$gene[differences_1_2$p_val_adj<0.05 & differences_1_2$pct.2<differences_1_2$pct.1]
+
+go_1_2 <- clown_go(degs_1_2)
+dotplot(go_1_2)
+```
+OK so it seems like 2_1 is enriched for signaling, cell adhesion etc relative to 2_2, does this mean they are proliferating?
 
 
