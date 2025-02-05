@@ -10,6 +10,7 @@ editor_options:
 Libraries
 
 ```{r setup, include=FALSE}
+setwd('~/Desktop/multiome_poa')
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 {
   library(parallel)
@@ -456,12 +457,14 @@ DimPlot(subset_obj, group.by = 'harmony.wnn_res0.4_clusters', label = T)
 ```
 Trajectory Analysis
 ```{r}
+
+subset_obj$cell_type <- ifelse(subset_obj$harmony.wnn_res0.4_clusters==2, 'radial_glia',NA)
+subset_obj$cell_type <- ifelse(subset_obj$harmony.wnn_res0.4_clusters==5, 'cluster_5',subset_obj$cell_type)
+
 gene_meta_data <- data.frame(row.names = rownames(subset_obj@assays$RNA$data),
                                                   gene_short_name=
                                                     rownames(subset_obj@assays$RNA$data)
 )
-
-gene_meta_data$cell_type <- ifelse(gene_meta_data$gene_short_name == 'LOC111577263', 'radial glia', NA)
                                                   
 cds <- new_cell_data_set(subset_obj@assays$RNA$data,
                          cell_metadata = subset_obj@meta.data,
@@ -482,8 +485,8 @@ cds <- cluster_cells(cds)
 cds <- learn_graph(cds)
 
 ## Step 6: Order cells
-get_earliest_principal_node <- function(cds=cds2, var=c('2_9')){
-  cell_ids <- which(colData(cds)[, "sub"] %in% var)
+get_earliest_principal_node <- function(cds=cds, var=c(2)){
+  cell_ids <- which(colData(cds)[, "harmony.wnn_res0.4_clusters"] %in% var)
   
   closest_vertex <-
   cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
@@ -498,10 +501,124 @@ cds <- order_cells(cds, root_pr_nodes=get_earliest_principal_node(cds))
 
 
 plot_cells(cds, color_cells_by = 'pseudotime')
+plot_cells(cds, color_cells_by = 'pseudotime', show_trajectory_graph = F)
 plot_cells(cds, genes = 'LOC111577263', show_trajectory_graph = F)
 plot_cells(cds, color_cells_by= 'cell_type', show_trajectory_graph = F)
+plot_cells(cds, color_cells_by= 'harmony.wnn_res0.4_clusters', show_trajectory_graph = F)
 
 ```
+Pseudotime seems to support the idea that radial glia are more populating cluster 0 and 17 than 5, do the markers support this
+```{r}
+misc_markers_2 <- na.omit(unique(c(
+  'LOC111577263', # brain aromatase
+  'gfap',
+  'elavl3', #neuron marker
+  'gad2',#GABA 
+   'LOC111588076', #gad1
+  'npy',
+  'cckb',
+  'cckar',
+  'cckbra',
+  'cckbrb',
+  'tac1',
+  'tac3a',
+  'npy',
+  'LOC111577296', #scg2b or something
+  'LOC111575776', #penka, 17
+  'slc6a11b', #i think a chat marker, 17
+  'LOC111570141', #17, #neurotransmitter reuptake, astrocyte marker  too I think 
+  'pdyn', #17
+  'oxt' #0, 1
+           )))
+
+DotPlot(subset(radial_glia, sub == '2_9'), features=misc_markers_2, group.by = 'sub')+
+  coord_flip()+
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")+
+  DotPlot(subset(obj, harmony.wnn_res0.4_clusters %in%c(5,17,0,1)),features=misc_markers_2, group.by = 'harmony.wnn_res0.4_clusters')+
+  coord_flip()+
+theme(axis.text.y=element_blank())+
+  labs(x = '')
+
+```
+
+#Where do these cells cluster now that radial glia are removed
+```{r}
+subset_obj_2 <- FindMultiModalNeighbors(
+  object = subset_obj_2,
+  reduction.list = list("harmony.rna", 'atacLSI'),
+  dims.list = list(1:50, 2:50),
+  verbose = TRUE,
+  prune.SNN = 0,
+  knn.graph.name = "harmony.wknn",
+  snn.graph.name = "harmony.wsnn",
+  weighted.nn.name = "harmony.wnn"
+)
+
+# build a joint UMAP visualization
+subset_obj_2 <- RunUMAP(
+  object = subset_obj_2,
+  nn.name = "harmony.wnn",
+  reduction.name = "harmony_wnn.umap",
+  reduction.key = "harmony_wnnUMAP_",
+  verbose = TRUE,
+  min.dist = 0.4,
+  metric = "euclidean"
+)
+
+subset_obj_2 <- FindClusters(subset_obj_2,
+                     graph.name = "harmony.wsnn",
+                     algorithm = 3,
+                     verbose = T,
+                     resolution = 0.4,
+                     cluster.name = 'harmony.wnn_res0.4_clusters_no_radial_glia') #using Katie's method, resolution Lynna suggested,I want to keep as much similar between the two objects
+
+
+```
+```{r}
+DimPlot(subset_obj_2, group.by = 'harmony.wnn_res0.4_clusters_no_radial_glia')
+```
+Interesting this splits cluster 0 into two smaller clusters
+
+```{r}
+unique(subset_obj_2$harmony.wnn_res0.4_clusters_no_radial_glia[
+  subset_obj_2$harmony.wnn_res0.4_clusters==2]
+)
+DimPlot(subset_obj_2, group.by = 'harmony.wnn_res0.4_clusters_no_radial_glia', label = T)
+
+```
+So this says they cluster with cluser 6 (cluster 0 in the actual clustering)
+Its also only 31 cells so who tf knows why this is happening
+
+```{r}
+misc_markers_2 <- na.omit(unique(c(
+  'LOC111577263', # brain aromatase
+  'gfap',
+  'elavl3', #neuron marker
+  'gad2',#GABA 
+   'LOC111588076', #gad1
+  'npy',
+  'cckb',
+  'cckar',
+  'cckbra',
+  'cckbrb',
+  'tac1',
+  'tac3a',
+  'npy',
+  'LOC111577296', #scg2b or something
+  'LOC111575776', #penka, 17
+  'slc6a11b', #i think a chat marker, 17
+  'LOC111570141', #17, #neurotransmitter reuptake, astrocyte marker  too I think 
+  'pdyn', #17
+  'oxt' #0, 1
+           )))
+
+DotPlot(subset(radial_glia, sub == '2_9'), features=misc_markers_2, group.by = 'sub')+
+  coord_flip()+
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")
+  DotPlot(subset_obj_2, features=misc_markers_2, group.by = 'harmony.wnn_res0.4_clusters_no_radial_glia')+
+  coord_flip()
+```
+
 
 #Characterize the other subclusters
 
