@@ -79,7 +79,13 @@ Find markers first
 
 ```{r FindMarkers}
 <<<<<<< HEAD
+<<<<<<< HEAD
 glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
+=======
+#glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
+#saveRDS(glia_markers, '/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
+glia_markers <- readRDS('/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
+>>>>>>> 99eb052 (Tried to classify radial glia, this is difficult)
 =======
 #glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
 #saveRDS(glia_markers, '/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
