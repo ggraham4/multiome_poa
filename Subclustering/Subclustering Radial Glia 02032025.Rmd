@@ -65,7 +65,7 @@ library(WGCNA)
 
 Load in the Seurat Object and Subset to Radial Glia, find subclusters
 
-```{r}
+```{r Read in Object}
 obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 radial_glia <- subset(obj, harmony.wnn_res0.4_clusters==2)
 radial_glia <- FindSubCluster(radial_glia, cluster = 2, subcluster.name = 'sub', graph.name = 'harmony.wsnn')
@@ -77,13 +77,13 @@ Identify the subtypes from
 ### Characterize subclusters
 Find markers first
 
-```{r}
+```{r FindMarkers}
 glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
 ```
 
 Make a heatmap
 
-```{r}
+```{r Top Markers}
 top_glia_markers <- split(glia_markers,f= glia_markers$cluster)
 markers <- data.frame()
 for(i in unique(glia_markers$cluster)){
@@ -96,7 +96,7 @@ for(i in unique(glia_markers$cluster)){
 
 ```
 
-```{r}
+```{r Plot Markers}
 print(DotPlot(radial_glia, features=markers$top_marker_gene, group.by = 'sub')+
   coord_flip())
 print(markers)
@@ -109,7 +109,7 @@ uncharacterized LOC118469603 2_4 = uncharacterized LOC111576017 2_5 =
 Im realizing a better way to do this is to do GO of all significant find
 all markers gees
 
-```{r}
+```{r Compare SubClusters by significant markers}
 degs_2_0 <- glia_markers$gene[glia_markers$p_val_adj<0.05& glia_markers$cluster=='2_0']
 go_2_0 <- clown_go(degs_2_0)
 dotplot(go_2_0)
@@ -129,7 +129,7 @@ mean 6) Alright these are all the same huh 7) ooh wnt interesting 8)
 Same old 9) ok 2_9 is interesting, it seems a lot like mature(ing)
 neurons
 
-```{r}
+```{r Characterize SubClusters using zebrafish neurogenesis paper -- Radial Glia}
 ensembl <- useEnsembl(biomart = "genes", 
                       dataset = "aocellaris_gene_ensembl")
 
@@ -197,7 +197,7 @@ Pretty confident radial glia are at least
 
 2_0 2_3 2_8
 
-```{r}
+```{r Characterize SubClusters using zebrafish neurogenesis paper -- NB1}
 nbn1_markers_paper <- na.omit(unique(c(
   drerio_to_ocellaris('tubb5'),
     drerio_to_ocellaris('cd99l2'),
@@ -238,7 +238,7 @@ DotPlot(radial_glia, features=nbn1_markers_paper, group.by = 'sub')+
 
 2_9 is the most likely to be NBN1 from the paper
 
-```{r}
+```{r Characterize SubClusters using zebrafish neurogenesis paper -- NB2}
 nbn2_markers_paper <- na.omit(unique(c(
   drerio_to_ocellaris('ebf3a'),
     drerio_to_ocellaris('kcnj19a'),
@@ -280,19 +280,19 @@ Ok so I guess 2_9 is both NB clusters from that paper... great
 
 What other astrocyte markers can I look at?
 
-```{r}
+```{r Plot SubClusters}
 Idents(radial_glia) <- 'sub'
 DimPlot(object = radial_glia, label = T)
 ```
 
-```{r}
+```{r Markers or NB cluster 2_9}
 markers_2_9 <- glia_markers[glia_markers$p_val_adj<0.05& glia_markers$cluster=='2_9',]
 ```
 
 Interesting, npy is a marker cckar is also a marker also expresses gaba
 markers what other clusters express these markers?
 
-```{r}
+```{r They express some interesting markers, what neurons express them?}
 marks <- c('npy',
            'cckar')
 DotPlot(obj, features=marks, group.by = 'harmony.wnn_res0.4_clusters')+
@@ -315,8 +315,9 @@ For now, I'm going to bed, things I want to do
 6)  CytoTRACE
 7)  Better astrocyte markers, brain aromatase?
 
-Proportion Differences (I guess using glmer like zack suggested?)
-```{r}
+#Proportion Differences 
+(I guess using glmer like zack suggested?)
+```{r Proportion DIfferences}
 cluster_data <- radial_glia@meta.data[radial_glia@meta.data$Status %in% c('D','F','M'),]
 
 cluster_data_grouped <- cluster_data%>%
@@ -377,7 +378,7 @@ Pairwise differences in
 
 I need to do more to prove what exactly these cells are before asking questions about 2_2 and 2_1
 
-```{r}
+```{r Further Characterization of these new neurons}
 misc_markers <- na.omit(unique(c(
   'LOC111577263', # brain aromatase
   'gfap',
@@ -398,12 +399,16 @@ misc_markers <- na.omit(unique(c(
   'tacr3a',
   'npy',
   'LOC111577296', #scg2b or something
-  'LOC111575776' #penka
+  'LOC111575776' ,#penka
+  'mbpa', #olig marker
+  'LOC111562384',
+  'cspg4', #OPC marker
+  'crocc2' #ependymal
            )))
 
 DotPlot(radial_glia, features=misc_markers, group.by = 'sub')+
   coord_flip()+
-  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")+
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")#+
   scale_x_discrete(labels= c('cyp19a1b',
                              'gfap',
                              'elavl3',
@@ -422,7 +427,12 @@ DotPlot(radial_glia, features=misc_markers, group.by = 'sub')+
                              'tac1',
                              'tacr3a',
                              'scg2b',
-                             'penka'))+
+                             'penka',
+                             'mbpa',
+                             'LOC111562384',
+                             'cspg4',
+                             'crocc2'
+                             ))+
   DotPlot(subset(obj, harmony.wnn_res0.4_clusters ==5),features=misc_markers, group.by = 'harmony.wnn_res0.4_clusters')+
   coord_flip()+
 theme(axis.text.y=element_blank())+
@@ -431,10 +441,8 @@ theme(axis.text.y=element_blank())+
 Ok so as we know, 
 2_9 are new neurons; interestingly, they are GABAergic neurons that express brain aromatase, npy, and cckbra, tac1, and secretogranin-2b. This aligns STRONGLY with cluster 5 I want to see if trajectory analysis confirms this
 
-
-
 Add Radial Glia Labels to Whole Object
-```{r}
+```{r Look at Radial Glia in Whole Object}
 
 obj$sub <- NA
 obj$sub <- ifelse(obj$harmony.wnn_res0.4_clusters==2, radial_glia$sub, NA)
@@ -447,7 +455,7 @@ WOAH OK thats something, it looks like some of these cells are also populating c
 ###Trajectory Analysis 
 
 Subset object
-```{r}
+```{r Subset Object}
   library(monocle3)
 subset_obj <- obj[,!obj$harmony.wnn_res0.4_clusters %in% c(4, 29, 14, 18, 26, 22)] #remove nonneuronal clusters
 subset_obj <- subset_obj[,!(subset_obj$harmony.wnn_res0.4_clusters == 2 & subset_obj$sub != "2_9") ] #subset out everything but 2_9
@@ -456,7 +464,7 @@ DimPlot(subset_obj, group.by = 'harmony.wnn_res0.4_clusters', label = T)
                     
 ```
 Trajectory Analysis
-```{r}
+```{r Trajectory Analysis}
 
 subset_obj$cell_type <- ifelse(subset_obj$harmony.wnn_res0.4_clusters==2, 'radial_glia',NA)
 subset_obj$cell_type <- ifelse(subset_obj$harmony.wnn_res0.4_clusters==5, 'cluster_5',subset_obj$cell_type)
@@ -508,7 +516,7 @@ plot_cells(cds, color_cells_by= 'harmony.wnn_res0.4_clusters', show_trajectory_g
 
 ```
 Pseudotime seems to support the idea that radial glia are more populating cluster 0 and 17 than 5, do the markers support this
-```{r}
+```{r Is the pseudotime right that radial glia populate 0, 17, 5?}
 misc_markers_2 <- na.omit(unique(c(
   'LOC111577263', # brain aromatase
   'gfap',
@@ -542,7 +550,7 @@ theme(axis.text.y=element_blank())+
 ```
 
 #Where do these cells cluster now that radial glia are removed
-```{r}
+```{r Where do the new neurons cluster when radial glia are removed?}
 subset_obj_2 <- FindMultiModalNeighbors(
   object = subset_obj_2,
   reduction.list = list("harmony.rna", 'atacLSI'),
@@ -574,12 +582,13 @@ subset_obj_2 <- FindClusters(subset_obj_2,
 
 
 ```
-```{r}
+
+```{r Plot}
 DimPlot(subset_obj_2, group.by = 'harmony.wnn_res0.4_clusters_no_radial_glia')
 ```
 Interesting this splits cluster 0 into two smaller clusters
 
-```{r}
+```{r Which clusters do they belong to?}
 unique(subset_obj_2$harmony.wnn_res0.4_clusters_no_radial_glia[
   subset_obj_2$harmony.wnn_res0.4_clusters==2]
 )
@@ -587,9 +596,9 @@ DimPlot(subset_obj_2, group.by = 'harmony.wnn_res0.4_clusters_no_radial_glia', l
 
 ```
 So this says they cluster with cluser 6 (cluster 0 in the actual clustering)
-Its also only 31 cells so who tf knows why this is happening
+Its also only 31 cells so who tf knows, the rest are already sorted into their clusters in the original clustering, they just are mapped near the radial glia main cluster
 
-```{r}
+```{r Are there any other similar clusters?}
 misc_markers_2 <- na.omit(unique(c(
   'LOC111577263', # brain aromatase
   'gfap',
@@ -619,23 +628,210 @@ DotPlot(subset(radial_glia, sub == '2_9'), features=misc_markers_2, group.by = '
   coord_flip()
 ```
 
-
 #Characterize the other subclusters
+I want to see which subclusters are progenitors and which ones aren't. My prediction is 2_9 should have a lower cytotrace score along with the gfap+ and brain aromatase + clusters, though maybe one of them is more immature than the others. I predict 2_0 is a stem cell cluster
 
-2_8 are gfap expressing astorcyte like radial glia, as are maybe 2_5
-2_1 - 2_3 strongly express brain aromatase; 2_3 expresses cckb; what are the differences between 2_1 and 2_2?
+```{r CytoTRACE}
+radial_glia_matrix <- as.matrix(radial_glia@assays$RNA$counts) #counts is OK to use with cyto
 
-```{r}
+RG_cyto <- CytoTRACE(mat = radial_glia_matrix
+)
+radial_glia$cyto <-RG_cyto$CytoTRACE
+
+FeaturePlot(radial_glia, 'cyto')
+
+```
+```{r Compare to DimPlot}
+DimPlot(radial_glia, label = T)
+```
+```{r ViolinPlot}
+RG_data <- data.frame(
+  individual = radial_glia@meta.data$individual,
+                              status = radial_glia@meta.data$Status,
+                              cluster = radial_glia@meta.data$sub,
+                              cyto = radial_glia@meta.data$cyto)
+RG_data <- subset(RG_data, status == 'F' |status == 'M' | status == 'D')
+RG_data$status <- factor(RG_data$status, levels = c('M','D','F'))
+cyto_gross_plot <- ggplot(RG_data, aes(x = cluster, y = cyto, group = interaction(cluster, status), color = status))+
+  geom_boxplot(alpha = 0)
+print(cyto_gross_plot)
+
+```
+Ok my prediction that 2_9 would be very differentiated was completely wrong, 2_9 is among the most undifferentiated. This to me suggests that it is still a progenitor cell along with 2_0, maybe 2_9 is neural progenitor vs 2_0 is glial progenitor? I dont know enough about radial glia to say
+
+```{r Statistical Differnces in CytoTRACE Score}
+
+RG_cyto_gross <- lmer(cyto~cluster *status+ (1|individual), data = RG_data)
+
+car::Anova(RG_cyto_gross, type = 'III')
+
+RG_cyto_pairs <- as.data.frame(
+  pairs(
+    emmeans(RG_cyto_gross, c('cluster', 'status')),
+    by = 'cluster',adjust = 'none')
+)
+print(RG_cyto_pairs)
+print(cyto_gross_plot)
+```
+Significant differnces in 
+2_2 - How is this a difference; dominants slightly less differentiated than females
+2_3 - More immature in dominants
+2_4 - More immature in dominats
+2_5 - More differentiated in females
+2_7 - The biggest differences; becomes more differentiated in females
+
+It seems to me like 
+2_0: Some kind of progenitor
+2_1: Functional Glia
+2_2: Functional Glia (I still don’t know what is different between 2_1 and 2_2, but see below
+2_3: Some kind of progenitor
+2_4: I have no clue, it expresses no markers
+2_5: Deactivated astrocyte?
+2_6: Also no clue
+2_7: Cmon man
+2_8: Activated astrocyte?
+2_9: Newborn neuron / neural progenitor
+
+I am still not seeing big differences between 2_2 and 2_1
+
+```{r Find markers between 1 and 2}
 differences_1_2 <- FindMarkers(radial_glia, ident.1 = '2_1',
                                ident.2 = '2_2')
 ```
-```{r}
+
+```{r GO of DEGs}
 differences_1_2$gene <- rownames(differences_1_2)
 degs_1_2 <- differences_1_2$gene[differences_1_2$p_val_adj<0.05 & differences_1_2$pct.2<differences_1_2$pct.1]
 
 go_1_2 <- clown_go(degs_1_2)
 dotplot(go_1_2)
 ```
-OK so it seems like 2_1 is enriched for signaling, cell adhesion etc relative to 2_2, does this mean they are proliferating?
+What do I make of this?
+
+Time to find more markers
+https://onlinelibrary.wiley.com/cms/asset/4d5beafa-6833-4008-8d84-4d76c1f88c3e/acel14251-fig-0001-m.jpg
+
+```{r Make a function to translate n furzeri genes to ocellaris}
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+biomart_ocellaris <-
+  getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'ensembl_gene_id'))
+
+ensembl_furzeri <- useEnsembl(biomart = "genes", 
+                      dataset = "nfurzeri_gene_ensembl")
+biomart_furzeri <- 
+  getBM(
+        mart = ensembl_furzeri, #working mart 
+        attributes = c('external_gene_name',
+                   "aocellaris_homolog_associated_gene_name",
+                   'aocellaris_homolog_ensembl_gene'
+                   ))
+
+joined_nfurzeri <- biomart_ocellaris%>%
+  right_join(biomart_drerio, join_by('ensembl_gene_id'=='aocellaris_homolog_ensembl_gene'))
+
+nfurzeri_to_ocellaris <- function(gene){
+  output_gene <- joined_nfurzeri$external_gene_name[joined_nfurzeri$aocellaris_homolog_associated_gene_name==gene]
+  
+  return(output_gene)
+}
+
+```
+
+```{r Translate genes}
+#read in n furzeri glia markers
+n_furzeri_markers <- read_excel("/Users/ggraham/Desktop/multiome_poa/Reference/N. furzeri glial marker genes Ayana etal..xlsx")
+
+n_furzeri_markers$ocellaris_gene <- lapply(FUN = nfurzeri_to_ocellaris, X= n_furzeri_markers$gene)
+
+n_furzeri_markers$ocellaris_gene<- as.character(n_furzeri_markers$ocellaris_gene )
+
+n_furzeri_markers$ocellaris_gene <- ifelse(n_furzeri_markers$ocellaris_gene =='character(0)', NA,  n_furzeri_markers$ocellaris_gene)
+
+n_furzeri_markers_filtered <- n_furzeri_markers[n_furzeri_markers$p_val_adj<0.05&                          !is.na(n_furzeri_markers$ocellaris_gene),]
+```
+
+```{r Astro_rg1}
+astro_RG1_markers <- unique(n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='Astro-RG1'])
+                                                
+DotPlot(radial_glia, features=astro_RG1_markers, group.by = 'sub')+
+  coord_flip()
+```
+Seems like 2_0, 2_3, and potentially 2_8, though 2_8 is confusing me a lot
+
+```{r Astro_rg2}
+               astro_RG2_markers <-unique( n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='Astro-RG2'])
+                                 
+DotPlot(radial_glia, features=astro_RG2_markers, group.by = 'sub')+
+  coord_flip()
+```
+Maybe 2_8?, another possibility though 2_8 doesnt express gfap
+```{r Non Glial Progenitor 1}
+               ngp1_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='NGP.1']
+                                 
+DotPlot(radial_glia, features=ngp1_markers, group.by = 'sub')+
+  coord_flip()
+```
+No good hits
+```{r Non Glial Progenitor 2}
+               ngp2_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='NGP.2']
+                                 
+DotPlot(radial_glia, features=ngp2_markers, group.by = 'sub')+
+  coord_flip()
+```
+No good hits
+```{r Intermediate cell 1}
+               intercell_1_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='Intercell.1']
+                                 
+DotPlot(radial_glia, features=intercell_1_markers, group.by = 'sub')+
+  coord_flip()
+```
+No good hits
+```{r Intermediate cell 2}
+               intercell_2_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='Intercell.2']
+                                 
+DotPlot(radial_glia, features=intercell_2_markers, group.by = 'sub')+
+  coord_flip()
+```
+No good hits
+```{r Intermediate cell 4}
+               intercell_4_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='Intercell.4']
+                                 
+DotPlot(radial_glia, features=intercell_4_markers, group.by = 'sub')+
+  coord_flip()
+```
+No good hits
+```{r Intermediate RG }
+               inter_rg_markers <-unique( n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='Inter-RG'])
+                                 
+DotPlot(radial_glia, features=inter_rg_markers, group.by = 'sub')+
+  coord_flip()
+```
+Now were getting somewhere, 2_8 may be intermediate radial glia, though I don’t like that 2_0 and 2_3 also seem like it again as I thought they were astrocyte like radial glia. I think they are stronger for that one 
+```{r neuroepithelial-like RG }
+               ne_rg3_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='NE-RG3']
+                                 
+DotPlot(radial_glia, features=ne_rg3_markers, group.by = 'sub')+
+  coord_flip()
+```
+
+```{r Ependymal radial glia}
+               epd_markers <- n_furzeri_markers_filtered$ocellaris_gene[n_furzeri_markers_filtered$CellType=='EPD-RG4']
+                                 
+DotPlot(radial_glia, features=epd_markers, group.by = 'sub')+
+  coord_flip()
+```
+Seems to me like 2_7 is either ependymal or neuroepithelial, very confusing
+
+#DEG analysis
+I will do this later, I am tired
+```{r}
+
+```
+
+
 
 
