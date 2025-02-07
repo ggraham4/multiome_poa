@@ -78,19 +78,14 @@ Identify the subtypes from
 Find markers first
 
 ```{r FindMarkers}
-<<<<<<< HEAD
-<<<<<<< HEAD
-glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
-=======
+
+#glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
 #glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
 #saveRDS(glia_markers, '/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
 glia_markers <- readRDS('/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
->>>>>>> 99eb052 (Tried to classify radial glia, this is difficult)
-=======
 #glia_markers <- FindAllMarkers(object = radial_glia, assay = 'RNA', group.by = 'sub')
 #saveRDS(glia_markers, '/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
 glia_markers <- readRDS('/Users/ggraham/Desktop/multiome_poa/Subclustering/glia subcluster markers')
->>>>>>> 99eb052 (Tried to classify radial glia, this is difficult)
 ```
 
 Make a heatmap
@@ -839,10 +834,25 @@ DotPlot(radial_glia, features=epd_markers, group.by = 'sub')+
 Seems to me like 2_7 is either ependymal or neuroepithelial, very confusing
 
 #DEG analysis
-I will do this later, I am tired
-```{r}
-
+```{r Read in Neg Binom}
+neg_bin_mult<- readRDS('~/Desktop/multiome_poa/Functions/DEG_functions/neg_bin_mult.rds')
 ```
+
+```{r Run Neg Binom on Subclusters}
+neg_bin_output <- data.frame()
+for(i in 0:9){
+  print(i)
+  out <- neg_bin_mult(obj =radial_glia,
+                     clustering= 'sub',
+                     cluster = paste0('2_',i))
+  out$cluster <- paste0('2_',i)
+  neg_bin_output <- rbind(out, neg_bin_output)
+  
+}
+
+write.csv(neg_bin_output, '~/Desktop/multiome_poa/DEG Outputs/radial glia subcluster expresssion DEGs 020625.csv')
+```
+
 
 
 
