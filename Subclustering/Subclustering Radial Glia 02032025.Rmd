@@ -287,6 +287,23 @@ Ok so I guess 2_9 is both NB clusters from that paper... great
 
 What other astrocyte markers can I look at?
 
+```{r NKX2.1 & ZIC 1-5 + Astrocytes}
+nkx_zic_markers<- na.omit(unique(c(
+  'zic1',
+  'zic2a',
+  'zic2b',
+  'zic3',
+  'zic4',
+  'zic5',
+  'nkx2.1'
+
+           )))
+
+DotPlot(radial_glia, features=nkx_zic_markers, group.by = 'sub')+
+  coord_flip()
+```
+
+
 ```{r Plot SubClusters}
 Idents(radial_glia) <- 'sub'
 DimPlot(object = radial_glia, label = T)
@@ -314,12 +331,12 @@ possibility
 
 For now, I'm going to bed, things I want to do
 
-1)  Prop differences
-2)  Neg Binom + GO
-3)  Trajectory Analysis
+1) X Prop differences
+2) X  Neg Binom + GO
+3) X  Trajectory Analysis
 4)  Lasso
 5)  Continuity
-6)  CytoTRACE
+6) X  CytoTRACE
 7)  Better astrocyte markers, brain aromatase?
 
 #Proportion Differences 
@@ -839,21 +856,81 @@ neg_bin_mult<- readRDS('~/Desktop/multiome_poa/Functions/DEG_functions/neg_bin_m
 ```
 
 ```{r Run Neg Binom on Subclusters}
-neg_bin_output <- data.frame()
-for(i in 0:9){
-  print(i)
-  out <- neg_bin_mult(obj =radial_glia,
-                     clustering= 'sub',
-                     cluster = paste0('2_',i))
-  out$cluster <- paste0('2_',i)
-  neg_bin_output <- rbind(out, neg_bin_output)
-  
-}
+#neg_bin_output <- data.frame()
+#for(i in 0:9){
+#  print(i)
+#  out <- neg_bin_mult(obj =radial_glia,
+#                     clustering= 'sub',
+#                     cluster = paste0('2_',i))
+#  out$cluster <- paste0('2_',i)
+#  neg_bin_output <- rbind(out, neg_bin_output)
+#  
+#}
+#
+#write.csv(neg_bin_output, '~/Desktop/multiome_poa/DEG Outputs/radial glia subcluster expresssion DEGs 020625.csv')
+neg_bin_output<- read.csv('~/Desktop/multiome_poa/DEG Outputs/radial glia subcluster expresssion DEGs 020625.csv')%>% dplyr::select(-X)%>%distinct()
+neg_bin_output <- define_degs(neg_bin_output)%>%distinct()
 
-write.csv(neg_bin_output, '~/Desktop/multiome_poa/DEG Outputs/radial glia subcluster expresssion DEGs 020625.csv')
+```
+
+```{r Plotting Neg Bin Results}
+plot_data <- neg_bin_output%>%
+  subset(!is.na(class))%>%
+  group_by(cluster, class)%>%
+  summarize(class_count = n())
+
+ggplot(plot_data, aes(x = cluster, y = class_count, fill = class))+
+  geom_bar(position="stack", stat="identity")+
+  scale_fill_manual(values = P40)
+
+```
+
+```{r GO 2_1}
+degs <- neg_bin_output[!is.na(neg_bin_output$class),]
+degs_2_1_go <- clown_go(degs$gene[degs$cluster=='2_1'])
+dotplot(degs_2_1_go) #nothin
+```
+```{r GO 2_0}
+degs_2_0_go <- clown_go(degs$gene[degs$cluster=='2_0'])
+dotplot(degs_2_0_go) #nothin
+```
+
+```{r GO 2_2}
+degs_2_2_go <- clown_go(degs$gene[degs$cluster=='2_2'])
+dotplot(degs_2_2_go) #nothin
+print(degs$gene[degs$cluster=='2_2'])
+```
+
+```{r GO 2_3}
+degs_2_3_go <- clown_go(degs$gene[degs$cluster=='2_3'])
+dotplot(degs_2_3_go) #nothin
+print(degs$gene[degs$cluster=='2_3'])
+```
+```{r GO 2_4}
+degs_2_4_go <- clown_go(degs$gene[degs$cluster=='2_4'])
+dotplot(degs_2_4_go) #nothin
+print(degs$gene[degs$cluster=='2_4'])
+```
+
+```{r GO 2_6}
+degs_2_6_go <- clown_go(degs$gene[degs$cluster=='2_6'])
+dotplot(degs_2_6_go) #nothin
+print(degs$gene[degs$cluster=='2_6'])
+```
+
+```{r GO 2_7}
+degs_2_7_go <- clown_go(degs$gene[degs$cluster=='2_7'])
+dotplot(degs_2_7_go) #nothin
+print(degs$gene[degs$cluster=='2_7'])
 ```
 
 
+```{r Radial Glia 2_1 sertonin receptor}
+mean_expression_cluster_plot(object=radial_glia,
+                             gene='htr2aa',
+                             clustering = 'sub',
+                             cluster= '2_1')
+```
 
 
 
