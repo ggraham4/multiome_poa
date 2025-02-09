@@ -35,7 +35,7 @@ mean_expression_cluster_plot<- readRDS('Functions/mean_expression_cluster_plot.r
 prop_cluster_plot<- readRDS( 'Functions/prop_cluster_plot.rds')
 define_degs_prop<- readRDS('Functions/define_degs_prop.rds')
 mean_expression_cluster_data<- readRDS('Functions/mean_expression_cluster_data.rds')
-prop_deg_function.rds<- readRDS('Functions/DEG_functions/prop_deg_function.rds')
+prop_deg_function<- readRDS('Functions/DEG_functions/prop_deg_function.rds')
 
 }
 
@@ -75,14 +75,34 @@ together_data_summed <- together_data%>%
   group_by(cluster, class)%>%
   summarize(class_count = n())
 
-ggplot(together_data_summed, aes(x = cluster, y = class_count, fill = class)) +
+together_data_chisq <-  together_data%>%
+  subset(!is.na(class)& is.na(warning))%>%
+  group_by(cluster)%>%
+  summarize(class_count = n())
+
+total_sum <- sum(together_data_chisq$class_count)
+mean_sum <- total_sum / nrow(together_data_chisq)
+chisq_test <- chisq.test(together_data_chisq$class_count, p = rep(1/nrow(together_data_chisq), nrow(together_data_chisq)))
+expected <- chisq_test$expected
+residuals <- (together_data_chisq$class_count - expected) / sqrt(expected)
+together_data_chisq$residuals <- residuals
+together_data_chisq$significant <- together_data_chisq$residuals > 2
+together_data_chisq$issignif <- ifelse(together_data_chisq$significant==T, '*',NA)
+
+together_data_defined_summed_plot <- together_data_summed%>%
+  right_join(together_data_chisq, by = 'cluster')
+
+
+ggplot(together_data_defined_summed_plot, aes(x = cluster, y = class_count.x, fill = class)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "Cluster", y = "Number of DEGs") +
   geom_bar(position="stack", stat="identity")+
   theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))+
     scale_x_continuous(breaks = c(0:31))+
   scale_y_continuous()+
-  scale_fill_manual(values = P40)
+  scale_fill_manual(values = P40)+
+geom_text(aes(label = issignif, y = class_count.y), size = 10)
+
 
 
 
