@@ -28,7 +28,7 @@
   #clown_go <- readRDS('R/Gabe/clown_go.rds')
   
 }
-multiome_object <- readRDS('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/R/RNA Object.rds')
+multiome_object <- readRDS('//Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 Idents(multiome_object) <- "harmony.wnn_res0.4_clusters"
 
 
@@ -92,81 +92,96 @@ return(converted_name)
 
 
 Idents(multiome_object) <- "harmony.wnn_res0.4_clusters"
-markers <- unique(c('gad2',#GABA 
-             'LOC111588076', #gad1
-             'LOC111584103', #vgat2.1
-             'slc17a6b',
-             'slc17a7a', #vglut1
-             percula_to_ocellaris('CYP19A1'),
-             percula_to_ocellaris('gfap'),
-             percula_to_ocellaris('crocc2'),
-             percula_to_ocellaris('slc6a11b'),
-             percula_to_ocellaris('glula'),
-             percula_to_ocellaris('mbpa'),
-             percula_to_ocellaris('cspg4'),
-             percula_to_ocellaris('p2ry12'),
-             percula_to_ocellaris('vegfd'),
-             percula_to_ocellaris('chat'),
-             percula_to_ocellaris('slc18a3b'),
-             percula_to_ocellaris('th'),
-             percula_to_ocellaris('slc6a3'),
-             percula_to_ocellaris('dbh'),
-             percula_to_ocellaris('tph1'),
-             percula_to_ocellaris('slc6a4b'),
-             percula_to_ocellaris('gnrh1'),
-             percula_to_ocellaris('kiss1'),
-             percula_to_ocellaris('galn'),
-             percula_to_ocellaris('npy'),
-             percula_to_ocellaris('oxt'),
-             percula_to_ocellaris('oxtr'),
-             percula_to_ocellaris('avp'),
-             percula_to_ocellaris('avpr'),
-             percula_to_ocellaris('pdyn'),
-             percula_to_ocellaris('penka'),
-             percula_to_ocellaris('tac1'),
-             percula_to_ocellaris('tac3a'),
-             percula_to_ocellaris('ccka'),
-             percula_to_ocellaris('cckb'),
-             percula_to_ocellaris('scg2b'),
-             percula_to_ocellaris('adcyap1b'),
-             percula_to_ocellaris('hmx3a'),#POA
-             percula_to_ocellaris('hmx2'),#POA,
-             percula_to_ocellaris('crhb'),#POA,
-             percula_to_ocellaris('trh'),#POA,
-              percula_to_ocellaris('crh'),#POA,
-             percula_to_ocellaris('ar'),#POA,
-             percula_to_ocellaris('esr2a'),#POA,
-             percula_to_ocellaris('esr2b'),#POA,
-             percula_to_ocellaris('pgr'),#POA,
-             percula_to_ocellaris('nr3c1'),#POA,
-          'otpa',
-          'ccka',
-          'cckbra',
-          'elavl3',
-                       percula_to_ocellaris('ptprc'),
-                    'rbm47',
-          'gdpd5a',
-          'col15a1b',
-          'flvcr2b',
-          'slc13a4',
-                    'slc13a2',
-          'cbln2',
-          'tent5aa',
-          'kiss1',
-          'tac1',
-          'tac3a',
+markers <- unique(c(
+  'elavl3',#neuron
+  'gad2',#GABA 
+  'LOC111588076', #gad1
+  'LOC111584103', #vgat2.1
+  'slc17a6b', #vglut
+  'slc17a7a', #vglut1
+  'sst1.1', #interneuron marker
+  'LOC111577263', #brain aromatase - radial glia
+  'gfap', #astrocyte marker
+  'crocc2', #ependymal cell marker
+  'mbpa', #oligo marker
+  'cspg4', #OPC marker
+  'p2ry12', #microglia marker
+  'ptprc', #leukocyte marker
+  'slc18a3b', #ach marker
+            'kiss1',
+          'kiss1ra',
+          'kiss1rb',
+           'tac1',
+           'tacr1a',
+           'tac3a',
+          'tacr3a',
+          'tacr3l',
+          'npy',
+          'esr1',
+          'esr2a',
+          'esr2b',
           'ar',
-          'galr'
-
+          'LOC111562384', #ccka
+          'cckar',
+          'cckb',
+          'cckbra',
+          'cckbrb',
+          'gal',
+          'galr1a',
+  'rbm47',
+  'gdpd5a',
+  'col15a1b',
+  'flvcr2b'
 ) )
 
 
 plot  <- DotPlot(object = multiome_object, 
                  group.by = "harmony.wnn_res0.4_clusters", 
-                 features = markers,
-                 cols = c("#D2B4DE", "#8E44AD", "#6C3483")
+                 features = markers
 ) + 
-  coord_flip()
+  coord_flip()+
+  theme(axis.text.x = element_text(angle = -45))+
+    scale_x_discrete(labels= c(
+                             'elavl3',
+                             'gad2',
+                             'gad1',
+                             'vglut2.1',
+                             'slc17a6b (GLUT)',
+                             'slc17a7a (GLUT)',
+                             'sst1.1',
+                             'cyp19a1b',
+                             'gfap',
+                             'crocc2',
+                             'mbpa',
+                             'cspg4',
+                             'p2ry12',
+                             'ptprc',
+                             'slc18a3b (ach)',
+                             'kiss1',
+                             'kiss1ra',
+                             'kiss1rb',
+                             'tac1',
+                             'tacr1a',
+                             'tac3a',
+                             'tacr3a',
+                             'tacr3L',
+                             'npy',
+                             'esr1',
+                             'esr2a',
+                             'esr2b',
+                             'ar',
+                             'ccka',
+                             'cckar',
+                             'cckb',
+                             'cckbra',
+                             'cckbrb',
+                             'gal',
+                             'galr1a',
+  'rbm47',
+  'gdpd5a',
+  'col15a1b',
+  'flvcr2b'                 ))
+
 
 plot
 

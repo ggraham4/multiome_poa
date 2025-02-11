@@ -432,7 +432,7 @@ misc_markers <- na.omit(unique(c(
 
 DotPlot(radial_glia, features=misc_markers, group.by = 'sub')+
   coord_flip()+
-  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")#+
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1),legend.position="none")+
   scale_x_discrete(labels= c('cyp19a1b',
                              'gfap',
                              'elavl3',
@@ -575,6 +575,9 @@ theme(axis.text.y=element_blank())+
 
 #Where do these cells cluster now that radial glia are removed
 ```{r Where do the new neurons cluster when radial glia are removed?}
+subset_obj_2 <- obj[,!(obj@meta.data$harmony.wnn_res0.4_clusters == 2 & obj@meta.data$sub != "2_9") ]
+
+
 subset_obj_2 <- FindMultiModalNeighbors(
   object = subset_obj_2,
   reduction.list = list("harmony.rna", 'atacLSI'),
@@ -619,8 +622,11 @@ unique(subset_obj_2$harmony.wnn_res0.4_clusters_no_radial_glia[
 DimPlot(subset_obj_2, group.by = 'harmony.wnn_res0.4_clusters_no_radial_glia', label = T)
 
 ```
+
+--- IGNORE THIS I CANT REPLICATE IT IDK WHAT WENT WRONG ---
 So this says they cluster with cluser 6 (cluster 0 in the actual clustering)
 Its also only 31 cells so who tf knows, the rest are already sorted into their clusters in the original clustering, they just are mapped near the radial glia main cluster
+--- ---
 
 ```{r Are there any other similar clusters?}
 misc_markers_2 <- na.omit(unique(c(
@@ -665,9 +671,11 @@ radial_glia$cyto <-RG_cyto$CytoTRACE
 FeaturePlot(radial_glia, 'cyto')
 
 ```
+
 ```{r Compare to DimPlot}
 DimPlot(radial_glia, label = T)
 ```
+
 ```{r ViolinPlot}
 RG_data <- data.frame(
   individual = radial_glia@meta.data$individual,
@@ -676,8 +684,17 @@ RG_data <- data.frame(
                               cyto = radial_glia@meta.data$cyto)
 RG_data <- subset(RG_data, status == 'F' |status == 'M' | status == 'D')
 RG_data$status <- factor(RG_data$status, levels = c('M','D','F'))
-cyto_gross_plot <- ggplot(RG_data, aes(x = cluster, y = cyto, group = interaction(cluster, status), color = status))+
-  geom_boxplot(alpha = 0)
+RG_data<- na.omit(RG_data)
+
+RG_data2 <- RG_data%>%
+  group_by(cluster, status)%>%
+  summarize(mean_cyto = mean(cyto),
+            se = sd(cyto)/sqrt(n()))
+
+cyto_gross_plot <- ggplot(RG_data2, aes(x = cluster, y = mean_cyto, group = interaction(cluster, status), color = status))+
+ geom_pointrange(aes(x = cluster, y = mean_cyto, group = interaction(cluster, status),
+                     ymin = mean_cyto-se, ymax = mean_cyto+se), position = position_dodge(0.5), size = .5, linewidth = 1)+
+  labs(x = 'Cluster', y = 'Mean CytoTRACE +/-')
 print(cyto_gross_plot)
 
 ```
@@ -692,10 +709,33 @@ car::Anova(RG_cyto_gross, type = 'III')
 RG_cyto_pairs <- as.data.frame(
   pairs(
     emmeans(RG_cyto_gross, c('cluster', 'status')),
-    by = 'cluster',adjust = 'none')
+    by = 'cluster',adjust = 'fdr')
 )
 print(RG_cyto_pairs)
-print(cyto_gross_plot)
+print(cyto_gross_plot+
+         geom_signif(xmin = 3, xmax = 3.17,
+                y_position = 0.5,
+                annotation = '**' , 
+                color = "black",
+                tip_length = c(0.0,0.1), textsize = 10)+
+          geom_signif(xmin = 5.83, xmax = 6.17,
+                y_position = 0.6,
+                annotation = '***' , 
+                color = "black",
+                tip_length = c(0.,0.2), textsize = 10)+
+        geom_signif(xmin = 7.83, xmax = 8.17,
+                y_position = 0.55,
+                annotation = '***' , 
+                color = "black",
+                tip_length = c(0.1,0.3), textsize = 10,
+                linetype =1)+
+         geom_signif(xmin = 8, xmax = 8.17,
+                y_position = 0.4,
+                annotation = '***' , 
+                color = "red",
+                tip_length = c(0,0.2), textsize = 10,
+                linetype =2)
+)
 ```
 Significant differnces in 
 2_2 - How is this a difference; dominants slightly less differentiated than females
@@ -894,6 +934,11 @@ dotplot(degs_2_1_go) #nothin
 degs_2_0_go <- clown_go(degs$gene[degs$cluster=='2_0'])
 dotplot(degs_2_0_go) #nothin
 ```
+```{r GO 2_1}
+degs_2_1_go <- clown_go(degs$gene[degs$cluster=='2_1'])
+dotplot(degs_2_1_go) 
+```
+
 
 ```{r GO 2_2}
 degs_2_2_go <- clown_go(degs$gene[degs$cluster=='2_2'])

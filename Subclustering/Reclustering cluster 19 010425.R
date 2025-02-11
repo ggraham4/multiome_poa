@@ -167,9 +167,6 @@ unique(unique_markers_19_0 %in%unique_markers_19_2)
 go_19_0 <- clown_go(unique_markers_19_0)
 dotplot(go_19_0)+ labs(title = '19_0')
 
-go_19_1 <- clown_go(unique_markers_19_1)
-dotplot(go_19_1)+ labs(title = '19_1')
-
 go_19_2 <- clown_go(unique_markers_19_2)
 dotplot(go_19_2)+ labs(title = '19_2')
 
@@ -202,147 +199,51 @@ cyto_gross_plot
 library(sjPlot)
 plot_model(cluster_19_cyto_gross,terms = c('cluster','status'), type = 'eff')
 
+
 cyto_gross_pairs <- pairs(emmeans(cluster_19_cyto_gross, c('cluster','status')),adjust = 'none', by = 'cluster')
 cyto_gross_pairs
 
+library(ggsignif)
+
+effects <- as.data.frame(ggeffects::ggeffect(cluster_19_cyto_gross, terms = c('cluster','status')))
+effects$group<- factor(effects$group, levels = c('M','D','F'))
+ggplot(effects, aes(x = x, y = predicted, color = group))+
+  geom_pointrange(aes(x=x, y = predicted, ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.5))+
+  labs(x ='Cluster', y = 'Mean CytoTRACE +/- SE', color = 'Status')+
+      geom_signif(xmin = 1, xmax = 1.17,
+                y_position = 0.8,
+                annotation = '*' , 
+                color = "black",
+                tip_length = c(0,0), textsize = 10)+
+        geom_signif(xmin = 1.835, xmax = 2,
+                y_position = 0.55,
+                annotation = '**' , 
+                color = "black",
+                tip_length = c(0,0), textsize = 10)+
+          geom_signif(xmin = 1.835, xmax = 2.17,
+                y_position = 0.7,
+                annotation = '*' , 
+                color = "black",
+                tip_length = c(0,0), textsize = 10)+
+  
+            geom_signif(xmin = 3, xmax = 3.17,
+                y_position = 0.55,
+                annotation = '*' , 
+                color = "black",
+                tip_length = c(0.,0), textsize = 10)+
+  theme_classic()+
+  ylim(0.2, 0.9)
+
 #### Negative binomial ####
-neg.bin.mult <- function(obj, clustering = 'sub', cluster, n_cores = detectCores() - 1) {
-  start_time <- Sys.time()  # Start timing
-  
-  message('Extracting Counts')
-  counts <- obj@assays$RNA$counts[, obj@meta.data[[clustering]] == cluster & (obj@meta.data$Status == "M" | obj@meta.data$Status == "F" | obj@meta.data$Status == "D")]
-  combined_counts <- counts
-  
-  df_counts <- data.frame(t(combined_counts))
-  colnames(df_counts) <- rownames(obj@assays$RNA)
-  
-  n_genes = ncol(df_counts)
-  n_cells = nrow(df_counts)
-  
-  message("Making Counts Data Frame...")
-  df_counts_meta <- data.frame(rownames(df_counts))
-  df_counts_meta$id <- df_counts_meta$rownames.df_counts.
-  df_counts_meta$rownames.df_counts. = NULL
-  df_counts_meta$individual = obj$individual[obj@meta.data[[clustering]] == cluster & (obj@meta.data$Status == "M" | obj@meta.data$Status == "F" | obj@meta.data$Status == "D")]
-  df_counts_meta$Status = obj$Status[obj@meta.data[[clustering]] == cluster & (obj@meta.data$Status == "M" | obj@meta.data$Status == "F" | obj@meta.data$Status == "D")]
-  
-  message("Removing Genes with 0 Counts...")
-  df_counts_no_0 <- df_counts[, which(colSums(df_counts) != 0)]
-  
-  message("Making New Counts Data Frame Without 0s...")
-  n_genes_no_0 = ncol(df_counts_no_0)
-  
-  df_counts_no_0 <- cbind(df_counts_no_0, df_counts_meta)
-  df_counts_no_0_split_by_subject <- split(df_counts_no_0, f = df_counts_no_0$individual)
-  
-  message("Finding Good Genes for Subject...")
-  # REMOVE GENES WITH ZERO COUNTS IN EACH SUBJECT 
-  for (l in 1:length(df_counts_no_0_split_by_subject)) {
-    correct_gene_names <- colnames(df_counts_no_0)
-    
-    temp_subject_l <- data.frame(df_counts_no_0_split_by_subject[[l]]) ### AND HERE THEY GET FUCKED UP 
-    colnames(temp_subject_l) <- correct_gene_names
-    
-    temp_subject_l_counts <- temp_subject_l[, 1:n_genes_no_0]
-    temp_subject_l_counts_no_0 <- temp_subject_l_counts[, which(colSums(temp_subject_l_counts) != 0)]
-    out <- data.frame(colnames(temp_subject_l_counts_no_0))
-    assign(x = paste0("gene_list_subject_", l), value = get("out"))
-  }
-  
-  # GENERATE A LIST OF GENES FOR EACH SUBJECT
-  good_gene_list <- gene_list_subject_1$colnames.temp_subject_l_counts_no_0.
-  
-  for (m in 2:length(df_counts_no_0_split_by_subject)) {
-    temp_good_gene_list_m <- data.frame(value = get(paste0("gene_list_subject_", m)))
-    temp_good_gene_list_m <- temp_good_gene_list_m$colnames.temp_subject_l_counts_no_0.
-    good_gene_list <- intersect(good_gene_list, temp_good_gene_list_m)
-  }
-  
-  p <- length(good_gene_list)
-  
-  message('Making Gene Data Frame for Each Subject...')
-  valid_genes <- good_gene_list[good_gene_list %in% colnames(df_counts_no_0)]
-  v <- length(valid_genes)
-  
-  df_counts_no_0_all_subjects <- df_counts_no_0[, valid_genes]
-  count_matrix_final <- as.matrix(df_counts_no_0_all_subjects)
-  count_matrix_final <- as.data.frame(t(count_matrix_final))
-  df_counts_no_0_all_subjects <- cbind(df_counts_no_0_all_subjects, df_counts_meta)
-  
-  Status <- as.factor(df_counts_no_0_all_subjects$Status)
-  subject <- as.factor(df_counts_no_0_all_subjects$individual)
-  
-  message("Estimating Dispersion Using Gamma-Poisson...")
-  cluster_size <- ncol(count_matrix_final)
-  
-  size_factors <- calculateSumFactors(count_matrix_final,
-                                      clusters = NULL,
-                                      ref.clust = NULL,
-                                      max.cluster.size = cluster_size,
-                                      positive = TRUE,
-                                      scaling = NULL,
-                                      min.mean = NULL,
-                                      subset.row = NULL)
-  
-  coldata <- data.frame(Status)
-  fit <- glm_gp(as.matrix(count_matrix_final), col_data = coldata, size_factors = size_factors, design = ~ Status, on_disk = FALSE)
-  dispersions.RAW <- fit$overdispersion_shrinkage_list$ql_disp_estimate
-  log.sizeFactors.RAW <- log(size_factors)
-  
-  offset <- log.sizeFactors.RAW
-  index <- v
-  
-  results <- mclapply(1:index, function(i) {
-    message('Calculating Gene', paste0(i, ' of ', index, '...'))
-    
-    dispersion <- dispersions.RAW[i]
-    outcome <- df_counts_no_0_all_subjects[, i]
-    
-    glmer_model <- glmer(outcome ~ Status + (1 | subject),
-                         offset = offset,
-                         family = MASS::negative.binomial(theta = 1 / dispersion))
-    
-    pairs <- pairs(emmeans(glmer_model, 'Status'), adjust = 'none')
-    
-    output_df <- data.frame(
-      gene = valid_genes[i],
-      f_m_estimate = as.data.frame(pairs[pairs@grid$contrast == 'F - M'])[, 2], # Ensure the correct reference to pairs columns
-      f_m_p.value = as.data.frame(pairs[pairs@grid$contrast == 'F - M'])[, 6],
-      d_m_estimate = as.data.frame(pairs[pairs@grid$contrast == 'D - M'])[, 2],
-      d_m_p.value = as.data.frame(pairs[pairs@grid$contrast == 'D - M'])[, 6],
-      d_f_estimate = as.data.frame(pairs[pairs@grid$contrast == 'D - F'])[, 2],
-      d_f_p.value = as.data.frame(pairs[pairs@grid$contrast == 'D - F'])[, 6],
-      warning = ifelse(length(glmer_model@optinfo$conv$lme4$code) != 0, substr(glmer_model@optinfo$conv$lme4$messages, 1, 50), NA),
-      singular = ifelse(isSingular(glmer_model), TRUE, FALSE)
-    )
-    return(output_df)
-  }, mc.cores = n_cores)
-  
-  results <- do.call(rbind, results)
-  results <- as.data.frame(results, stringsAsFactors = FALSE)
-  results$f_m_p.value <- ifelse(results$f_m_p.value == 0, 1, results$f_m_p.value)
-  results$d_m_p.value <- ifelse(results$d_m_p.value == 0, 1, results$d_m_p.value)
-  results$d_f_p.value <- ifelse(results$d_f_p.value == 0, 1, results$d_f_p.value)
-  
-  results$f_m_q.value <- ifelse(is.na(results$warning), p.adjust(as.numeric(results$f_m_p.value), method = "fdr"), "NA")
-  results$d_m_q.value <- ifelse(is.na(results$warning), p.adjust(as.numeric(results$d_m_p.value), method = "fdr"), "NA")
-  results$d_f_q.value <- ifelse(is.na(results$warning), p.adjust(as.numeric(results$d_f_p.value), method = "fdr"), "NA")
-  
-  assign(paste0("results_", "cluster", cluster), results, envir = .GlobalEnv)
-  
-  message('Complete')
-  end_time <- Sys.time()  # End timing
-  message(end_time - start_time)  # Print the time difference
-  return(results)
-}
+neg_bin_mult<- readRDS('Functions/DEG_functions/neg_bin_mult.rds')
 
 neg_bin <- data.frame()
 for (i in 0:2) {
   cluster <- paste0('19_',i)
   print(cluster)
-  output <- neg.bin.mult(cluster_19,
-                         'sub',
-                         cluster)
+  output <- neg_bin_mult(obj = cluster_19,
+                         clustering = 'sub',
+                         cluster = cluster)
   output$cluster = cluster
   neg_bin <- rbind(neg_bin, output)
 }
@@ -354,7 +255,7 @@ for (i in 0:2) {
  neg_bin_defined <- define_degs(neg_bin)
 
  neg_bin_defined_filtered <- neg_bin_defined%>%
-   filter(!is.na(issignif))
+   filter(!is.na(issignif)& is.na(warning))
  
  neg_bin_defined_counts<- neg_bin_defined_filtered%>%
    group_by(cluster, class)%>%
@@ -381,6 +282,7 @@ neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_1' ,]
 neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_2' ,]
 
 ### GO of DEGs####
+
 genes_19_0 <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_0']
 go_19_0 <- clown_go(genes_19_0)
 dotplot(go_19_0)
@@ -893,6 +795,68 @@ ggplot(deg_output3, aes(x = as.numeric(prop_expressing_F),y =  as.numeric(prop_e
   geom_text(data = deg_output3, aes(label = label), color ='blue', size =3)
 
 FeaturePlot(data, 'pgr', split.by = 'Status')
+
+#### Trajectory analysis ####
+
+cluster_19$cell_type <- ifelse(cluster_19$sub=='19_0', '19_0; immature',NA)
+cluster_19$cell_type <- ifelse(cluster_19$sub=='19_1', '19_1; mixed',cluster_19$cell_type)
+cluster_19$cell_type <- ifelse(cluster_19$sub=='19_2', '19_2; pgr+',cluster_19$cell_type)
+
+gene_meta_data <- data.frame(row.names = rownames(cluster_19@assays$RNA$data),
+                                                  gene_short_name=
+                                                    rownames(cluster_19@assays$RNA$data)
+)
+ library(monocle3)                                                 
+cds <- new_cell_data_set(cluster_19@assays$RNA$data,
+                         cell_metadata = cluster_19@meta.data,
+                         gene_metadata =gene_meta_data)
+## Step 1: Normalize and pre-process the data
+cds <- preprocess_cds(cds, num_dim = 100)
+
+## Step 2: Remove batch effects with cell alignment
+#cds <- align_cds(cds, alignment_group = "batch") #this isnt working but Im using the data column anyway
+
+## Step 3: Reduce the dimensions using UMAP
+cds <- reduce_dimension(cds)
+
+## Step 4: Cluster the cells
+cds <- cluster_cells(cds)
+                    
+## Step 5: Learn a graph
+cds <- learn_graph(cds)
+
+## Step 6: Order cells
+get_earliest_principal_node <- function(cds=cds, var=c('19_0','19_1','19_2')){
+  cell_ids <- which(colData(cds)[, "sub"] %in% var)
+  
+  closest_vertex <-
+  cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds), ])
+  root_pr_nodes <-
+  igraph::V(principal_graph(cds)[["UMAP"]])$name[as.numeric(names
+  (which.max(table(closest_vertex[cell_ids,]))))]
+  
+  root_pr_nodes
+}
+cds <- order_cells(cds, root_pr_nodes=get_earliest_principal_node(cds))
+
+
+plot_cells(cds, color_cells_by= 'sub',
+           show_trajectory_graph = T,
+           group_label_size=7, 
+           cell_size = 1,
+           graph_label_size = 5)+
+    theme(legend.position = 'top')
+
+plot_cells(cds, color_cells_by= 'pseudotime',
+           show_trajectory_graph = T,
+           group_label_size=7, 
+           cell_size = 1,
+           graph_label_size = 5)+
+    theme(legend.position = 'top')
+
+
+
 
 
                    
