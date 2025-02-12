@@ -29,7 +29,9 @@ DotPlot(obj, c('flt1',
   coord_flip()
 
 
-DotPlot(obj, c(               'LOC111577366',
+DotPlot(obj, c(   'LOC111588076', #gad1,
+                'gad2',
+                'LOC111577366',
                'pvalb3',
                'pvalb5',
                'pvalb6',
