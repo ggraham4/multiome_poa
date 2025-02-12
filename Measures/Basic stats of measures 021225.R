@@ -28,7 +28,9 @@
   
 }
 multiome_object <-readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+data <- read_excel("Reference/Complete Data Frame (Hormones, Behavior, Size, Gonads) GG.xlsx")
 
+###Plotting ####
  data.frame(time = multiome_object$Time_Day_2,
                        individual = multiome_object$individual,
                        status = multiome_object$Status)%>%
@@ -65,7 +67,8 @@ multiome_object <-readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
    ggplot(aes(x = status, y = time))+
    geom_point()+
    geom_boxplot()
- 
+ ### Stats #####
+  #- Gonads -#
  gonad_data <- data.frame(Test = multiome_object$Percent_Testicular,
             individual = multiome_object$individual,
             status = multiome_object$Status)%>%
@@ -73,11 +76,32 @@ multiome_object <-readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
    summarize(Test = mean(Test))
  gonad_data_no_e <- subset(gonad_data, status !='E')
 
+ 
  t.test(gonad_data_no_e$Test~gonad_data_no_e$status)
-<<<<<<< HEAD
  
- DotPlot(multiome_object, 'vegfd')+
-   coord_flip()
-=======
->>>>>>> refs/remotes/origin/main
  
+ ovarian_data <-subset(data, Status =='D' | Status == 'M')
+ ovarian_data<- ovarian_data[!is.na(ovarian_data$Percent_Ovarian),]
+ovarian_data$Percent_Ovarian <- as.numeric(ovarian_data$Percent_Ovarian)
+
+t.test(ovarian_data$Percent_Ovarian~ovarian_data$Status)
+
+ovarian_data$Log10_Volume <- as.numeric(ovarian_data$Log10_Volume)
+t.test(ovarian_data$Log10_Volume~ovarian_data$Status)
+
+ovarian_data_e <-subset(data, Status =='E' | Status == 'M')
+t.test(as.numeric(ovarian_data_e$Log10_Volume)~ovarian_data_e$Status)
+
+ovarian_data_e_d <-subset(data, Status =='E' | Status == 'D')
+t.test(as.numeric(ovarian_data_e_d$Log10_Volume)~ovarian_data_e_d$Status)
+
+#- Behavior -# 
+data$Time_Day_2 <- as.numeric(data$Time_Day_2)
+data$Behaviors_Day_2 <- as.numeric(data$Behaviors_Day_2)
+
+behavior_model <- lm(Behaviors_Day_2~Status, data = subset(data, Status =='D' | Status ==  'F' | Status == 'M')
+)
+summary(behavior_model)
+
+pairs(emmeans(behavior_model, 'Status'), adjust = 'none')
+
