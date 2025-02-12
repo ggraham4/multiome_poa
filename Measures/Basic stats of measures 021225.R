@@ -105,3 +105,18 @@ summary(behavior_model)
 
 pairs(emmeans(behavior_model, 'Status'), adjust = 'none')
 
+#why is this not significant?
+behavior_model <- lm(Behaviors_Day_2~Status, data = data)
+summary(behavior_model)
+ggplot(data, aes(x = fct_reorder(Status,Behaviors_Day_2), y = Behaviors_Day_2))+
+  geom_boxplot(outlier.shape = NA)+
+  geom_jitter()
+
+data%>%
+  group_by(Status)%>%
+  summarize(Behavior = mean(Behaviors_Day_2),
+            se = sd(Behaviors_Day_2)/sqrt(n()))%>%
+  ggplot(aes(x =  fct_reorder(Status,Behavior), y = Behavior))+
+  geom_pointrange(aes(x =  fct_reorder(Status,Behavior), y = Behavior, ymin =Behavior-se, ymax = Behavior+se)) 
+
+
