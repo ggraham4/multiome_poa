@@ -74,7 +74,10 @@ multiome_object <-readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
  gonad_data_no_e <- subset(gonad_data, status !='E')
 
  t.test(gonad_data_no_e$Test~gonad_data_no_e$status)
+<<<<<<< HEAD
  
  DotPlot(multiome_object, 'vegfd')+
    coord_flip()
+=======
+>>>>>>> refs/remotes/origin/main
  
