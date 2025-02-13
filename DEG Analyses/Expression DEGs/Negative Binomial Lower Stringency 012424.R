@@ -189,13 +189,55 @@ for (i in 31:0) {
 ### ANALYSIS ####
 together_data <- data.frame()
 for(i in 0:31){
-  data <- read.csv(paste0('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/012425 Neg Bin w Doms Lower Stringency/cluster_', i, '.csv'))
+  data <- read.csv(paste0('DEG Outputs/012425 Neg Bin w Doms Lower Stringency/cluster_', i, '.csv'))
   #data <- get(paste0('results_cluster',i))
   data$cluster <- i
   together_data <- rbind(together_data, data)
 }
 
 together_data_defined <- define_degs(together_data)
+together_data_defined_only_signif <- together_data_defined[!is.na(together_data_defined$class),]
+
+
+### GO of all DEGs ####
+clown_go(together_data_defined_only_signif$gene)%>%dotplot()
+all_degs_go <- clown_go(together_data_defined_only_signif$gene)
+all_degs_go$geneID
+
+enriched_genes_mon_ion_trans <- unlist(strsplit(all_degs_go$geneID[all_degs_go$Description == 'monoatomic ion transport'], "/"))
+
+#name genes
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+
+biomart_ocellaris <-
+  getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'entrezgene_description'))
+
+biomart_ocellaris[biomart_ocellaris$entrezgene_accession %in% enriched_genes_mon_ion_trans,]
+
+for(i in enriched_genes_mon_ion_trans){
+  cluster = together_data_defined_only_signif$cluster[together_data_defined_only_signif$gene ==i][1]
+print( mean_expression_cluster_plot(obj,
+                              i,
+                              cluster))
+                              
+}
+deg_clusters <- c()
+for(i in enriched_genes_mon_ion_trans){
+  cluster = together_data_defined_only_signif$cluster[together_data_defined_only_signif$gene ==i]
+  deg_clusters <- append(deg_clusters, unlist(cluster))
+  
+}
+length(deg_clusters)
+sum(deg_clusters == 6)
+sum(deg_clusters == 7)
+
+
+
+
 
 together_data_defined_summed <- together_data_defined%>%
   subset(!is.na(class))%>%

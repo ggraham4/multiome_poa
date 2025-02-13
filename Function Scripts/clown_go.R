@@ -26,8 +26,8 @@ library(biomaRt)
  
   
   
-  term2gene <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2gene.rds')
-  term2desc<- readRDS( '/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2desc.rds')
+  term2gene <- readRDS('Function Scripts/Dependencies/Term2gene.rds')
+  term2desc<- readRDS( 'Function Scripts/Dependencies/Term2desc.rds')
   
   ego2 <- enricher(significant.list, 
                    TERM2GENE=term2gene, 
