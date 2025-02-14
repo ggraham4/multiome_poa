@@ -1,6 +1,7 @@
 library(ggplot2)
 library(ggsignif)
 library(tidyverse)
+library(emmeans)
 
 data <- read_csv("Measures/all_data.csv")
 
@@ -235,7 +236,7 @@ ev_2.5x_plot <- ggplot(ev_2.5x_data, aes(x = Status_dummy, y = Log10_Volume))+
   geom_boxplot(data = subset(ev_2.5x_data, !is.na(Status)),aes(group = Status, fill = Status, , color = Status), alpha = 0.25, outlier.shape = NA)+
   geom_point(size = 2, color = 'black', shape = 1, position = position_dodge2(0.5))+
   theme_classic()+
-  labs(x  ='Sex', y = 'Log10 Gonadal Volume (px)')+
+  labs(x  ='Sex', y = 'Log10 Gonad Volume (px)')+
   geom_signif(xmin = c(2), xmax = c(3), y_position = c(max(ev_2.5x_data$Log10_Volume)*1.03), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=5)+
   geom_signif(xmin = c(1), xmax = c(3), y_position = c(max(ev_2.5x_data$Log10_Volume)*1.1), annotation =c("***"), color = "black", tip_length = c(0,0), textsize=5)+
   theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0), legend.position = 'none')+
