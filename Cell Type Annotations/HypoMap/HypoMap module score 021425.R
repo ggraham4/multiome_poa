@@ -69,6 +69,9 @@ hypomap_allgenes <- read_excel('Cell Type Annotations/HypoMap/hypomap poa mappin
 #convert to ocellaris
 hypomap_allgenes$ocellaris <- lapply(X=hypomap_allgenes$gene,FUN=ocellaris_mus_translator)
 
+hypomap_allgenes <- hypomap_allgenes[hypomap_allgenes$p_val_adj<0.001 &
+                                       hypomap_allgenes$specificity>5,]
+
 #read in regions
 hypomap_regions  <- read_excel('Cell Type Annotations/HypoMap/hypomap poa mapping.xlsx',
                                4)
