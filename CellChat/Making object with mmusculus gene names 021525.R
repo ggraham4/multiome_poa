@@ -95,6 +95,8 @@ filtered_data <- filtered_data[seq_along(valid_names), ]  # Trim matrix to match
 
 # Assign unique rownames to filtered_data
 rownames(filtered_data) <- valid_names
+which(valid_names=='H2-BI')
+which(valid_names=='H2-Ea-ps')
 
 # Create a new Seurat object
 new_obj <- CreateSeuratObject(counts = filtered_data, project = "renamed")
