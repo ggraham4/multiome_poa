@@ -310,8 +310,6 @@ for (i in unique(pca_predictions_together$cluster)) {
   pca_predictions_together$pc1_4_asterisk[which(pca_predictions_together$cluster == i)] <- ifelse(any(pc1_4_av$`Pr(>Chi)`< 0.05) , '*', NA)
   
 }
-
-
 ### how do these compare to the lasso scores####
 mean_expression_cluster_data_2 <- function(object, gene, cluster, clustering = 'harmony.wnn_res0.4_clusters'){
   counts <- t(obj@assays$RNA$data[,obj@meta.data$harmony.wnn_res0.4_clusters == cluster])
