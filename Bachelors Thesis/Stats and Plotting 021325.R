@@ -40,13 +40,13 @@ behavior_plot <- ggplot(data, aes(x = Status_dummy, y = Behaviors_Day_2))+
   theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0, size = 10), legend.position = 'none')
 behavior_plot
 
-#ggsave(plot = behavior_plot,
-#      file = "behavior_plot.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 1")
+ggsave(plot = behavior_plot,
+      file = "behavior_plot.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 1")
 
 sd(na.omit(data$Behaviors_Day_2[data$Status == 'M']))
 sd(na.omit(data$Behaviors_Day_2[data$Status == 'D']))
@@ -73,13 +73,13 @@ time_plot <- ggplot(data, aes(x = Status_dummy, y = Time_Day_2))+
   
 time_plot
 
-#ggsave(plot = time_plot,
-#      file = "time_plot.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 1")
+ggsave(plot = time_plot,
+      file = "time_plot.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 1")
 
 sd(na.omit(data$Time_Day_2[data$Status == 'M']))
 sd(na.omit(data$Time_Day_2[data$Status == 'D']))
@@ -111,13 +111,13 @@ kt_plot <- ggplot(kt_data, aes(x = Status_dummy, y = Log_11KT))+
   
 kt_plot
 
-#ggsave(plot = kt_plot,
-#      file = "kt_plot.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 1")
+ggsave(plot = kt_plot,
+      file = "kt_plot.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 1")
 
 ##percent testicuar ##
 data$Percent_Testicular <- as.numeric(data$Percent_Testicular)
@@ -163,13 +163,13 @@ test_plot <- ggplot(test_data, aes(x = Status_dummy, y = Percent_Testicular))+
   
 test_plot
 
-#ggsave(plot = test_plot,
-#      file = "test_plot.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 1")
+ggsave(plot = test_plot,
+      file = "test_plot.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 1")
 
 ##Percent Ovarian ###
 
@@ -212,13 +212,13 @@ ov_plot <- ggplot(ov_data, aes(x = Status_dummy, y = Percent_Ovarian))+
   scale_fill_manual(values =c('#619CFF', '#F8766D','#DB72FB','#D39200','#00BA38'))
 ov_plot
 
-#ggsave(plot = ov_plot,
-#      file = "ov_plot.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 1")
+ggsave(plot = ov_plot,
+      file = "ov_plot.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 1")
 
 ## volume estimate ####
 
@@ -258,13 +258,13 @@ ev_2.5x_plot <- ggplot(ev_2.5x_data, aes(x = Status_dummy, y = Log10_Volume))+
   scale_fill_manual(values =c('#619CFF', '#F8766D','#DB72FB','#D39200','#00BA38'))
 ev_2.5x_plot
 
-#ggsave(plot = ev_2.5x_plot,
-#      file = "log10 volume.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 1")
+ggsave(plot = ev_2.5x_plot,
+      file = "log10 volume.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 1")
 
 ###UMAP #### --- BEGIN FIG 2 #####
 obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
@@ -297,13 +297,13 @@ umap <- DimPlot(obj_subset,
   
 umap
 
-#ggsave(plot = umap,
-#      file = "umap.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 2")
+ggsave(plot = umap,
+      file = "umap.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 2")
 
 ##RNA ####
 rna_umap <- DimPlot(obj_subset, 
@@ -317,13 +317,13 @@ rna_umap <- DimPlot(obj_subset,
   
 rna_umap
 
-#ggsave(plot = rna_umap,
-#      file = "rna_umap.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 2")
+ggsave(plot = rna_umap,
+      file = "rna_umap.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 2")
 
 ###ATAC ####
 atac_umap <- DimPlot(obj_subset, 
@@ -337,13 +337,13 @@ atac_umap <- DimPlot(obj_subset,
 
 atac_umap
 
-#ggsave(plot = atac_umap,
-#      file = "atac_umap.tiff",
-#      device = "tiff",
-#      units = "in",
-#      width = 2.5,
-#      height = 2.5,
-#      path = "Bachelors Thesis/Plots/Figure 2")
+ggsave(plot = atac_umap,
+      file = "atac_umap.svg",
+      device = "svg",
+      units = "in",
+      width = 2.5,
+      height = 2.5,
+      path = "Bachelors Thesis/Plots/Figure 2")
 
 
 Idents(obj_subset) <- "harmony.wnn_res0.4_clusters"
@@ -450,8 +450,8 @@ marker_plot  <- DotPlot(object = obj_subset,
 marker_plot
 
 ggsave(plot = marker_plot,
-       file = "marker_plot.tiff",
-       device = "tiff",
+       file = "marker_plot.svg",
+       device = "svg",
        units = "in",
        width = 7.5,
        height = 5,
