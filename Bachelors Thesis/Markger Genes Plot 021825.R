@@ -36,7 +36,7 @@ markers <- unique(c(
   'elavl3',#neuron
   'gad2',#GABA 
   'LOC111588076', #gad1
-  'LOC111584103', #vgat2.1
+  'LOC111584103', #vglut2.1
   'slc17a6b', #vglut
   'slc17a7a', #vglut1
   'sst1.1', #interneuron marker
@@ -84,8 +84,7 @@ markers <- unique(c(
 marker_gene_plot <- DotPlot(object = multiome_object, 
                  group.by = "harmony.wnn_res0.4_clusters", 
                  features = markers,
-        dot.min = 0.1,
-        col.min = 0
+        dot.min = 0.1
 ) + 
   coord_flip()+
   scale_size(range = c(0,2))+
@@ -94,7 +93,7 @@ marker_gene_plot <- DotPlot(object = multiome_object,
 'elavl3',#neuron
 'gad2',#GABA 
 'gad1', #gad1
-'vgat2.1', #vgat2.1
+'vglut2.1', #vgat2.1
 'slc17a6b', #vglut
 'slc17a7a', #vglut1
 'sst1.1', #interneuron marker
