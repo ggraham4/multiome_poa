@@ -82,6 +82,7 @@ continuity_individual <- function(degs, cluster, clustering = 'harmony.wnn_res0.
     dplyr::filter(Sex == 'D'| Sex =='F' | Sex == 'M')%>%
     pivot_wider(names_from = gene, 
                 values_from = mean)
+
   
   cluster_prcomp <- prcomp(pca_data_pivoted[,3:ncol(pca_data_pivoted)])
   
@@ -90,7 +91,21 @@ continuity_individual <- function(degs, cluster, clustering = 'harmony.wnn_res0.
   cluster_pca_loadings <- as.data.frame(cluster_pca_loadings[,1:2])
   cluster_pca_loadings$Sex <- pca_data_pivoted$Sex
   
+  ### run ANCOVA on pc loadings ###
+  #initialize list
+  ancovas <- list()
+  cluster_pca_loadings_ancova <- cluster_pca_loadings
+  cluster_pca_loadings_ancova$dummy_sex <- ifelse(cluster_pca_loadings_ancova$Sex == 'D', "Test", "Known")
   
+  pc1_by_pc2 <- lm(PC1 ~ PC2+dummy_sex, data =cluster_pca_loadings_ancova)
+  pc2_by_pc1 <- lm(PC2 ~ PC1+dummy_sex, data =cluster_pca_loadings_ancova)
+  ancovas[['pc1_by_pc2']] =pc1_by_pc2
+  ancovas[['pc2_by_pc1']] =pc2_by_pc1
+  
+  #assign to global env
+  assign(paste0('ancovas_',cluster), ancovas, envir = .GlobalEnv)
+  
+  #continue with continuity score
   grouped_means <- cluster_pca_loadings %>%
     group_by(Sex) %>%
     summarize(across(starts_with("PC"), base::mean))
@@ -154,6 +169,66 @@ for(i in 0:31){
   
   
 }
+###coalesce ancova_data
+ancova_data <- data.frame()
+for(i in 0:31){
+  ancovas_list <- get(paste0('ancovas_',i))
+  model_1_2 <- ancovas_list[['pc1_by_pc2']]
+  model_2_1 <- ancovas_list[['pc2_by_pc1']]
+  
+  av_1_2 <- as.data.frame(anova(model_1_2, test = 'Chisq'))[-3,]
+  av_2_1 <- as.data.frame(anova(model_2_1, test = 'Chisq'))[-3,]
+  
+  av_1_2$model = '1_2'
+  av_1_2$vars = c('PC2','dummy_sex')
+  av_2_1$model = '2_1'
+  av_2_1$vars = c('PC1','dummy_sex')
+  
+  new_data <- rbind(av_1_2,av_2_1)
+  new_data$cluster = i
+  ancova_data <- rbind(ancova_data, new_data)
+}
+
+ancova_data$issignif <- ifelse(ancova_data$`Pr(>F)`<0.05, '*', NA)
+
+ancova_data[ancova_data$vars!='dummy_sex',]
+
+ancova_data_dummy_sex <- ancova_data[ancova_data$vars=='dummy_sex',]
+
+continuity_data_2_plot <- continuity_data_2%>%
+  group_by(cluster)%>%
+  summarize(mean_pred = mean(continuity_score.continuum_score_individual),
+            se_pred = sd(continuity_score.continuum_score_individual)/sqrt(n())
+  )%>%
+  right_join(ancova_data_dummy_sex, by = 'cluster')
+
+continuity_data_2_plot$Linearity <- ifelse(continuity_data_2_plot$mean_pred<0.33, 'Nonlinear', NA)
+continuity_data_2_plot$Linearity <- ifelse(continuity_data_2_plot$mean_pred>0.66, 'Linear', continuity_data_2_plot$Linearity)
+continuity_data_2_plot$Linearity <- ifelse(is.na(continuity_data_2_plot$Linearity ), 'Intermediate', continuity_data_2_plot$Linearity)
+
+continuity_plot2 <- ggplot(subset(continuity_data_2_plot, cluster %notin% c(15,30)), aes(x =fct_reorder(as.factor(cluster), mean_pred), y = mean_pred, color = Linearity, shape = Linearity))+
+  geom_pointrange(aes(x =fct_reorder(as.factor(cluster), mean_pred), y = mean_pred, ymin = mean_pred-se_pred, ymax = mean_pred+se_pred))+
+  theme_classic()+
+  labs(x = 'Cluster', y = 'Continuity Score +/- SE')+
+  theme(legend.position = c(0.15,.85))+
+  theme(axis.text.x = element_text(size = 10,angle = -45, vjust = 1, hjust=0), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
+  geom_text(aes(label = issignif,x =fct_reorder(as.factor(cluster), mean_pred), y = 1.05*(mean_pred+se_pred)), color = 'black', size=10, show.legend = F)
+continuity_plot2
+
+data_to_count <- subset(continuity_data_2_plot, cluster %notin% c(15,30))
+data_to_count$look <- ifelse(data_to_count$cluster %in% c(19, 2, 8,7, 6, 3, 14), '*', NA)
+data_to_count_look <-data_to_count[!is.na(data_to_count$look),]
+length(unique(data_to_count$cluster))
+
+
+ggsave(plot = continuity_plot2,
+       file = "continuity_plot_individual.svg",
+       device = "svg",
+       units = "in",
+       width = 5,
+       height = 5,
+       path = "Bachelors Thesis/Plots/Figure 2")
+
 
 
 ##### eigengene score ######
@@ -255,10 +330,11 @@ for(i in 0:31){
   
   
   data <- as.data.frame(pca_output[[paste0(i)]]$prcomp$x)
+  if(ncol(data)<=2){next}
+  
   data$Sex <- pca_data_pivoted$Sex
   data$individual <- pca_data_pivoted$individual
   
-  if(ncol(data)<=5){next}
   
   data$binary_sex <- ifelse(data$Sex == 'F', 1,NA)
   data$binary_sex <- ifelse(data$Sex == 'M', 0, data$binary_sex)
@@ -327,13 +403,14 @@ continuity_sex_joined_plot <- ggplot(subset(continuity_sex_joined, cluster %noti
   xlim(0,1)+
   ylim(0,1)
 
-ggsave(plot = continuity_sex_joined_plot,
-       file = "continuity_sex.svg",
-       device = "svg",
-       units = "in",
-       width = 5,
-       height = 5,
-       path = "Bachelors Thesis/Plots/Figure 2")
+#ggsave(plot = continuity_sex_joined_plot,
+#       file = "continuity_sex.svg",
+#       device = "svg",
+#       units = "in",
+#       width = 5,
+#       height = 5,
+#       path = "Bachelors Thesis/Plots/Figure 2")
 
+continuity_sex_joined$both <- ifelse((continuity_sex_joined$mean_sex<0.66 & continuity_sex_joined$mean_continuity<0.66), '*', NA)
 
 

@@ -129,10 +129,11 @@ for(i in 0:31){
   
   
   data <- as.data.frame(pca_output[[paste0(i)]]$prcomp$x)
+  if(ncol(data)<=2){next}
+  
   data$Sex <- pca_data_pivoted$Sex
   data$individual <- pca_data_pivoted$individual
   
-  if(ncol(data)<=5){next}
   
   data$binary_sex <- ifelse(data$Sex == 'F', 1,NA)
   data$binary_sex <- ifelse(data$Sex == 'M', 0, data$binary_sex)
@@ -143,22 +144,22 @@ for(i in 0:31){
   pc1_2_model <- glm(binary_sex ~ PC1+PC2, data = training_data, family = binomial('logit'))
   
   pc1_2_model_av = anova(pc1_2_model, test ='Chisq')
-
+  
   pca_model_output[[paste0(i)]]$pc1_2_model = pc1_2_model
   pca_model_output[[paste0(i)]]$pc1_2_av = pc1_2_model_av
-
+  
   
   #### test model ####
   test_data <- data[is.na(data$binary_sex),]
   
-
+  
   #pc1_2
   predictions_pc1_2_model <- as.data.frame(predict(pc1_2_model, test_data, type = 'response'))
   predictions_pc1_2_model$individual = test_data$individual
   colnames(predictions_pc1_2_model) <- c('predicted','individual')
   predictions_pc1_2_model$model = 'pc1_2'
   
-
+  
   predictions = rbind(predictions_pc1_2_model)
   predictions$cluster =i
   predictions$n_degs = ncol(pca_data_pivoted)-2
@@ -211,7 +212,8 @@ pca_pred_plot <- ggplot(subset(pca_predictions_merged_cluster_plot, cluster %not
   theme(legend.position = c(0.15,.85))+
   theme(axis.text.x = element_text(size = 10,angle = -45, vjust = 1, hjust=0), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))
 
-
+pca_pred_plot
+length(pca_predictions_merged_cluster_plot$cluster[pca_predictions_merged_cluster_plot$cluster %notin% c(15,30)])
 ggsave(plot = pca_pred_plot,
        file = "pca_pred_plot.svg",
        device = "svg",
