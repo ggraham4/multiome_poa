@@ -29,7 +29,7 @@
   library(glmnet)  
 }
 
-obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 
 mean_expression_cluster_data<- function(object, gene, cluster, clustering = 'harmony.wnn_res0.4_clusters'){
   options(dplyr.summarise.inform = FALSE)
@@ -209,16 +209,19 @@ pca_pred_plot <- ggplot(subset(pca_predictions_merged_cluster_plot, cluster %not
   geom_text(aes(x =  fct_reorder(as.factor(cluster), mean_pred), y = 1.05*(mean_pred+se_pred+0.01), label = asterisk), color = 'black', size =10)+
   labs(x = 'Cluster', y = 'Mean Prediction +/- SE')+
   theme_classic()+
-  theme(legend.position = c(0.15,.85))+
-  theme(axis.text.x = element_text(size = 10,angle = -45, vjust = 1, hjust=0), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))
+  #theme(legend.position = c(0.15,.85))+
+    theme(legend.position = 'none')+
+  theme(axis.text.x = element_text(size = 10,angle = -90, vjust = 1, hjust=0), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
+  ylim(0,1)
 
 pca_pred_plot
 length(pca_predictions_merged_cluster_plot$cluster[pca_predictions_merged_cluster_plot$cluster %notin% c(15,30)])
+
 ggsave(plot = pca_pred_plot,
        file = "pca_pred_plot.svg",
        device = "svg",
        units = "in",
-       width = 5,
-       height = 5,
+       width = 4,
+       height = 2.3,
        path = "Bachelors Thesis/Plots/Figure 2")
 

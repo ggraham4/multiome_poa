@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='svglite' width='288.00pt' height='144.00pt' viewBox='0 0 288.00 144.00'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHwyODguMDB8MC4wMHwxNDQuMDA='>
+    <rect x='0.00' y='0.00' width='288.00' height='144.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHwyODguMDB8MC4wMHwxNDQuMDA=)'>
+<rect x='0.00' y='0.00' width='288.00' height='144.00' style='stroke-width: 1.07; stroke: #FFFFFF; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMTYzLjE2fDI4Mi41MnwyMy4zNHw5Mi4yOA=='>
+    <rect x='163.16' y='23.34' width='119.36' height='68.95' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTYzLjE2fDI4Mi41MnwyMy4zNHw5Mi4yOA==)'>
+<rect x='163.16' y='23.34' width='119.36' height='68.95' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
+<polyline points='174.55,92.28 174.55,23.34 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='198.42,92.28 198.42,23.34 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='222.29,92.28 222.29,23.34 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='246.17,92.28 246.17,23.34 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='270.04,92.28 270.04,23.34 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='163.16,57.81 282.52,57.81 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='186.49,92.28 186.49,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='210.36,92.28 210.36,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='234.23,92.28 234.23,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='258.10,92.28 258.10,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='281.97,92.28 281.97,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<circle cx='222.84' cy='57.81' r='2.93' style='stroke-width: 0.71; fill: #A3758E;' />
+<rect x='163.16' y='23.34' width='119.36' height='68.95' style='stroke-width: 1.07; stroke: #333333;' />
+</g>
+<g clip-path='url(#cpMC4wMHwyODguMDB8MC4wMHwxNDQuMDA=)'>
+<text x='158.23' y='55.64' text-anchor='end' style='font-size: 12.00px; font-family: "Arial";' textLength='144.72px' lengthAdjust='spacingAndGlyphs'>regulation of small GTPase</text>
+<text x='158.23' y='68.60' text-anchor='end' style='font-size: 12.00px; font-family: "Arial";' textLength='152.75px' lengthAdjust='spacingAndGlyphs'>mediated signal transduction</text>
+<polyline points='160.42,57.81 163.16,57.81 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='186.49,95.02 186.49,92.28 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='210.36,95.02 210.36,92.28 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='234.23,95.02 234.23,92.28 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='258.10,95.02 258.10,92.28 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='281.97,95.02 281.97,92.28 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text transform='translate(180.40,116.96) rotate(45)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='27.35px' lengthAdjust='spacingAndGlyphs'>-0.02</text>
+<text transform='translate(204.27,116.96) rotate(45)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='23.36px' lengthAdjust='spacingAndGlyphs'>0.00</text>
+<text transform='translate(228.14,116.96) rotate(45)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='23.36px' lengthAdjust='spacingAndGlyphs'>0.02</text>
+<text transform='translate(252.01,116.96) rotate(45)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='23.36px' lengthAdjust='spacingAndGlyphs'>0.04</text>
+<text transform='translate(275.89,116.96) rotate(45)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='23.36px' lengthAdjust='spacingAndGlyphs'>0.06</text>
+<text x='222.84' y='135.87' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='57.37px' lengthAdjust='spacingAndGlyphs'>GeneRatio</text>
+</g>
+</svg>

@@ -221,13 +221,13 @@ data_to_count_look <-data_to_count[!is.na(data_to_count$look),]
 length(unique(data_to_count$cluster))
 
 
-ggsave(plot = continuity_plot2,
-       file = "continuity_plot_individual.svg",
-       device = "svg",
-       units = "in",
-       width = 5,
-       height = 5,
-       path = "Bachelors Thesis/Plots/Figure 2")
+#ggsave(plot = continuity_plot2,
+#       file = "continuity_plot_individual.svg",
+#       device = "svg",
+#       units = "in",
+#       width = 5,
+#       height = 5,
+#       path = "Bachelors Thesis/Plots/Figure 2")
 
 
 
