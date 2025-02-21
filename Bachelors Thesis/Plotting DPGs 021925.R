@@ -362,6 +362,8 @@ together_data_filtered_exclude <- together_data_filtered[
 
 together_data_filtered_cutoff_5_summed<- as.data.frame(table(together_data_filtered_cutoff_5$class, together_data_filtered_cutoff_5$cluster))
 
+table(together_data_filtered_cutoff_5$class)
+
 ggplot(together_data_filtered_cutoff_5_summed, aes(x = as.factor(Var2), y = Freq, fill = Var1), color = 'black')+
   geom_bar(stat = 'identity', position = 'stack')
 ### still the same bias though, late up or early down
