@@ -68,7 +68,7 @@ for(i in c(0:31)){
     if(i == 15 | i == 30){next}
   print(i)
   data <- read.csv(
-              paste0('/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/Prop DEGs 011525/prop_degs_cluster_', i, '.csv'))
+              paste0('DEG Outputs/022025 Prop DEGs SCTransform Matrix/prop_degs_cluster_', i, '.csv'))
   data <-define_degs_prop(data) 
      together_data <- rbind(together_data, data)
   }
