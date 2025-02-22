@@ -97,19 +97,18 @@ together_data_defined_summed_plot <- together_data_summed%>%
   right_join(together_data_chisq, by = 'cluster')
 
 
-ggplot(together_data_defined_summed_plot, aes(x = cluster, y = class_count.x, fill = class)) +
+ggplot(together_data_defined_summed_plot, aes(x = as.factor(cluster), y = class_count.x, fill = class)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "Cluster", y = "Number of DEGs") +
   geom_bar(position="stack", stat="identity")+
   theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))+
-    scale_x_continuous(breaks = c(0:31))+
   scale_y_continuous()+
   scale_fill_manual(values = P40)+
 geom_text(aes(label = issignif, y = class_count.y), size = 10)
 
 
-
-
+table(together_data$class)
+length(together_data$gene[!is.na(together_data$class)])
 
   
 
