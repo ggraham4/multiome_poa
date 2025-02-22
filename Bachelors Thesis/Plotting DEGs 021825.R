@@ -121,13 +121,13 @@ geom_text(aes(label = issignif, y = class_count.y), size = 8)+
   ylim(0,60)
 deg_bar_plot
 
-ggsave(plot = deg_bar_plot,
-       file = "deg_bar_plot.svg",
-       device = "svg",
-       units = "in",
-       width = 4,
-       height = 2,
-       path = "Bachelors Thesis/Plots/Figure 2")
+#ggsave(plot = deg_bar_plot,
+ #      file = "deg_bar_plot.svg",
+  #     device = "svg",
+   #    units = "in",
+    #   width = 4,
+     #  height = 2,
+      # path = "Bachelors Thesis/Plots/Figure 2")
 
 
 go_all <- clown_go(together_data_defined$gene[!is.na(together_data_defined$class) & together_data_defined$cluster %notin%c(15,30)])
@@ -144,7 +144,7 @@ ggsave(plot = go_all_plot,
        file = "go_all_plot.svg",
        device = "svg",
        units = "in",
-       width = 4,
+       width = 5.5,
        height = 2,
        path = "Bachelors Thesis/Plots/Figure 2")
 
