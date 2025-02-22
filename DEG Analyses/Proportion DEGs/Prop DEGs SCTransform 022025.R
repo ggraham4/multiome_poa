@@ -144,7 +144,9 @@ geom_text(aes(label = issignif, y = class_count.y), size = 8)+
   ylim(0,130)
 dpg_bar_plot
 
-table(together_data$class)
+tab <-  as.data.frame(table(together_data_subset$class))
+sum(tab$Freq)
+
 length(together_data$gene[!is.na(together_data$class)])
 
 ggsave(plot = dpg_bar_plot,
@@ -179,7 +181,7 @@ ggsave(plot = go_early_up_plot,
        file = "go_early_up_plot.svg",
        device = "svg",
        units = "in",
-       width = 4,
+       width = 5.5,
        height = 2,
        path = "Bachelors Thesis/Plots/Figure 2")
 
