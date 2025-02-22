@@ -40,9 +40,9 @@ clown_go<- readRDS('Functions/clown_go')
 
 }
 
-#obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 
-#options(future.globals.maxSize = 23 * 1024^3) 
+options(future.globals.maxSize = 23 * 1024^3) 
 
 #obj <- SCTransform(obj)
 #saveRDS(obj, '/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object with SCT.rds')
