@@ -149,7 +149,7 @@ DotPlot(object = cluster_19,
         features = top_markers$gene) +
   coord_flip()
 
-clown_go <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/clown_go.rds')
+clown_go<- readRDS('Functions/clown_go')
 
 markers_19_0 <- markers_19$gene[markers_19$p_val_adj<0.05& markers_19$cluster=='19_0']
 markers_19_1 <- markers_19$gene[markers_19$p_val_adj<0.05& markers_19$cluster=='19_1']
@@ -169,6 +169,9 @@ dotplot(go_19_0)+ labs(title = '19_0')
 
 go_19_2 <- clown_go(unique_markers_19_2)
 dotplot(go_19_2)+ labs(title = '19_2')
+
+#go_19_1 <- clown_go(unique_markers_19_1)
+#dotplot(go_19_1)+ labs(title = '19_1')
 
 
 #### CytoTRACE ######
@@ -315,6 +318,12 @@ dotplot(go_19_2_late_up)
 
 
 #### Proportion Differences ####
+
+### I shoulda done this the first time
+cluster_19@meta.data$index <- 1
+as.data.frame(table(cluster_19@meta.data$index, cluster_19@meta.data$Status, cluster_19@meta.data$sub))
+###
+
 total_cells_m <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='M',])
 total_cells_f <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='F',])
 total_cells_d <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='D',])
@@ -344,8 +353,9 @@ cluster_19_0_glm <- glm(cluster_19_0_matrix~Status, family = binomial('logit'), 
 summary(cluster_19_0_glm)
 pairs(emmeans(cluster_19_0_glm, 'Status'),adjust = 'none')
 
-counts_19_0$prop <- counts_19_0$n/counts_19_0$total
+counts_19_0$prop <- counts_19_0$in_cluster/(counts_19_0$in_cluster+counts_19_0$non)
 counts_19_0$Status <- factor(counts_19_0$Status, levels = c('M','D','F'))
+
 ggplot(counts_19_0, aes(x = Status, y = prop, fill = Status))+
   geom_bar(stat = 'identity')
 

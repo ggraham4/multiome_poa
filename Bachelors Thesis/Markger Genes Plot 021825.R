@@ -23,7 +23,7 @@
   library(openxlsx)
 
 }
-multiome_object <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+multiome_object <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 Idents(multiome_object) <- "harmony.wnn_res0.4_clusters"
 `%notin%` <- Negate(`%in%`)
 multiome_object <- subset(multiome_object, harmony.wnn_res0.4_clusters %notin% c(15,30))
@@ -40,6 +40,9 @@ markers <- unique(c(
   'slc17a6b', #vglut
   'slc17a7a', #vglut1
   'sst1.1', #interneuron marker
+    'slc18a3b', #ach marker
+  'hmx2',
+  'hmx3a',
   'LOC111577263', #brain aromatase - radial glia
   'gfap', #astrocyte marker
   'crocc2', #ependymal cell marker
@@ -47,7 +50,6 @@ markers <- unique(c(
   'cspg4', #OPC marker
   'p2ry12', #microglia marker
   'ptprc', #leukocyte marker
-  'slc18a3b', #ach marker
   'kiss1',
   'kiss1ra',
   'kiss1rb',
@@ -72,6 +74,7 @@ markers <- unique(c(
   'gal',
   'galr1a',
   'oxt',
+  'oxtrb',
   'avp',
   'avpr2aa',
   'rbm47',
@@ -97,6 +100,9 @@ marker_gene_plot <- DotPlot(object = multiome_object,
 'slc17a6b', #vglut
 'slc17a7a', #vglut1
 'sst1.1', #interneuron marker
+'slc18a3b', #ach marker
+  'hmx2',
+  'hmx3a',
 'cyp19a1b', #brain aromatase - radial glia
 'gfap', #astrocyte marker
 'crocc2', #ependymal cell marker
@@ -104,7 +110,6 @@ marker_gene_plot <- DotPlot(object = multiome_object,
 'cspg4', #OPC marker
 'p2ry12', #microglia marker
 'ptprc', #leukocyte marker
-'slc18a3b', #ach marker
 'kiss1',
 'kiss1ra',
 'kiss1rb',
@@ -129,6 +134,7 @@ marker_gene_plot <- DotPlot(object = multiome_object,
 'gal',
 'galr1a',
 'oxt',
+  'oxtrb',
 'avp',
 'avpr2aa',
 'rbm47',
