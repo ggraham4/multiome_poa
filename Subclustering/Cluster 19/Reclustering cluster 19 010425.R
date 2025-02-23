@@ -319,10 +319,6 @@ dotplot(go_19_2_late_up)
 
 #### Proportion Differences ####
 
-### I shoulda done this the first time
-cluster_19@meta.data$index <- 1
-as.data.frame(table(cluster_19@meta.data$index, cluster_19@meta.data$Status, cluster_19@meta.data$sub))
-###
 
 total_cells_m <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='M',])
 total_cells_f <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='F',])
@@ -390,6 +386,81 @@ counts_19_2$prop <- counts_19_2$n/counts_19_2$total
 counts_19_2$Status <- factor(counts_19_2$Status, levels = c('M','D','F'))
 ggplot(counts_19_2, aes(x = Status, y = prop, fill = Status))+
   geom_bar(stat = 'identity')
+
+
+#### does 19_0 compensate for the loss in 19_1
+### I shoulda done this the first time
+cluster_19@meta.data$index <- 1
+cluster_19_count_data <- as.data.frame(table(cluster_19@meta.data$index, cluster_19@meta.data$individual, cluster_19@meta.data$sub, cluster_19@meta.data$Status))
+cluster_19_individual_counts <- cluster_19_count_data%>% group_by(Var4, Var3, Var2)%>%
+  summarize(count = sum(Freq))
+
+cluster_19_total_counts <- as.data.frame(table(cluster_19$individual))
+
+cluster_19_total_counts_table <- cluster_19_individual_counts%>%right_join(cluster_19_total_counts, join_by('Var2' =='Var1'))
+cluster_19_total_counts_table$prop = cluster_19_total_counts_table$count/cluster_19_total_counts_table$Freq
+
+sex_table = data.frame(sex = cluster_19@meta.data$Status, Var2 =  cluster_19@meta.data$individual)%>%distinct()
+cluster_19_w_sex <- cluster_19_total_counts_table%>%full_join(sex_table, by = 'Var2')
+cluster_19_w_sex <- cluster_19_w_sex[cluster_19_w_sex$sex ==cluster_19_w_sex$Var4, ]
+
+cluster_19_w_sex<- cluster_19_w_sex[ cluster_19_w_sex$sex %in% c('M','D','F'),]
+
+cluster_19_w_sex$sex<- factor(cluster_19_w_sex$sex, levels = c('M','D','F'))
+ggplot(cluster_19_w_sex, aes(x = Var3, y = prop, shape = sex, group = sex))+
+  stat_summary(geom = 'bar', fun = "mean", position = 'dodge', fill = NA, size = 1, color = 'black')+
+  stat_summary(geom = 'errorbar', fun.data = mean_se, width = 0.4, position = position_dodge(.9), linewidth = 1)+
+  scale_shape_manual(values = c(1,2,3))+
+  geom_point(position = position_jitterdodge(dodge.width=.9), size = 4, aes(color = sex))+
+  theme_minimal()
+
+### now how do I actually analyze it
+cluster_19_w_sex$fake_sex = ifelse(cluster_19_w_sex$sex=='D', 'D', 'Diff')
+
+fake_19 = cluster_19_w_sex%>%
+  group_by(Var3, fake_sex)%>%
+  summarize(sum_cells = sum(count),
+           sum_total = sum(Freq), 
+           prop = sum_cells/sum_total)
+
+diff_in_19_0 = fake_19$prop[fake_19$fake_sex=='D' & fake_19$Var3=='19_0'] - fake_19$prop[fake_19$fake_sex=='Diff'& fake_19$Var3=='19_0']
+(diff_in_19_0+1)*  fake_19$sum_total[fake_19$fake_sex=='D' & fake_19$Var3=='19_0']
+
+
+diff_in_19_2 = fake_19$prop[fake_19$fake_sex=='D' & fake_19$Var3=='19_2'] - fake_19$prop[fake_19$fake_sex=='Diff'& fake_19$Var3=='19_2']
+(diff_in_19_2+1)*  fake_19$sum_total[fake_19$fake_sex=='D' & fake_19$Var3=='19_2']
+#ok the difference is 7% higher in 19_0 and 5% lower in 19_2
+
+cluster_19_w_sex$fake_cluster = ifelse(cluster_19_w_sex$Var3 == '19_1', '19_1', '19_0 + 19_2')
+
+ggplot(cluster_19_w_sex, aes(x = fake_cluster, y = prop, shape = sex, group = sex))+
+  stat_summary(geom = 'bar', fun = "mean", position = 'dodge', fill = NA, size = 1, color = 'black')+
+  stat_summary(geom = 'errorbar', fun.data = mean_se, width = 0.4, position = position_dodge(.9), linewidth = 1)+
+  scale_shape_manual(values = c(1,2,3))+
+  geom_point(position = position_jitterdodge(dodge.width=.9), size = 4, aes(color = sex))+
+  theme_minimal()
+
+ cluster_19_w_sex_fake_summed <-  cluster_19_w_sex%>% 
+   group_by(fake_cluster, sex)%>%
+  summarize(sum = sum(count),
+            total = sum(Freq), 
+            prop = sum/total) ##wait this is wrong why is it not adding to 1
+ #because the fake cluster doubles the freq, it needs to be the values from 19_1
+ 
+ cluster_19_w_sex_fake_summed$total <- unlist(rep(cluster_19_w_sex_fake_summed[4:6,4],2))
+ cluster_19_w_sex_fake_summed$prop = cluster_19_w_sex_fake_summed$sum/cluster_19_w_sex_fake_summed$total
+ 
+ ggplot(cluster_19_w_sex_fake_summed, aes(x = fake_cluster, y = prop, shape = sex, group = sex))+
+  stat_summary(geom = 'bar', fun = "mean", position = 'dodge', fill = NA, size = 1, color = 'black')+
+  stat_summary(geom = 'errorbar', fun.data = mean_se, width = 0.4, position = position_dodge(.9), linewidth = 1)+
+  scale_shape_manual(values = c(1,2,3))+
+  geom_point(position = position_jitterdodge(dodge.width=.9), size = 4, aes(color = sex))+
+  theme_minimal()
+ 
+ ## it looks pretty close
+
+###
+
 
 ### Lasso Regression ####
         lasso_scorer <- function(deg_data, cluster, multiome_object = cluster_19){
