@@ -65,15 +65,31 @@ old_obj_predictions_matrix <- predictions2%>%
 
 colnames(old_obj_predictions_matrix) <- str_remove(colnames(old_obj_predictions_matrix), 'prediction.score.')
 
+colnames(old_obj_predictions_matrix) <- as.numeric(colnames(old_obj_predictions_matrix))
+
+old_obj_predictions_matrix%>%
+  order()
+
 old_obj_predictions_matrix[,2:33]%>%
   as.matrix()%>%
   scale()%>%
-  Heatmap(row_labels = old_obj_predictions_matrix$query_id,
+  Heatmap(
           cluster_rows = FALSE, 
           cluster_columns = FALSE,
+          row_order = 0:48,
+          row_labels = 0:48,
+          column_order = order(as.numeric(colnames(old_obj_predictions_matrix[,2:33]))),
           row_title = 'previous',
           column_title = 'multiome')
 
 DimPlot(previous_object, label = T)
 ##cluster 27 does not align strongly to any clusters, maybe try with the relabeled object
+
+#its strongest align is cluster 25 in the previous object which I believe is 13d
+
+Idents(previous_object) <- 'clusters49'
+DimPlot(previous_object, label = T)
+
+Idents(previous_object) <- 'predicted.id'
+DimPlot(previous_object, label = T)
 
