@@ -37,10 +37,10 @@ library(stringr)
 #write.csv(combined_data, 'C:/Users/Gabe/Desktop/multiome_poa/Reference/mmusculus_to_aocellaris.csv')
 
 #only have to do all that once
-combined_data <- read.csv('C:/Users/Gabe/Desktop/multiome_poa/Reference/mmusculus_to_aocellaris.csv')
+combined_data <- read.csv('Reference/mmusculus_to_aocellaris.csv')
 
 ### read in object
-obj <-readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+obj <-readRDS("/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds")
 
 clusters <- unique(obj$harmony.wnn_res0.4_clusters)
 
@@ -91,25 +91,29 @@ rownames(data.input_trimmed) <- rownames(aggregated_data)
 library(Seurat)
 new_obj <- CreateSeuratObject(counts = data.input_trimmed[-1, -which(colnames(data.input_trimmed) == "rowsums")],
                               project = "renamed")
+rownames(new_obj) <- rownames(data.input_trimmed[-1, -which(colnames(data.input_trimmed) == "rowsums")])
+col_names <- colnames(data.input_trimmed[-1, -which(colnames(data.input_trimmed) == "rowsums")])
+colnames(new_obj) <- sub("\\.(\\d+)$", "-\\1", col_names)
+
 new_obj <- JoinLayers(new_obj)
+
 new_obj@assays$RNA$data <- new_obj@assays$RNA$counts
+
 new_obj@meta.data <- meta_data
 new_obj@reductions <- obj@reductions
 Idents(new_obj) <- 'harmony.wnn_res0.4_clusters'
 
 DimPlot(new_obj)
-FeaturePlot(new_obj, 'Cck' ) 
+FeaturePlot(new_obj, 'Cck') 
 FeaturePlot(new_obj, 'Cckbr' ) 
 
-saveRDS(new_obj, 'C:/Users/Gabe/Desktop/RNA object mouse names.rds')
+#saveRDS(new_obj, '/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA object mouse names.rds')
+marks <- FindAllMarkers(new_obj)
 
-### make new cellchat object
-data.input.matrix <- as.matrix(counts = data.input_trimmed[-1, -which(colnames(data.input_trimmed) == "rowsums")])
+marks_19 <- subset(marks, cluster ==19)
+#write.csv(marks_19, 'Reference/mmusculus_cluster_19_markers.csv')
 
-cellchat <- createCellChat(object = data.input.matrix,
-                           meta = meta_data,
-                           group.by = as.vector(clusters)
-)
-cellchat <- runCellChat(cellchat,M=100)
-net_aggregated_cellchat <- net_aggregation(cellchat@net,method = 'weight')
+FeaturePlot(new_obj, 'Kiss1r' ) 
+FeaturePlot(new_obj, 'Tacr3' ) 
+FeaturePlot(new_obj, 'Tac2' ) 
 
