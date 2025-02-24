@@ -28,12 +28,12 @@
   #clown_go <- readRDS('R/Gabe/clown_go.rds')
   
 }
-multiome_object <- readRDS('//Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+multiome_object <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
 Idents(multiome_object) <- "harmony.wnn_res0.4_clusters"
 
 
 #### Find anchorsets and transfer labels #####
-previous_object <- readRDS('/Volumes/jrhodes/Fish Lab/Experiments/snRNAseq POA sex differences/analysis/data/anenomefish_clustered_061821.rds')
+previous_object <- readRDS('C:/Users/Gabe/Desktop/Old object.rds')
 
 #### Clusters 49 ####
 Idents(previous_object) <- 'clusters49'
