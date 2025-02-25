@@ -95,6 +95,6 @@ ggplot(ieg_data_individual_level, aes(x = as.factor(harmony.wnn_res0.4_clusters)
   labs(x = 'Cluster', y = 'IEG + / IEG -')+
   theme_minimal()+
   scale_shape_manual(values = c(1,2,3))+
-  scale_y_continuous(breaks = 0:7)
+  scale_y_continuous(breaks = c(0.5,0:7))
 
 
