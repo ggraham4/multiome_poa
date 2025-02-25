@@ -91,7 +91,7 @@ ggplot(ieg_data_individual_level, aes(x = as.factor(harmony.wnn_res0.4_clusters)
     geom_hline(yintercept = 0.5, linetype = 2)+
     geom_hline(yintercept =1, linetype = 2)+
   geom_boxplot(alpha = 0, outlier.shape = NA)+
-  geom_point( position = position_dodge(1), size =1.25)+
+  geom_point( position = position_dodge(1), size =1.25, color = 'black')+
   labs(x = 'Cluster', y = 'IEG + / IEG -')+
   theme_minimal()+
   scale_shape_manual(values = c(1,2,3))+
