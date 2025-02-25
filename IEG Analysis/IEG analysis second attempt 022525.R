@@ -31,7 +31,7 @@ obj <-  readRDS("~/Desktop/snRNA-seq R Files 122524/RNA Object.rds")
 obj$ieg <- ifelse(obj@assays$RNA$data['LOC111583367',] >0, 'ieg', NA)
 obj$ieg <- ifelse(obj@assays$RNA$data['egr1',] >0, 'ieg', obj$ieg)
 obj$ieg <- ifelse(obj@assays$RNA$data['npas4a',] >0, 'ieg', obj$ieg)
-obj$ieg <- ifelse(is.na(obj$ieg), 'no-ieg', obj$ieg)
+obj$ieg <- ifelse(is.na(obj$ieg), 'no_ieg', obj$ieg)
 
 DimPlot(obj, split.by = 'ieg')
 
@@ -56,6 +56,14 @@ DimPlot(neuronal_only, split.by = 'ieg')
 #>2) How do the sexes differ in these measures
 #>3) Do the findmarkers things zack discusses in his methods
 #>4) 
+
+ieg_data_cluster_level <- table(obj@meta.data$ieg, obj@meta.data$harmony.wnn_res0.4_clusters)%>%
+  as.data.frame()%>%
+  pivot_wider(names_from = 'Var1', values_from = 'Freq')%>%
+  mutate(prop_pos = ieg/no_ieg)
+
+###CLUSTER 27 IS THE HIGHEST WAOW
+### ITS NOT EVEN CLOSE
 
 
 
