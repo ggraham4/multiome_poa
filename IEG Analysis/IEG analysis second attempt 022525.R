@@ -57,7 +57,7 @@ DimPlot(neuronal_only, split.by = 'ieg')
 #>3) Do the findmarkers things zack discusses in his methods
 #>4) 
 
-ieg_data_cluster_level <- table(obj@meta.data$ieg, obj@meta.data$harmony.wnn_res0.4_clusters)%>%
+ieg_data_cluster_level <- table(neuronal_only@meta.data$ieg, neuronal_only@meta.data$harmony.wnn_res0.4_clusters)%>%
   as.data.frame()%>%
   pivot_wider(names_from = 'Var1', values_from = 'Freq')%>%
   mutate(prop_pos = ieg/no_ieg)
@@ -65,5 +65,36 @@ ieg_data_cluster_level <- table(obj@meta.data$ieg, obj@meta.data$harmony.wnn_res
 ###CLUSTER 27 IS THE HIGHEST WAOW
 ### ITS NOT EVEN CLOSE
 
+ggplot(ieg_data_cluster_level, aes(x = as.factor(Var2), y = prop_pos))+
+  geom_bar(stat = 'identity')+
+  geom_hline(yintercept = 0.5, linetype = 2)+
+    geom_hline(yintercept =1, linetype = 2)+
+  labs(x = 'Cluster', y = 'IEG + / IEG -')+
+  theme_minimal()
+
+### Lets do it with sex now
+
+ieg_data_individual_level <- neuronal_only@meta.data%>%
+  dplyr::select(c(individual, Status, harmony.wnn_res0.4_clusters, ieg))%>%
+  group_by(Status, individual, harmony.wnn_res0.4_clusters)%>%
+  summarize(ieg_pos = sum(ieg =='ieg'),
+            ieg_neg = sum(ieg == 'no_ieg')
+  )%>%
+  mutate(prop_pos = ieg_pos/ieg_neg)%>%
+  subset(Status %in% c('M','D','F'))%>%
+  na.omit()%>%
+  subset(prop_pos != Inf)
+
+ieg_data_individual_level$Status <- factor(ieg_data_individual_level$Status, levels = c('M','D','F'))
+
+ggplot(ieg_data_individual_level, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = prop_pos, shape = Status, color = Status))+
+    geom_hline(yintercept = 0.5, linetype = 2)+
+    geom_hline(yintercept =1, linetype = 2)+
+  geom_boxplot(alpha = 0, outlier.shape = NA)+
+  geom_point( position = position_dodge(1), size =1.25)+
+  labs(x = 'Cluster', y = 'IEG + / IEG -')+
+  theme_minimal()+
+  scale_shape_manual(values = c(1,2,3))+
+  scale_y_continuous(breaks = 0:7)
 
 
