@@ -60,15 +60,13 @@ DimPlot(neuronal_only, split.by = 'ieg')
 ieg_data_cluster_level <- table(neuronal_only@meta.data$ieg, neuronal_only@meta.data$harmony.wnn_res0.4_clusters)%>%
   as.data.frame()%>%
   pivot_wider(names_from = 'Var1', values_from = 'Freq')%>%
-  mutate(prop_pos = ieg/no_ieg)
+  mutate(prop_pos = ieg/(no_ieg+ieg))
 
 ###CLUSTER 27 IS THE HIGHEST WAOW
-### ITS NOT EVEN CLOSE
 
 ggplot(ieg_data_cluster_level, aes(x = as.factor(Var2), y = prop_pos))+
   geom_bar(stat = 'identity')+
   geom_hline(yintercept = 0.5, linetype = 2)+
-    geom_hline(yintercept =1, linetype = 2)+
   labs(x = 'Cluster', y = 'IEG + / IEG -')+
   theme_minimal()
 
@@ -80,7 +78,7 @@ ieg_data_individual_level <- neuronal_only@meta.data%>%
   summarize(ieg_pos = sum(ieg =='ieg'),
             ieg_neg = sum(ieg == 'no_ieg')
   )%>%
-  mutate(prop_pos = ieg_pos/ieg_neg)%>%
+  mutate(prop_pos = ieg_pos/(ieg_pos+ieg_neg))%>%
   subset(Status %in% c('M','D','F'))%>%
   na.omit()%>%
   subset(prop_pos != Inf)
@@ -92,10 +90,22 @@ ggplot(ieg_data_individual_level, aes(x = as.factor(harmony.wnn_res0.4_clusters)
     geom_hline(yintercept =1, linetype = 2)+
   geom_boxplot(alpha = 0, outlier.shape = NA)+
   geom_point( position = position_dodge(1), size =1.25, color = 'black')+
-  labs(x = 'Cluster', y = 'IEG + / IEG -')+
+  labs(x = 'Cluster', y = 'Proportion IEG+')+
   theme_minimal()+
   scale_shape_manual(values = c(1,2,3))+
   scale_y_continuous(breaks = c(0.5,0:7))
+
+ggplot(ieg_data_individual_level, aes(x = Status, y = prop_pos, shape = Status, color = Status))+
+    geom_hline(yintercept = 0.5, linetype = 2)+
+    geom_hline(yintercept =1, linetype = 2)+
+  geom_violin(alpha = 0, outlier.shape = NA)+
+  geom_boxplot(size = 1)+
+  geom_point( position = position_dodge(1), size =1.25, color = 'black')+
+  labs(x = 'Cluster', y = 'Proportion IEG+')+
+  theme_minimal()+
+  scale_shape_manual(values = c(1,2,3))+
+  scale_y_continuous(breaks = c(0.5,0:7))
+
 
 ### FindMarkers
 #Find genes differentially expressed between IEG and IEG- clusters
@@ -138,7 +148,7 @@ neuronal_only$ieg2<-  ifelse(is.na(neuronal_only$ieg2), 'non_ieg', neuronal_only
 ieg_data_cluster_level2 <- table(neuronal_only@meta.data$ieg2, neuronal_only@meta.data$harmony.wnn_res0.4_clusters)%>%
   as.data.frame()%>%
   pivot_wider(names_from = 'Var1', values_from = 'Freq')%>%
-  mutate(prop_pos = ieg/non_ieg)%>%
+  mutate(prop_pos = ieg/(non_ieg+ieg))%>%
   na.omit()
 
 
@@ -146,8 +156,9 @@ ggplot(ieg_data_cluster_level2, aes(x = as.factor(Var2), y = prop_pos))+
   geom_bar(stat = 'identity')+
   geom_hline(yintercept = 0.5, linetype = 2)+
     geom_hline(yintercept =1, linetype = 2)+
-  labs(x = 'Cluster', y = 'IEG + / IEG -')+
+  labs(x = 'Cluster', y = 'Prop IEG+')+
   theme_minimal()
+
 
 
 ieg_data_individual_level2 <- neuronal_only@meta.data%>%
@@ -156,7 +167,7 @@ ieg_data_individual_level2 <- neuronal_only@meta.data%>%
   summarize(ieg_pos = sum(ieg2 =='ieg'),
             ieg_neg = sum(ieg2 == 'non_ieg')
   )%>%
-  mutate(prop_pos = ieg_pos/ieg_neg)%>%
+  mutate(prop_pos = ieg_pos/(ieg_neg+ieg_pos))%>%
   subset(Status %in% c('M','D','F'))%>%
   na.omit()%>%
   subset(prop_pos != Inf)
@@ -166,9 +177,21 @@ ieg_data_individual_level2$Status <- factor(ieg_data_individual_level2$Status, l
 ggplot(ieg_data_individual_level2, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = prop_pos, shape = Status, color = Status))+
   geom_boxplot(alpha = 0, outlier.shape = NA)+
   geom_point( position = position_dodge(1), size =1.25, color = 'black')+
-  labs(x = 'Cluster', y = 'IEG + / IEG -')+
+  labs(x = 'Cluster', y = 'Proportion IEG+')+
   theme_minimal()+
   scale_shape_manual(values = c(1,2,3))
+
+ggplot(ieg_data_individual_level2, aes(x = Status, y = prop_pos, shape = Status, color = Status))+
+    geom_hline(yintercept = 0.5, linetype = 2)+
+    geom_hline(yintercept =1, linetype = 2)+
+  geom_violin(alpha = 0, outlier.shape = NA)+
+  geom_boxplot(size = 1)+
+  geom_point( position = position_dodge(1), size =1.25, color = 'black')+
+  labs(x = 'Cluster', y = 'Proportion IEG+')+
+  theme_minimal()+
+  scale_shape_manual(values = c(1,2,3))+
+  scale_y_continuous(breaks = c(0.5,0:7))
+
 
 ###I think there is also a way to do this with a module score
 iegs_list <- list()
@@ -221,5 +244,172 @@ ggplot(ieg_positive, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = prop_po
   theme_minimal()+
   scale_shape_manual(values = c(1,2,3))
 
+###--- Statistics ---####
+## based on coltans paper, negative binomial regression on ieg score
+neg_binom_list <- list()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  print(i)
+neg_binom <- glmer.nb(ieg_scores ~ Status + log10GenesPerUMI +(1|individual), data = subset(neuronal_only@meta.data, Status %in% c('M','D','F')& harmony.wnn_res0.4_clusters==i))
+
+neg_binom_list[[paste0(i)]]$summary <-summary(neg_binom)
+neg_binom_list[[paste0(i)]]$av <-car::Anova(neg_binom, type = 'III')
+
+}
+
+av_p_values <- data.frame()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  
+ av <- neg_binom_list[[paste0(i)]]$av%>%as.data.frame()
+ 
+ newd <- data.frame(cluster = i, 
+                    Status_av_p = av$`Pr(>Chisq)`[2])
+ av_p_values <- rbind(av_p_values, newd)
+   
+}
+#nothing is going to be significant with a q value adjustment
+
+
+### proportion of IEG+ cells
+glmer_out <- list()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  print(i)
+temp_ieg_positive <- subset(ieg_positive, harmony.wnn_res0.4_clusters==i)
+ieg_pos_matrix <- matrix(cbind(temp_ieg_positive$ieg_pos, temp_ieg_positive$ieg_neg), nrow(temp_ieg_positive),2)
+
+glmer_model <- glmer(ieg_pos_matrix~Status + (1|individual), data = temp_ieg_positive, family = binomial('logit'))
+
+glmer_out[[paste0('cluster_',i)]]$model <- glmer_model
+glmer_out[[paste0('cluster_',i)]]$av <- car::Anova(glmer_model, type ='III')
+glmer_out[[paste0('cluster_',i)]]$summary <- summary(glmer_model)
+
+}
+
+library(emmeans)
+glmer_av_output <- data.frame()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  print(i)
+  av <- glmer_out[[paste0('cluster_',i)]]$av%>%as.data.frame()
+  status_p <- av$`Pr(>Chisq)`[2]
+  
+  pairs <- pairs(emmeans(glmer_out[[paste0('cluster_',i)]]$model, 'Status'), adjust = 'none')%>%
+    as.data.frame()
+  
+  m_d_p.value <- pairs$p.value[1]
+  m_f_p.value <- pairs$p.value[2]
+  d_f_p.value <- pairs$p.value[3]
+  
+  newd <- data.frame(cluster = i,
+                     m_d_p.value,
+                     m_f_p.value,
+                     d_f_p.value,
+                     status_p = status_p,
+                     singular= isSingular(glmer_out[[paste0('cluster_',i)]]$model)
+    )
+  glmer_av_output <- rbind(glmer_av_output, newd)
+}
+
+glmer_av_output$m_d_q.value <- p.adjust(glmer_av_output$m_d_p.value, 'fdr', nrow(glmer_av_output))
+glmer_av_output$m_f_q.value <- p.adjust(glmer_av_output$m_f_p.value, 'fdr', nrow(glmer_av_output))
+glmer_av_output$d_f_q.value <- p.adjust(glmer_av_output$d_f_p.value, 'fdr', nrow(glmer_av_output))
+glmer_av_output$status_q <- p.adjust(glmer_av_output$status_p, 'fdr', nrow(glmer_av_output))
+
+glmer_av_output$issignif <- ifelse(glmer_av_output$m_d_q.value<0.05|
+                                     glmer_av_output$m_f_q.value<0.05|
+                                     glmer_av_output$d_f_q.value<0.05|
+                                   glmer_av_output$status_q<0.05,
+                                   '*',
+                                   NA)
+glmer_av_output$cluster <- as.numeric(glmer_av_output$cluster)
+### nothing is significant
+
+library(sjPlot)
+plot_model(glmer_out[[paste0('cluster_','27')]]$model)
+
+
+###trying out zack's beta binomial
+library(PROreg)
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  temp_data <- subset(neuronal_only@meta.data, harmony.wnn_res0.4_clusters==i)%>%
+    dplyr::select(individual, Status, ieg_scores)%>%
+    subset(Status %in% c('M','D','F'))
+
+  
+model <- BBmm(fixed.formula = 
+                temp_data$ieg_scores ~ temp_data$Status,
+  random.formula =  ~temp_data$individual,
+  data = temp_data,
+  m = 21)  #max number of iegs
+
+
+summary(model)
+
+}
+### the problem with this model is I cannot compute typeIII tests or pairwise comparisons
+
+
+### what about glmmTMB
+library(glmmTMB)
+library(performance)
+out_betabin <- data.frame()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  print(i)
+  temp_data <- subset(neuronal_only@meta.data, harmony.wnn_res0.4_clusters==i)%>%
+    dplyr::select(individual, Status, ieg_scores)%>%
+    subset(Status %in% c('M','D','F'))
+
+  
+model <- glmmTMB(cbind(ieg_scores,21-ieg_scores)  ~ Status + (1|individual),
+  data = temp_data,
+  family=betabinomial(link = "logit"))  
+
+
+summary(model)
+pairs <- pairs(emmeans(model, 'Status'), adjust = 'none')%>%
+  as.data.frame()
+
+av <- car::Anova(model, type = 'III')
+
+newd <- data.frame(cluster = i,
+                   status_p.value = av$`Pr(>Chisq)`[2],
+                   d_m_p.value = pairs$p.value[pairs$contrast=='D - M'],
+                  f_m_p.value = pairs$p.value[pairs$contrast=='F - M'],
+                   d_f_p.value = pairs$p.value[pairs$contrast=='D - F'],
+                  singular =  check_singularity(model)
+
+                  
+)
+out_betabin <- rbind(newd, out_betabin)
+
+
+}
+### ok this is definitely the way to go
+
+out_betabin$status_q.value <- p.adjust(out_betabin$status_p.value, 'fdr', nrow(out_betabin))
+out_betabin$d_m_q.value <- p.adjust(out_betabin$d_m_p.value, 'fdr', nrow(out_betabin))
+out_betabin$f_m_q.value <- p.adjust(out_betabin$f_m_p.value, 'fdr', nrow(out_betabin))
+out_betabin$d_f_q.value <- p.adjust(out_betabin$d_f_p.value, 'fdr', nrow(out_betabin))
+
+out_betabin$issignif <- ifelse(out_betabin$status_q.value<0.05|
+                                 out_betabin$d_m_q.value<0.05|
+                                 out_betabin$f_m_q.value<0.05|
+                                 out_betabin$d_f_q.value<0.05,
+                               '*',
+                               NA)
+
+### nothing signif man 
+
+out_betabin$lower_string_issignif <- ifelse(out_betabin$status_p.value<0.05|
+                                 out_betabin$d_m_p.value<0.05|
+                                 out_betabin$f_m_p.value<0.05|
+                                 out_betabin$d_f_p.value<0.05,
+                               '*',
+                               NA)
+
+out_betabin$issignif_0.1 <- ifelse(out_betabin$status_q.value<0.1|
+                                 out_betabin$d_m_q.value<0.1|
+                                 out_betabin$f_m_q.value<0.1|
+                                 out_betabin$d_f_q.value<0.1,
+                               '*',
+                               NA)
 
 
