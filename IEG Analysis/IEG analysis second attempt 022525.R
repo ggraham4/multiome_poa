@@ -26,7 +26,7 @@
   `%notin%` <- Negate(`%in%`)
 }
 
-obj <-  readRDS("~/Desktop/snRNA-seq R Files 122524/RNA Object.rds")
+obj <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
 
 obj$ieg <- ifelse(obj@assays$RNA$data['LOC111583367',] >0, 'ieg', NA)
 obj$ieg <- ifelse(obj@assays$RNA$data['egr1',] >0, 'ieg', obj$ieg)
@@ -113,11 +113,13 @@ ieg_marker_all <-data.frame()
 for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
   print(i)
   temp_obj <- subset(neuronal_only, harmony.wnn_res0.4_clusters==i)
+  Idents(temp_obj) = 'ieg'
   ieg_markers <- FindAllMarkers(temp_obj, 
                               assay = 'RNA', 
                               group.by = 'ieg',
                               logfc.threshold = 0,
-                              min.pct = 1/204) #204 cells in smallest cluster
+                              min.pct = 1/204
+                              ) #204 cells in smallest cluster
   ieg_markers$harmony.wnn_res0.4_clusters =i
   ieg_marker_all <- rbind(ieg_marker_all, ieg_markers)
 }
@@ -362,6 +364,7 @@ model <- glmmTMB(cbind(ieg_scores,21-ieg_scores)  ~ Status + (1|individual),
   data = temp_data,
   family=betabinomial(link = "logit"))  
 
+#hist(temp_data$ieg_scores)
 
 summary(model)
 pairs <- pairs(emmeans(model, 'Status'), adjust = 'none')%>%
