@@ -84,7 +84,7 @@
   
 }
 
-obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 
 cells_in_d <- nrow(obj@meta.data[obj@meta.data$Status == 'D',])
 cells_in_m <- nrow(obj@meta.data[obj@meta.data$Status == 'M',])

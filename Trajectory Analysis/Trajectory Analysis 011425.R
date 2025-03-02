@@ -91,7 +91,10 @@ cds <- learn_graph(cds)
 ## Step 6: Order cells
 cds <- order_cells(cds, reduction = 'UMAP')
 
-plot_cells(cds)
+plot_cells(cds,           
+           color_cells_by = 'harmony.wnn_res0.4_clusters',
+                       group_label_size = 5
+)
                     
 plot_cells(cds, genes=c("LOC111577263"), show_trajectory_graph= F)
                   

@@ -302,9 +302,9 @@ hist(z_matrix_cells_as_rows$sum_z_score)
 
 neuronal_only$ieg_z_score_sum = z_matrix_cells_as_rows$sum_z_score
 
-FeaturePlot(temp_obj, 'ieg_z_score_sum')
+FeaturePlot(neuronal_only, 'ieg_z_score_sum')
 
-data_for_plot = subset(temp_obj@meta.data, Status %in% c("M",'D', 'E','NF',"F"))%>%
+data_for_plot = subset(neuronal_only@meta.data, Status %in% c("M",'D', 'E','NF',"F"))%>%
   group_by(harmony.wnn_res0.4_clusters, individual, Status)%>%
   summarize(mean_z_score_sum = mean(ieg_z_score_sum))
       
@@ -374,3 +374,46 @@ sum_z_score_stats$issignif = ifelse(sum_z_score_stats$av_q.value <0.05|
                                     NA)
 
 #whelp, nothing is significant
+
+#### Test if clusters are significantly different from the mean
+mean_score = mean(neuronal_only$ieg_z_score_sum)
+
+cluster_level_data <- data.frame()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  print(i)
+
+  data_for_model = data.frame(cluster = neuronal_only$harmony.wnn_res0.4_clusters,
+                              ieg_z_score_sum =  neuronal_only$ieg_z_score_sum,
+                              individual = neuronal_only$individual)%>%
+    subset(cluster ==i)
+  
+  model = lmer((ieg_z_score_sum - mean_score) ~1 + (1|individual), data = data_for_model)
+  av = car::Anova(model, type = 'III')
+  int_p.value =  av$`Pr(>Chisq)` 
+  
+  sum = summary(model)$coefficients%>%as.data.frame()
+  
+  new_data = data.frame(cluster = i, 
+                        estimate = sum$Estimate,
+                        int_p.value = int_p.value,
+                        singular = isSingular(model)
+  )
+  cluster_level_data<- rbind(cluster_level_data, new_data)
+  
+}
+cluster_level_data$int_q.value = p.adjust(cluster_level_data$int_p.value, 'fdr', nrow(cluster_level_data))
+cluster_level_data$issignif = ifelse(cluster_level_data$int_q.value <0.05, '*', NA)
+
+#come the fuck on still nothing
+
+data_for_model2 = data.frame(cluster = neuronal_only$harmony.wnn_res0.4_clusters,
+                              ieg_z_score_sum =  neuronal_only$ieg_z_score_sum,
+                              individual = neuronal_only$individual)
+
+ggplot(data_for_model2, aes(x =cluster, y = ieg_z_score_sum))+
+  geom_boxplot()+
+  geom_hline(yintercept = 0)
+#ok yeah that makes sense 
+
+
+
