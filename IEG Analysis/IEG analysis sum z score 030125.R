@@ -25,7 +25,7 @@
   `%notin%` <- Negate(`%in%`)
 }
 
-obj <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
+obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
 
 obj$ieg <- ifelse(obj@assays$RNA$data['LOC111583367',] >0, 'ieg', NA)
 obj$ieg <- ifelse(obj@assays$RNA$data['egr1',] >0, 'ieg', obj$ieg)
@@ -216,31 +216,32 @@ FeaturePlot(neuronal_only, feature = 'ieg_scores')
 ieg_scores <- neuronal_only@meta.data%>%
   group_by(individual, Status, harmony.wnn_res0.4_clusters)%>%
   summarize(mean_ieg_score = mean(ieg_scores))%>%
-  subset(Status %in% c('M','D','F'))
+  subset(Status %in% c('M','D','E','NF','F'))
 
-ieg_scores$Status <- factor(ieg_scores$Status, levels = c('M','D','F'))
+ieg_scores$Status <- factor(ieg_scores$Status, levels = c('M','D','E','NF','F'))
 ggplot(ieg_scores, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = mean_ieg_score, shape = Status, color = Status))+
   geom_boxplot(alpha = 0, outlier.shape = NA)+
   geom_point( position = position_dodge(1), size =1.25, color = 'black')+
   labs(x = 'Cluster', y = 'Mean IEG Score')+
   theme_minimal()+
-  scale_shape_manual(values = c(1,2,3))
+  scale_shape_manual(values = c(1,2,3,4,5))
 
 ieg_positive <- neuronal_only@meta.data%>%
   group_by(individual, Status, harmony.wnn_res0.4_clusters)%>%
   summarize(ieg_pos = sum(ieg_scores>0),
             ieg_neg = sum(ieg_scores ==0),
-            prop_pos = ieg_pos/ieg_neg)%>%
-  subset(Status %in% c('M','D','F'))%>%
+            prop_pos = ieg_pos/(ieg_neg+ieg_pos)
+            )%>%
+  subset(Status %in% c('M','D','E','NF','F'))%>%
   filter(prop_pos != Inf)
 
-ieg_positive$Status <- factor(ieg_positive$Status, levels = c('M','D','F'))
+ieg_positive$Status <- factor(ieg_positive$Status, levels = c('M','D','E','NF','F'))
 ggplot(ieg_positive, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = prop_pos, shape = Status, color = Status))+
   geom_boxplot(alpha = 0, outlier.shape = NA)+
   geom_point( position = position_dodge(1), size =1.25, color = 'black')+
-  labs(x = 'Cluster', y = 'Mean IEG Score')+
+  labs(x = 'Cluster', y = 'Proportion IEG')+
   theme_minimal()+
-  scale_shape_manual(values = c(1,2,3))
+  scale_shape_manual(values = c(1,2,3,4,5))
 
 #### Summing Z-scores ####
 #### Ok for each nucleus, lets find the z score of each ieg relative to the mean of that cluster IG
@@ -299,22 +300,77 @@ z_matrix_cells_as_rows$sum_z_score = rowSums(z_matrix_cells_as_rows)
 
 hist(z_matrix_cells_as_rows$sum_z_score)
 
-temp_obj$ieg_z_score_sum = z_matrix_cells_as_rows$sum_z_score
+neuronal_only$ieg_z_score_sum = z_matrix_cells_as_rows$sum_z_score
 
 FeaturePlot(temp_obj, 'ieg_z_score_sum')
 
-data_for_plot = subset(temp_obj@meta.data, Status %in% c("M",'D',"F"))%>%
+data_for_plot = subset(temp_obj@meta.data, Status %in% c("M",'D', 'E','NF',"F"))%>%
   group_by(harmony.wnn_res0.4_clusters, individual, Status)%>%
   summarize(mean_z_score_sum = mean(ieg_z_score_sum))
       
-data_for_plot$Status = factor(data_for_plot$Status, levels = c('M','D','F'))                   
+data_for_plot$Status = factor(data_for_plot$Status, levels = c("M",'D', 'E','NF',"F"))  
+data_for_plot$label = ifelse(data_for_plot$individual=='C13F', 'C13F',NA)
 ggplot(data_for_plot, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = mean_z_score_sum, shape = Status, color = Status))+
   geom_boxplot(alpha = 0, outlier.shape = NA)+
-  geom_point( position = position_dodge(1), size =1.25, color = 'black')+
+  #geom_point( position = position_dodge(1), size =1.25, color = 'black')+
   labs(x = 'Cluster', y = 'Mean IEG Sum Z Score')+
   theme_minimal()+
-  scale_shape_manual(values = c(1,2,3))
+  scale_shape_manual(values = c(1,2,3,4,5))+
+  geom_text(aes(label =label))
 
 
+ggplot(data_for_plot, aes(x = Status, y = mean_z_score_sum, shape = Status, color = Status))+
+  geom_violin()+
+   geom_boxplot(alpha = 0, outlier.shape = NA)
+
+### Stats ####
+library(emmeans)
+emm_options(pbkrtest.limit = 55000)
+sum_z_score_stats <- data.frame()
+for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
+  print(i)
+  data_for_stats = data.frame(
+    sum_z_score = neuronal_only$ieg_z_score_sum,
+    individual = neuronal_only$individual,
+    Status = neuronal_only$Status,
+    cluster = neuronal_only$harmony.wnn_res0.4_clusters)%>%
+    subset(neuronal_only$harmony.wnn_res0.4_clusters == i)
+  
+  model = lmer(sum_z_score~Status + (1|individual), data = data_for_stats)
+  av = car::Anova(model, type = 'III')%>% as.data.frame()
+   pairs = pairs(emmeans(model, 'Status'), adjust = 'none')%>%as.data.frame()
+  
+   temp_data = data.frame(
+     cluster = i,
+     singular = isSingular(model),
+     av_p.value = av$`Pr(>Chisq)`[2],
+     d_f_p.value = pairs$p.value[pairs$contrast== 'D - F'],
+    d_e_p.value = pairs$p.value[pairs$contrast== 'D - E'],
+    d_m_p.value = pairs$p.value[pairs$contrast== 'D - M'],
+    e_f_p.value = pairs$p.value[pairs$contrast== 'E - F'],
+    e_m_p.value = pairs$p.value[pairs$contrast== 'E - M'],
+    f_m_p.value = pairs$p.value[pairs$contrast== 'F - M']
+)
+   sum_z_score_stats <- rbind(sum_z_score_stats, temp_data)
+  
+  }
+
+sum_z_score_stats$av_q.value = p.adjust( sum_z_score_stats$av_p.value, 'fdr',nrow(sum_z_score_stats))
+sum_z_score_stats$d_f_q.value = p.adjust( sum_z_score_stats$d_f_p.value, 'fdr',nrow(sum_z_score_stats))
+sum_z_score_stats$d_e_q.value = p.adjust( sum_z_score_stats$d_e_p.value, 'fdr',nrow(sum_z_score_stats))
+sum_z_score_stats$d_m_q.value = p.adjust( sum_z_score_stats$d_m_p.value, 'fdr',nrow(sum_z_score_stats))
+sum_z_score_stats$e_f_q.value = p.adjust( sum_z_score_stats$e_f_p.value, 'fdr',nrow(sum_z_score_stats))
+sum_z_score_stats$e_m_q.value = p.adjust( sum_z_score_stats$e_m_p.value, 'fdr',nrow(sum_z_score_stats))
+sum_z_score_stats$f_m_q.value = p.adjust( sum_z_score_stats$f_m_p.value, 'fdr',nrow(sum_z_score_stats))
 
 
+sum_z_score_stats$issignif = ifelse(sum_z_score_stats$av_q.value <0.05|
+                                      sum_z_score_stats$d_f_q.value<0.05|
+                                      sum_z_score_stats$d_e_q.value <0.05|
+                                      sum_z_score_stats$d_m_q.value <0.05|
+                                      sum_z_score_stats$e_f_q.value<0.05|
+                                      sum_z_score_stats$e_m_q.value <0.05|
+                                      sum_z_score_stats$f_m_q.value <0.05, '*',
+                                    NA)
+
+#whelp, nothing is significant
