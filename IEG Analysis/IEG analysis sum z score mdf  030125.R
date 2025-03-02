@@ -323,11 +323,12 @@ data_for_plot2$Status = factor(data_for_plot2$Status, levels = c('M','D', 'E','F
 
 box_height =data_for_plot2%>%
   group_by(harmony.wnn_res0.4_clusters)%>%
+  na.omit()%>%
   summarize(up = max(mean_z_score_sum)+max(se_z_score_sum),
             down = min(mean_z_score_sum)-max(se_z_score_sum))
 
 ggplot(data_for_plot2, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = mean_z_score_sum))+
-  geom_rect( aes(xmin = c(((1:92)/4)),
+  geom_rect( aes(xmin = c(((1:92)/4)+.25),
                  xmax = (c(1:92)/4)+0.5,
                  ymax = rep(box_height$up, each = 4), 
                  ymin = rep(box_height$down, each = 4)),
@@ -340,6 +341,7 @@ ggplot(data_for_plot2, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = mean_
                      color = Status),
                   position = position_dodge(0.75))  +
   labs(x = 'Cluster', y = 'Mean IEG Sum Z Score')+
+  geom_vline(xintercept = 1:23+0.5)+
   theme_minimal()
 
 
