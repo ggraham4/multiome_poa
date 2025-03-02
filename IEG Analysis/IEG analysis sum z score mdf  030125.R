@@ -327,12 +327,12 @@ box_height =data_for_plot2%>%
             down = min(mean_z_score_sum)-max(se_z_score_sum))
 
 ggplot(data_for_plot2, aes(x = as.factor(harmony.wnn_res0.4_clusters), y = mean_z_score_sum))+
-  geom_hline(yintercept = 0)+
-  geom_rect( aes(xmin = c(((1:92)/4)+0.5),
-                 xmax = (c(1:92)/4),
+  geom_rect( aes(xmin = c(((1:92)/4)),
+                 xmax = (c(1:92)/4)+0.5,
                  ymax = rep(box_height$up, each = 4), 
                  ymin = rep(box_height$down, each = 4)),
              fill = 'grey')+
+  geom_hline(yintercept = 0, linetype =2)+
   geom_pointrange(aes(x = as.factor(harmony.wnn_res0.4_clusters),
                       y =mean_z_score_sum,
                       ymin = mean_z_score_sum -se_z_score_sum,
