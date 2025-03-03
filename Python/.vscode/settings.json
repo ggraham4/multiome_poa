@@ -1,4 +1,6 @@
 {
     "python.defaultInterpreterPath": "C:\\Users\\Gabe\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
     "python.pythonPath": "C:\\Users\\Gabe\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"
+    "editor.inlineSuggest.enabled": false,
+
 }

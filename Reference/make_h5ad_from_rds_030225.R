@@ -17,9 +17,8 @@ print(slotNames(rna_object@assays$RNA))  # Should include "counts" or "data"
 rna_object <- JoinLayers(rna_object)
 print(slotNames(rna_object@assays$RNA))  # Should include "counts" or "data"
 
-rna_object@assays$RNA@counts = rna_object@assays$RNA$counts
-
-rna.v3 <- CreateAssayObject(counts = rna_object@assays$RNA$counts)
+rna.v3 <- CreateAssayObject( 
+                            data = rna_object@assays$RNA$data)
 rna_object_v3 = CreateSeuratObject(rna.v3)
 rna_object_v3@meta.data = rna_object@meta.data
 
