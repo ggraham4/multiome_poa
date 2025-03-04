@@ -11,6 +11,8 @@ rna.v3 <- CreateAssayObject(
 rna_object_v3 = CreateSeuratObject(rna.v3)
 rna_object_v3@meta.data = rna_object@meta.data
 
+rna_object_v3$harmony.wnn_res0.4_clusters = as.character(rna_object_v3$harmony.wnn_res0.4_clusters)
+
 SaveH5Seurat(rna_object_v3, filename = "C:/Users/Gabe/Desktop/RNA_object_human_names_anndata", overwrite = TRUE)
 
 #it has to be a v3 object oh my christ satija lab should be blown up for doing this
