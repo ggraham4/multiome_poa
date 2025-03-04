@@ -6,6 +6,7 @@ options(Seurat.object.assay.version = "v3")
 
 human_named = readRDS("C:/Users/Gabe/Desktop/RNA_object_human_names.rds")
 
+human_named$harmony.wnn_res0.4_clusters <- as.character(human_named$harmony.wnn_res0.4_clusters)
 Idents(human_named) = human_named$harmony.wnn_res0.4_clusters
 
 # Save normalised counts - NOT scaled!
@@ -25,7 +26,7 @@ library('BiocManager')
 BiocManager::install('limma', force =T)
 library(limma)
 
-DEGs <- FindAllMarkers(human_named,  test.use = 'LR', 
+DEGs <- FindAllMarkers(human_named, 
                                                verbose = T, 
                                                only.pos = T, 
                                                random.seed = 1, 
@@ -33,10 +34,10 @@ DEGs <- FindAllMarkers(human_named,  test.use = 'LR',
                                                min.pct = 0.1, 
                                                return.thresh = 0.05)
 
-fDEGs = subset(DEGs, p_val_adj < 0.05 & avg_logFC > 0.1)
+fDEGs = subset(DEGs, p_val_adj < 0.05 & avg_log2FC  > 0.1)
 
 # 1st column = cluster; 2nd column = gene 
-fDEGs = fDEGs[, c('cluster', 'gene', 'p_val_adj', 'p_val', 'avg_logFC', 'pct.1', 'pct.2')] 
+fDEGs = fDEGs[, c('cluster', 'gene', 'p_val_adj', 'p_val', 'avg_log2FC', 'pct.1', 'pct.2')] 
 
 write.table(fDEGs, file ='A:/CellPhoneDB 030225/human_named_DEGs.tsv', sep = '\t', quote = F, row.names = F)
 
