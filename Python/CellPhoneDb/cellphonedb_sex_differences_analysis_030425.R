@@ -106,7 +106,7 @@ for(interacting_pair in unique_interactions){
 
 }
 
-
+saveRDS(cluster_pair_list, 'A:/CellPhoneDB 030225/coalesced_list_030525.RDS')
 
 
 
