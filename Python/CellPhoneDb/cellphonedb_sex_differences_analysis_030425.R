@@ -65,5 +65,49 @@ for(interacting_pair in sample(unique_interactions,10)){
   }
   hist(interacting_pair_data[,2])
 }
-### ok so a lot of them stack at 0 and others are normally distributed. In this case what do I do?
+### if more than 4 == 0, use fisher, else, use lm
+
+#first, make a loop to coalesce all the data
+
+cluster_pair_list = list()  
+for(interacting_pair in unique_interactions){
+  print(interacting_pair)
+  
+  full_cluster_pair_data = data.frame()
+ 
+  for(cluster_pair in unique_cell_cell_pairs){
+    
+    cluster_pair_data = data.frame()
+    for(i in individuals){
+      
+      data =  individual_data[[i]]$means
+      
+      columns = colnames(data)
+      
+      if(cluster_pair %notin% columns){next}
+      
+      mean = data[data$interacting_pair == interacting_pair, cluster_pair]
+      colnames(mean) = 'mean'
+      
+      if(nrow(mean)==0){next}
+      
+      newd = data.frame(individual =i,
+                        interacting_pair = interacting_pair,
+                        cluster_pair = cluster_pair,
+                       mean = mean)
+      cluster_pair_data = rbind(cluster_pair_data, newd)
+      
+      
+    }
+    full_cluster_pair_data =rbind(cluster_pair_data, full_cluster_pair_data)
+  }
+  cluster_pair_list[[interacting_pair]] =full_cluster_pair_data
+  
+
+}
+
+
+
+
+
 
