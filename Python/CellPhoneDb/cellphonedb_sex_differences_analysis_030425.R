@@ -7,7 +7,7 @@ library(Seurat)
 human_named = readRDS("C:/Users/Gabe/Desktop/RNA_object_human_names.rds")
 
 ## first, figure out all pathways is analyzed
-example_data = read_tsv("A:/CellPhoneDB 030225/simple_analysis_means_result_03_03_2025_194650.txt")
+example_data = read_tsv("A:/CellPhoneDB 030225/degs_analysis_means_03_03_2025_224407.txt")
 
 unique_interactions = unique(example_data$interacting_pair)
 unique_cell_cell_pairs = colnames(example_data[,14:ncol(example_data)])
@@ -106,8 +106,35 @@ for(interacting_pair in unique_interactions){
 
 }
 
+
 saveRDS(cluster_pair_list, 'A:/CellPhoneDB 030225/coalesced_list_030525.RDS')
+test_pull = readRDS('A:/CellPhoneDB 030225/coalesced_list_030525.RDS')
 
 
+hist(cluster_pair_list[["Dihydrotestosterone_bySRD5A1_AR"]]$mean)
+#ok so these might actually be negative binomially distributed
+hist(cluster_pair_list[["CCK_CCKBR"]]$mean) #this is a neuropeptide so it should have high expression
+hist(cluster_pair_list[["CCK_CCKAR"]]$mean) #ok these seem to be gamma distributed
+hist(cluster_pair_list[["TAC1_TACR1"]]$mean) 
+hist(cluster_pair_list[["TAC1_TACR3"]]$mean) 
+#i wonder if model like glmer.nb(interacting_pair~Status*cluster_pair) might be better as a broad model and then 
+#each subsequent model only evaluates what is significnat in the first model
 
+## add sex into the df
+individual_by_sex_data = data.frame(human_named$individual, human_named$Status)%>%distinct()
+ccka_cckar_sex = cluster_pair_list[["CCK_CCKAR"]]%>%
+  right_join(individual_by_sex_data, by =join_by('individual'== 'human_named.individual'))%>%
+  na.omit()
+
+
+###Ok so the data is actually not normally distributed, it is gamma distributed
+library(glmmTMB)
+
+test_model = glmmTMB(mean+1~human_named.Status*cluster_pair,
+                     data = ccka_cckar_sex,
+                     family = Gamma())
+
+summary(test_model)
+
+# a way to cut down this data might be to pull in "relevant_interactions.txt" and eliminate any interactions that are 0
 
