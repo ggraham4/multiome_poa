@@ -126,10 +126,18 @@ for(interacting_pair in unique_interactions){
 }
 
 #theres a way to do this in parallel but I dont want to think to hard, i'll just let it run, make sure to save it
+signif_data2 =signif_data
 
-signif_data_bound = do.call(rbind, signif_data)
+for(i in names(signif_data2)){
+  signif_data2[[i]]$main_effect_q.value = p.adjust(signif_data2[[i]]$main_effect_p.value, 'fdr',nrow(signif_data2[[i]]))
+  
+  
+}
+
+# do p adjust within interacting pair not across, 72K will kill any p values
+
+signif_data_bound = do.call(rbind, signif_data2)
 rownames(signif_data_bound) =(1:nrow(signif_data_bound))
 
 write_csv(signif_data_bound, 'A:/CellPhoneDB 030225/signif_data_bound.csv')
-
 
