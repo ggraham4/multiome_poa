@@ -130,6 +130,6 @@ for(interacting_pair in unique_interactions){
 signif_data_bound = do.call(rbind, signif_data)
 rownames(signif_data_bound) =(1:nrow(signif_data_bound))
 
-
+write_csv(signif_data_bound, 'A:/CellPhoneDB 030225/signif_data_bound.csv')
 
 
