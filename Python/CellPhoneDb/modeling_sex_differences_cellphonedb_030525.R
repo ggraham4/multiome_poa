@@ -126,3 +126,10 @@ for(interacting_pair in unique_interactions){
 }
 
 #theres a way to do this in parallel but I dont want to think to hard, i'll just let it run, make sure to save it
+
+signif_data_bound = do.call(rbind, signif_data)
+rownames(signif_data_bound) =(1:nrow(signif_data_bound))
+
+
+
+
