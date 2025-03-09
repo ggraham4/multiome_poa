@@ -30,7 +30,7 @@ for(interacting_pair in unique_interactions){
   
   interacting_pair_data = data.frame()
   for(cluster_pair in unique(full_data$cluster_pair)){
-    if(grepl(cluster_pair, '31') ==T | grepl(cluster_pair, '15')==T){next} ### skip clusters 15 and 31, they are no goof
+    if(grepl(cluster_pair, '30') ==T | grepl(cluster_pair, '15')==T){next} ### skip clusters 15 and 31, they are no goof
     
     temp_data = full_data[full_data$cluster_pair == cluster_pair,]
 
