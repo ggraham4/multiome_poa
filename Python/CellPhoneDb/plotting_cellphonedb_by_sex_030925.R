@@ -62,10 +62,9 @@ plot_communication_cluster_pair = function(interacting_pair, cluster_pair, indiv
   
   ## plot
   full_data$Status <- factor(full_data$Status, levels = c('M','D','E','NF',"F"))
-  plot <- ggplot(full_data, aes(x = Status, y = mean, color = Status, shape = Status))+
-    geom_boxplot(outlier.shape = NA)+
-    geom_jitter(size = 3)+
-    scale_shape_manual(values = c(1,2,3,4,5))+
+  plot <- ggplot(full_data, aes(x = Status, y = mean, color = Status))+
+    geom_boxplot(outlier.shape = NA, alpha = 0.25, aes(fill= Status))+
+    geom_jitter(size = 3, color = 'black', shape =1)+
     theme_classic()+
     labs(y = paste0(interacting_pair), title = paste0('Clusters ',cluster_pair))
   plot
@@ -82,7 +81,25 @@ plot_communication_cluster_pair('Glutamate_byGLS_and_SLC17A7_GRM7', '27|14',indi
 
 plot_communication_cluster_pair('Dehydroepiandrosterone_bySTS_PPARA', '24|21',individuals_meta_data )
 
-  
-  
-  
+plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2|19',individuals_meta_data )
+
+plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2|2',individuals_meta_data )
+
+plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2|11',individuals_meta_data )
+
+plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2|8',individuals_meta_data )
+
+plot_communication_cluster_pair('Dehydroepiandrosterone_bySTS_PPARA', '24|20',individuals_meta_data )
+
+plot_communication_cluster_pair('Dehydroepiandrosterone_bySTS_PPARA', '24|23',individuals_meta_data )
+
+plot_communication_cluster_pair('Dehydroepiandrosterone_bySTS_PPARA', '24|11',individuals_meta_data )
+
+plot_communication_cluster_pair('LRRTM4_NRXN2', '10|24',individuals_meta_data )
+
+plot_communication_cluster_pair('LRRTM4_NRXN2', '18|8',individuals_meta_data )
+
+plot_communication_cluster_pair('Glutamate_byGLS_and_SLC17A7_GRM7', '27|14',individuals_meta_data )
+
+plot_communication_cluster_pair('Glutamate_byGLS_and_SLC1A6_GRM1', '12|19',individuals_meta_data )
 
