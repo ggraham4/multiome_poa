@@ -262,4 +262,81 @@ for(i in unique(neuronal_only$harmony.wnn_res0.4_clusters)){
   glmer_av_output <- rbind(glmer_av_output, newd)
 }
 
+library(ggsignif)
+#plot clusters 10, 13, 21
+
+clust_10 = subset(ieg_positive, harmony.wnn_res0.4_clusters==10)
+clust_10$prop_pos = clust_10$ieg_pos/(clust_10$ieg_pos+clust_10$ieg_neg)
+
+clust_10_plot <- ggplot(clust_10, aes(x = Status,  y = prop_pos))+
+  geom_boxplot(outlier.shape = NA, aes(color = Status, fill = Status), alpha = 0.25)+
+  geom_jitter(fill = NA, shape = 1, size = 2)+
+  theme_classic()+
+  labs(y = 'Proportion IEG+', x = 'Sex', fill = 'Sex',color ="Sex", title ="Cluster 10")+
+  theme(legend.position = 'none', plot.title = element_text(hjust=0.5))+
+  theme(legend.position = 'none')+
+  theme(axis.text.y = element_text(size = 10), axis.text.x = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
+  geom_signif(xmin = 1, xmax = 3, y_position = 0.7, annotation = '*', color = 'black', textsize = 7, tip_length =c(0,0))+
+  ylim(0,1.2*0.7)
+clust_10_plot
+
+ggsave(plot = clust_10_plot,
+       file = "prop_ieg_clust_10.svg",
+       device = "svg",
+       units = "in",
+       width = 2,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 2")
+
+
+
+clust_13 = subset(ieg_positive, harmony.wnn_res0.4_clusters==13)
+clust_13$prop_pos = clust_13$ieg_pos/(clust_13$ieg_pos+clust_13$ieg_neg)
+
+clust_13_plot <- ggplot(clust_13, aes(x = Status,  y = prop_pos))+
+  geom_boxplot(outlier.shape = NA, aes(color = Status, fill = Status), alpha = 0.25)+
+  geom_jitter(fill = NA, shape = 1, size = 2)+
+  theme_classic()+
+  labs(y = 'Proportion IEG+', x = 'Sex', fill = 'Sex',color ="Sex", title ="Cluster 13")+
+  theme(legend.position = 'none', plot.title = element_text(hjust=0.5))+
+  theme(legend.position = 'none')+
+  theme(axis.text.y = element_text(size = 10), axis.text.x = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
+  geom_signif(xmin = 1, xmax = 3, y_position = 1.2, annotation = '*', color = 'black', textsize = 7, tip_length =c(0,0))+
+  ylim(0,1.2*1.2)
+clust_13_plot
+
+ggsave(plot = clust_13_plot,
+       file = "prop_ieg_clust_13.svg",
+       device = "svg",
+       units = "in",
+       width = 2,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 2")
+
+
+
+clust_21 = subset(ieg_positive, harmony.wnn_res0.4_clusters==21)
+clust_21$prop_pos = clust_21$ieg_pos/(clust_21$ieg_pos+clust_21$ieg_neg)
+
+clust_21_plot <- ggplot(clust_21, aes(x = Status,  y = prop_pos))+
+  geom_boxplot(outlier.shape = NA, aes(color = Status, fill = Status), alpha = 0.25)+
+  geom_jitter(fill = NA, shape = 1, size = 2)+
+  theme_classic()+
+  labs(y = 'Proportion IEG+', x = 'Sex', fill = 'Sex',color ="Sex", title ="Cluster 21")+
+  theme(legend.position = 'none', plot.title = element_text(hjust=0.5))+
+  theme(axis.text.y = element_text(size = 10), axis.text.x = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
+  geom_signif(xmin = 1, xmax = 1.9, y_position = .8, annotation = '*', color = 'black', textsize = 7, tip_length =c(0,0))+
+  geom_signif(xmin = 2.1, xmax = 3, y_position = .8, annotation = '*', color = 'black', textsize = 7, tip_length =c(0,0))+
+  ylim(0,1.2*.8)
+clust_21_plot
+
+ggsave(plot = clust_21_plot,
+       file = "prop_ieg_clust_21.svg",
+       device = "svg",
+       units = "in",
+       width = 2,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 2")
+
+
 
