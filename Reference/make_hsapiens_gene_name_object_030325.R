@@ -1,7 +1,6 @@
 ### Trying to replicate zack's code
 ### neuronchat_by_individual_100423
 
-library(CellChat)
 library(patchwork)
 library(stringr)
 
@@ -32,6 +31,19 @@ combined_data <- ocellaris_to_hsapiens1%>%
   dplyr::select(-1)%>%
   distinct()
 colnames(combined_data)= c('hsapiens_name', 'aocellaris_name')
+
+##manually fix some problems 
+##kisspeptin names are fucked 
+combined_data$hsapiens_name <- ifelse(combined_data$aocellaris_name %in% c('kiss2', 'kiss1'), 'KISS1',combined_data$hsapiens_name )
+combined_data$hsapiens_name <- ifelse(combined_data$aocellaris_name %in% c('kiss1ra', 'kiss1rb'), 'KISS1R',combined_data$hsapiens_name )
+combined_data$hsapiens_name <- ifelse(combined_data$aocellaris_name %in% c('galr1a'), 'GALR1',combined_data$hsapiens_name )
+
+##somehow it gets oxt and avp backward, maybe I need to think of a better approach
+combined_data$hsapiens_name <- ifelse(combined_data$aocellaris_name %in% c('oxt'), 'OXT',combined_data$hsapiens_name )
+combined_data$hsapiens_name <- ifelse(combined_data$aocellaris_name %in% c('avp'), 'AVP',combined_data$hsapiens_name )
+combined_data$hsapiens_name <- ifelse(combined_data$aocellaris_name %in% c('avpr2b', 'avpr2l'), 'AVPR2',combined_data$hsapiens_name )
+
+#it seems like most of my genes have good coverage re the cellphone db database so I think I'm otherwise ok
 
 ##save
 write.csv(combined_data, 'C:/Users/Gabe/Desktop/multiome_poa/Reference/hsapiens_to_aocellaris.csv')

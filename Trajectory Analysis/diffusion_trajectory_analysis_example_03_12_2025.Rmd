@@ -1,0 +1,154 @@
+Here, I am going to explore a few different trajectory analyses 
+
+Load libraries
+```{r}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+
+library(Seurat)
+library(ggplot2)
+library(tidyverse)
+
+```
+
+Read in multiome object
+```{r}
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+```
+Looks good to me
+```{r}
+Idents(obj) <-'harmony.wnn_res0.4_clusters'
+DimPlot(obj, reduction = 'harmony_wnn.umap')
+```
+#Diffusion based Pseudotime
+```{r}
+#library(devtools)
+#devtools::install_git('https://github.com/theislab/destiny.git', force = T)
+library(destiny)
+```
+
+Convert object to single cell experiment
+```{r}
+library(SingleCellExperiment)
+sce <- as.SingleCellExperiment(obj)
+```
+
+Run diffusion on variable genes
+```{r}
+var_genes = VariableFeatures(obj)
+```
+
+Explicity specify destiny package
+```{r}
+dm = DiffusionMap(sce, k =30, n_pcs =20, verbose =T)
+```
+
+Extract first two diffusion components
+```{r}
+dc <- eigenvectors(dm)[,1:2]
+```
+
+Add coordinates to Seurat obj
+```{r}
+obj[['diffmap']]<- CreateDimReducObject(
+  embeddings = dc,
+  key = 'DC_',
+  assay = 'RNA'
+)
+```
+
+Calculate diffusion Pseudotime - set radial glia to root
+```{r}
+root_cell_type <- '2'
+#find radial glia indicies
+root_cell_indicies <- which(obj$harmony.wnn_res0.4_clusters == root_cell_type)
+
+#choose median radial glia as root
+root_cell_dc <- dc[root_cell_indicies,]
+root_cell_center <- colMeans(root_cell_dc)
+
+#calculate distances for all cells
+dists <- apply(root_cell_dc, 1, function(x) sum((x- root_cell_center)^2))
+
+#set smallest distance as root cell
+root_cell <- root_cell_indicies[which.min(dists)]
+
+```
+Calculate diffusion pseudotime - run
+```{r}
+dpt <- DPT(dm, tips = root_cell)
+```
+Add to Seurat Object
+```{r}
+obj$diffusion_pseudotime <- rank(dpt$dpt) #why do rank also what is rank 
+obj$diffusion_pseudotime <- 100* (obj$diffusion_pseudotime-
+  min(obj$diffusion_pseudotime))/
+  (max(obj$diffusion_pseudotime)-
+     min(obj$diffusion_pseudotime)) ##have no idea what this does, I think it normalizes?
+# ok so its 100 * (score above min)/range(score) so its a percentage I think
+```
+
+Visualize
+```{r}
+p1 <- ggplot(data.frame(DC1 = dc[,1],
+                        DC2 = dc[,2],
+                        CellType = obj$harmony.wnn_res0.4_clusters))+
+  geom_point(aes(x = DC1, y = DC2, color = CellType), size = 1)+
+  theme_minimal()+
+  guides(color = guide_legend(override.aes =list(size =3)))+ #waht does this do??
+  labs(title= "Diffusion Map", x = 'DC1',y = 'Dc2')
+
+p2 <- FeaturePlot(obj, features = 'diffusion_pseudotime',
+                  reduction = 'harmony_wnn.umap',
+                  label = T,
+                  pt.size = 1)+
+  scale_color_viridis_c()+
+  labs(title = 'Diffusion Pseudotime')
+
+p1+p2
+```
+
+Alright I want to plot by celltype
+```{r}
+diff_score_data <- data.frame(individual = obj$individual,
+                              Status = obj$Status, 
+                              cluster = obj$harmony.wnn_res0.4_clusters,
+                              pseudotime = obj$diffusion_pseudotime)%>%
+  group_by(individual, Status, cluster)%>%
+  summarize(pseudotime = mean(pseudotime),
+            se_pseudotime = sd(pseudotime)/sqrt(n()))
+library(forcats)
+diff_score_data$Status <- factor(diff_score_data$Status, levels = c('NRM','M','D',"E",'NF','F'))
+
+plot <- ggplot(diff_score_data, aes(x = fct_reorder(cluster, pseudotime), y = pseudotime))+
+  geom_jitter(size = 1, alpha =0.5, aes(color = Status))+
+  geom_boxplot(fill = NA, outlier.shape = NA)+
+  theme_minimal()+
+  labs(x = 'Cluster',y = 'Mean +/- SE Diff Pseudotime')
+plot
+
+
+```
+Not surprising that 22 is closest because ependymal cells are related to radial glia. What is surprising is that 28 is so low on this, also 19 
+Very surprising to me that OPCs and oligodendrocytes are so far on this, what? 
+26 and 14, 29 should not be in this, that is probably confusing it.
+29 is so variable it makes me very interested to see it's cytotrace score
+It's interesting that it thinks 27 is so old, that disagrees with the CytoTRACE
+It looks like there is kind of a plateau in 19-0
+
+I think next is to look at Slingshot, that may be more accurate. My prior beleifs are that OPCs and 27 should be low on pseudotime due to their stem-nature
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
