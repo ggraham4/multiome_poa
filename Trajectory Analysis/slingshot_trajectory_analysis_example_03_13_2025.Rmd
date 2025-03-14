@@ -1,0 +1,127 @@
+---
+title: "Slingshot Trajectory Analysis"
+author: "Gabriel Graham"
+date: "2025-03-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
+Load libraries
+```{r}
+library(Seurat)
+library(ggplot2)
+library(tidyverse)
+library(BiocManager)
+library(SingleCellExperiment)
+
+```
+
+Install slingshot
+```{r}
+BiocManager::install('slingshot')
+library(slingshot)
+```
+
+Read in object
+```{r}
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+DimPlot(obj, reduction = 'harmony_wnn.umap', label=T)
+```
+#Slingshot Pseudotime
+Make SCE
+```{r}
+sce= SingleCellExperiment(assays = list(
+  counts = GetAssayData(obj, slot='counts'),
+  logcounts = GetAssayData(obj, slot='data')
+))
+
+reducedDims(sce)= list(
+  PCA = Embeddings(obj),
+  UMAP = Embeddings(obj, 'harmony_rnaUMAP')
+)
+
+colData(sce)$cell_type = obj$harmony.wnn_res0.4_clusters
+colData(sce)$cluster = obj$harmony.wnn_res0.4_clusters
+```
+
+Run Slingshot
+```{r}
+set.seed(123)
+sce <- slingshot(sce, 
+                 clusterLabels = 'cluster',
+                 reducedDim = 'UMAP',
+                 start.clus = '2')
+
+```
+
+Normalize and add to seurat obj
+```{r}
+pseudotime_slingshot <- slingPseudotime(sce)
+avg_pseudotime <- rowMeans(pseudotime_slingshot, na.rm = T)
+avg_pseudotime[is.na(avg_pseudotime)] <- min(avg_pseudotime, na.rm =T)
+avg_pseudotime_norm <- 100* (avg_pseudotime - min(avg_pseudotime))/
+  (max(avg_pseudotime)- min(avg_pseudotime))
+
+obj$slingshot_pseudotime <- avg_pseudotime_norm
+
+curves = slingCurves(sce)
+umap_coords <- reducedDims(sce)$UMAP
+```
+
+Plot
+```{r}
+plot_data <- data.frame(UMAP1 =umap_coords[,1],
+                        UMAP2 = umap_coords[,2],
+                        Pseudotime = obj$slingshot_pseudotime,
+                        CellType = obj$harmony.wnn_res0.4_clusters)
+
+slingshot_plot <- ggplot(plot_data, aes(x = UMAP1, y = UMAP2, color = Pseudotime))+
+  geom_point(suze =0.8, alpha = 0.7)+
+  scale_color_viridis_c()+
+  labs(title = 'Slingshot Trajectories')+
+  theme_minimal()
+#add curves
+for(i in seq_along(curves)){
+  curve_data <- data.frame(UMAP1 = curves[[i]]$s[,1],
+                           UMAP2 = curves[[i]]$s[,2])
+  slingshot_plot <- slingshot_plot+ 
+    geom_path(data = curve_data, aes(x = UMAP1, y = UMAP2),
+              size = 1, color = 'black', alpha = 0.8)
+  
+}
+
+std_umap <-DimPlot(obj, reduction = 'harmony_rnaUMAP', label=T)
+
+print(slingshot_plot + std_umap)
+
+
+```
+This is kinda beautiful
+Both using the RNA and wnn umap makes 27 v old
+Also doesnt make senes that oligodendrocytes come from cluster 9 lmao, this needs to be on a more strict basis
+
+```{r}
+diff_score_data <- data.frame(individual = obj$individual,
+                              Status = obj$Status, 
+                              cluster = obj$harmony.wnn_res0.4_clusters,
+                              pseudotime = obj$slingshot_pseudotime)%>%
+  group_by(individual, Status, cluster)%>%
+  summarize(pseudotime = mean(pseudotime),
+            se_pseudotime = sd(pseudotime)/sqrt(n()))
+library(forcats)
+diff_score_data$Status <- factor(diff_score_data$Status, levels = c('NRM','M','D',"E",'NF','F'))
+
+plot <- ggplot(diff_score_data, aes(x = fct_reorder(cluster, pseudotime), y = pseudotime))+
+  geom_jitter(size = 1, alpha =0.5, aes(color = Status))+
+  geom_boxplot(fill = NA, outlier.shape = NA)+
+  theme_minimal()+
+  labs(x = 'Cluster',y = 'Mean +/- SE Sling Pseudotime')
+plot
+
+
+```
+Again, very high variation for 29 and 18 is very far, why?
