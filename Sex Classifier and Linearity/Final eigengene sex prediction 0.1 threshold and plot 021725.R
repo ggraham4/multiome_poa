@@ -29,7 +29,7 @@
   library(glmnet)  
 }
 
-obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
 
 mean_expression_cluster_data<- function(object, gene, cluster, clustering = 'harmony.wnn_res0.4_clusters'){
   options(dplyr.summarise.inform = FALSE)
@@ -204,24 +204,25 @@ pca_predictions_merged_cluster$Progression <- ifelse(is.na(pca_predictions_merge
 pca_predictions_merged_cluster_plot <- pca_predictions_merged_cluster%>%
   right_join(p_val_data, by = 'cluster')
 
+#write.csv(pca_predictions_merged_cluster_plot, 'Sex Classifier and Linearity/sex_predictions_03_13_2025.csv')
+
 pca_pred_plot <- ggplot(subset(pca_predictions_merged_cluster_plot, cluster %notin% c(15,30)), aes(x = fct_reorder(as.factor(cluster), mean_pred), y = mean_pred, color = Progression, shape = Progression))+
   geom_pointrange(aes(x = fct_reorder(as.factor(cluster), mean_pred), y = mean_pred, ymin = mean_pred-se_pred, ymax=mean_pred+se_pred))+
   geom_text(aes(x =  fct_reorder(as.factor(cluster), mean_pred), y = 1.05*(mean_pred+se_pred+0.01), label = asterisk), color = 'black', size =10)+
-  labs(x = 'Cluster', y = 'Mean Prediction +/- SE')+
-  theme_classic()+
-  #theme(legend.position = c(0.15,.85))+
-    theme(legend.position = 'none')+
+  labs(x = 'Cluster', y = 'Mean Predicted Sex +/- SE', color = 'Predicted Sex', shape = 'Predicted Sex')+
+  theme_minimal()+
+  theme(legend.position = c(0.17,(0.77)))+
   theme(axis.text.x = element_text(size = 10,angle = -90, vjust = 1, hjust=0), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
-  ylim(0,1)
+  ylim(0,1.2)
 
 pca_pred_plot
-length(pca_predictions_merged_cluster_plot$cluster[pca_predictions_merged_cluster_plot$cluster %notin% c(15,30)])
+#length(pca_predictions_merged_cluster_plot$cluster[pca_predictions_merged_cluster_plot$cluster %notin% c(15,30)])
 
-ggsave(plot = pca_pred_plot,
-       file = "pca_pred_plot.svg",
-       device = "svg",
-       units = "in",
-       width = 4,
-       height = 2.3,
-       path = "Bachelors Thesis/Plots/Figure 2")
+#ggsave(plot = pca_pred_plot,
+ #      file = "pca_pred_plot.svg",
+  #     device = "svg",
+   #    units = "in",
+    #   width = 4.5,
+     #  height = 2.5,
+      # path = "Bachelors Thesis/Plots/Figure 3")
 
