@@ -80,10 +80,16 @@ merged <- IntegrateLayers(object = merged, method = HarmonyIntegration, orig.red
                           new.reduction = "integrated.harmony",
                         verbose = FALSE)
 
+merged[["RNA"]] <- JoinLayers(merged[["RNA"]])
 
+merged <- FindNeighbors(merged, reduction = "integrated.harmony", dims = 1:30)
+merged <- FindClusters(merged, resolution = 1)
 
+merged <- RunUMAP(merged, dims = 1:30, reduction = "integrated.harmony")
 
-
+DimPlot(merged, reduction = "umap", group.by = c("source"))
+DimPlot(merged, reduction = "umap", group.by = c("harmony.wnn_res0.4_clusters"))
+DimPlot(merged, reduction = "umap", group.by = c("clusters49"))
 
 
 
