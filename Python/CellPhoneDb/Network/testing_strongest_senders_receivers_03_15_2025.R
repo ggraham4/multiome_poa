@@ -127,7 +127,7 @@ out_data$perm_p_rec <- perm_p_recs
 out_data$sig_rec <- ifelse(out_data$perm_p_rec<0.05, '*', NA)
 out_data$sig_send <- ifelse(out_data$perm_p_send<0.05, '*', NA)
 
-#write.csv(out_data, 'Python/CellPhoneDb/Network/permutatin_testing_senders_receivers_03_15_2025.csv')
+#write.csv(out_data, 'Python/CellPhoneDb/Network/permutation_testing_senders_receivers_03_15_2025.csv')
 
 ### testing if a cluster_cluster pair is significant - do that later...
 
