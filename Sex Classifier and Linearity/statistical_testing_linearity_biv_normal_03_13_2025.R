@@ -202,7 +202,7 @@ continuity_plot2 <- ggplot(subset(continuity_data_2_summarized, cluster %notin% 
   geom_text(aes(label = issignif,x =fct_reorder(as.factor(cluster), mean_continuum_score), y = 1.05*(mean_continuum_score+se)), color = 'black', size=10, show.legend = F)
 continuity_plot2
 
-write.csv(continuity_data_2_summarized, 'Sex Classifier and Linearity/linearity_score_03_13_2025.csv')
+#write.csv(continuity_data_2_summarized, 'Sex Classifier and Linearity/linearity_score_03_13_2025.csv')
 
 ggsave(plot = continuity_plot2,
        file = "continuity_plot_individual.svg",
