@@ -1,3 +1,4 @@
+#linearity score recording mahalanobis distance
 {
   library(parallel)
   library(clusterProfiler)
@@ -98,20 +99,6 @@ continuity_individual <- function(degs, cluster, clustering = 'harmony.wnn_res0.
   #simulate data from males and females
   simulated_data <- mvrnorm(n = 10000, mu = mu_hat, Sigma = Sigma_hat)
   
-  #calculate p-value for mean dominant
-  dom_data <- cluster_pca_loadings%>%
-    subset(Sex == 'D')
-  
-  dom_PC1 <- mean(dom_data[,1])
-  dom_PC2 <- mean(dom_data[,2])
-  point <- c(dom_PC1, dom_PC2)
-  
-  #calculate mahalanobis distance
-  mahalanobis_dist <- mahalanobis(point, mu_hat, Sigma_hat)
-  
-  # Compute p-value using chi-square distribution with 2 degrees of freedom
-  p_value <- 1 - pchisq(mahalanobis_dist, df = 2)
-  p_value
   
   ### continue with continuity score ###
   grouped_means <- cluster_pca_loadings %>%
@@ -122,7 +109,7 @@ continuity_individual <- function(degs, cluster, clustering = 'harmony.wnn_res0.
   mean_m <- grouped_means[grouped_means$Sex=='M',2:3]
   
   mean_f <- grouped_means[grouped_means$Sex=='F',2:3]
-
+  
   #calculate the distance between the mean male and female
   f_m_distance <- stats::dist(rbind(as.numeric(mean_m), as.numeric(mean_f)))
   
@@ -134,17 +121,28 @@ continuity_individual <- function(degs, cluster, clustering = 'harmony.wnn_res0.
     
     dominant_data <- cluster_pca_loadings[cluster_pca_loadings$individual == u,1:2]
     
+    #calculate p-value for mean dominant
+    dom_data <- cluster_pca_loadings%>%
+      subset(Sex == 'D' & individual ==u)
     
-    dominant_m_distance <- stats::dist(rbind(as.numeric(mean_m), as.numeric(dominant_data)))
+    dom_PC1 <- dom_data[,1]
+    dom_PC2 <- dom_data[,2]
+    point <- c(dom_PC1, dom_PC2)
     
-    dominant_f_distance <- stats::dist(rbind(as.numeric(dominant_data), as.numeric(mean_f)))
+    #calculate mahalanobis distance
+    mahalanobis_dist <- mahalanobis(point, mu_hat, Sigma_hat)
     
-    continuum_score_individual <- f_m_distance/(dominant_m_distance+dominant_f_distance)
-    
+    # Compute p-value using chi-square distribution with 2 degrees of freedom
+    p_value <- 1 - pchisq(mahalanobis_dist, df = 2)
+    p_value
+
+
     new_data <- data.frame(
       cluster = cluster,
       individual = u,
-      continuum_score_individual =continuum_score_individual,
+      mahalanobis_dist =mahalanobis_dist,
+      f_m_distance  = f_m_distance,
+      normalized_mahalanobis = (mahalanobis_dist/f_m_distance),
       p_value = p_value
     )
     individual_data <- rbind(individual_data, new_data)
@@ -178,39 +176,45 @@ for(i in 0:31){
   
   
 }
-
+library(psych)
 continuity_data_2_summarized <- continuity_data_2%>%
   group_by(cluster)%>%
-  subset(cluster != '15' & cluster != '31')%>%
-  summarize(mean_continuum_score = mean(continuity_score.continuum_score_individual),
-            se =  sd(continuity_score.continuum_score_individual)/sqrt(n()),
-            p_value = mean(continuity_score.p_value))
+  summarize(mean_mahalanobis = mean(continuity_score.mahalanobis_dist),
+            mean_normal_mahalanobis = mean(continuity_score.normalized_mahalanobis),
+            se_normal = sd(continuity_score.normalized_mahalanobis)/sqrt(n()),
+            se =  sd(continuity_score.mahalanobis_dist)/sqrt(n()),
+            p_value = harmonic.mean(continuity_score.p_value))
 
+(max(continuity_data_2_summarized$mean_mahalanobis)-min(continuity_data_2_summarized$mean_mahalanobis))/3
 
 continuity_data_2_summarized$issignif <- ifelse(continuity_data_2_summarized$p_value<0.05, '*', NA)
-continuity_data_2_summarized$Linearity <- ifelse(continuity_data_2_summarized$mean_continuum_score<0.33, 'Nonlinear', NA)
-continuity_data_2_summarized$Linearity <- ifelse(continuity_data_2_summarized$mean_continuum_score>0.66, 'Linear', continuity_data_2_summarized$Linearity)
+continuity_data_2_summarized$Linearity <- ifelse(continuity_data_2_summarized$mean_mahalanobis>17.01467*2, 'Nonlinear', NA)
+continuity_data_2_summarized$Linearity <- ifelse(continuity_data_2_summarized$mean_mahalanobis<(17.01467), 'Linear', continuity_data_2_summarized$Linearity)
 continuity_data_2_summarized$Linearity <- ifelse(is.na(continuity_data_2_summarized$Linearity ), 'Intermediate', continuity_data_2_summarized$Linearity)
 
+continuity_data_2_summarized$mahalanobis_percent <- 100* log(((continuity_data_2_summarized$mean_mahalanobis) - min(continuity_data_2_summarized$mean_mahalanobis))/
+  (max(continuity_data_2_summarized$mean_mahalanobis)- min(continuity_data_2_summarized$mean_mahalanobis)))
+
+hist(continuity_data_2_summarized$mahalanobis_percent)
 ###plot this result
-continuity_plot2 <- ggplot(subset(continuity_data_2_summarized, cluster %notin% c(15,30)), aes(x =fct_reorder(as.factor(cluster), mean_continuum_score), y = mean_continuum_score, color = Linearity, shape = Linearity))+
-  geom_pointrange(aes(x =fct_reorder(as.factor(cluster), mean_continuum_score), y = mean_continuum_score, ymin = mean_continuum_score-se, ymax = mean_continuum_score+se))+
+continuity_plot2 <- ggplot(subset(continuity_data_2_summarized, cluster %notin% c(15,30)), aes(x =fct_reorder(as.factor(cluster), mean_mahalanobis), y = mean_mahalanobis, color = Linearity, shape = Linearity))+
+  geom_pointrange(aes(x =fct_reorder(as.factor(cluster), mean_mahalanobis), y = mean_mahalanobis, ymin = mean_mahalanobis-se, ymax = mean_mahalanobis+se))+
   theme_minimal()+
   labs(x = 'Cluster', y = 'Linearity Score +/- SE')+
   theme(legend.position = c(0.17,.77))+
   theme(axis.text.x = element_text(size = 10,angle = -90, vjust = 1, hjust=0), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))+
-  geom_text(aes(label = issignif,x =fct_reorder(as.factor(cluster), mean_continuum_score), y = 1.05*(mean_continuum_score+se)), color = 'black', size=10, show.legend = F)
+  geom_text(aes(label = issignif,x =fct_reorder(as.factor(cluster), mean_mahalanobis), y = 1.05*(mean_mahalanobis+se)), color = 'black', size=10, show.legend = F)
 continuity_plot2
 
-write.csv(continuity_data_2_summarized, 'Sex Classifier and Linearity/linearity_score_03_13_2025.csv')
+#write.csv(continuity_data_2_summarized, 'Sex Classifier and Linearity/linearity_score_03_13_2025.csv')
 
-ggsave(plot = continuity_plot2,
-       file = "continuity_plot_individual.svg",
-       device = "svg",
-       units = "in",
-       width = 4.5,
-       height = 2.5,
-       path = "Bachelors Thesis/Plots/Figure 3")
+#ggsave(plot = continuity_plot2,
+#       file = "continuity_plot_individual.svg",
+#       device = "svg",
+#      units = "in",
+#     width = 4.5,
+#    height = 2.5,
+#   path = "Bachelors Thesis/Plots/Figure 3")
 
 
 
