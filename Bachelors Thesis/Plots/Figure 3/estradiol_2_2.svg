@@ -50,27 +50,27 @@
 <line x1='101.17' y1='83.25' x2='101.17' y2='89.50' style='stroke-width: 1.07; stroke: #E76BF3; stroke-linecap: butt;' />
 <polygon points='95.82,76.22 95.82,83.25 106.51,83.25 106.51,76.22 95.82,76.22 ' style='stroke-width: 1.07; stroke: #E76BF3; stroke-linecap: butt; stroke-linejoin: miter; fill: #E76BF3; fill-opacity: 0.25;' />
 <line x1='95.82' y1='82.31' x2='106.51' y2='82.31' style='stroke-width: 2.13; stroke: #E76BF3; stroke-linecap: butt; stroke-linejoin: miter;' />
-<circle cx='89.33' cy='87.82' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='45.00' cy='94.61' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='58.06' cy='93.06' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='101.27' cy='82.05' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='106.53' cy='83.50' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='62.87' cy='91.34' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='102.62' cy='89.49' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='47.25' cy='87.98' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='43.72' cy='83.07' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='100.27' cy='74.27' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='103.05' cy='58.02' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='63.40' cy='93.17' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='56.28' cy='105.55' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='48.01' cy='95.92' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='70.09' cy='95.67' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='106.18' cy='82.57' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='46.02' cy='77.78' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='60.50' cy='106.80' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='43.62' cy='58.76' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='53.11' cy='94.53' r='2.49' style='stroke-width: 0.71;' />
-<circle cx='75.88' cy='96.72' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='81.60' cy='87.80' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='41.14' cy='94.62' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='59.70' cy='93.05' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='100.51' cy='82.03' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='105.70' cy='83.49' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='54.22' cy='91.37' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='99.35' cy='89.51' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='44.27' cy='88.00' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='45.71' cy='83.05' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='97.91' cy='74.27' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='105.02' cy='58.02' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='63.44' cy='93.17' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='62.79' cy='105.54' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='43.41' cy='95.93' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='71.19' cy='95.68' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='103.47' cy='82.59' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='46.28' cy='77.78' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='60.82' cy='106.83' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='42.33' cy='58.78' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='56.71' cy='94.54' r='2.49' style='stroke-width: 0.71;' />
+<circle cx='70.17' cy='96.73' r='2.49' style='stroke-width: 0.71;' />
 <text x='80.49' y='38.37' text-anchor='middle' style='font-size: 17.07px; font-family: "Arial";' textLength='13.28px' lengthAdjust='spacingAndGlyphs'>**</text>
 <line x1='59.82' y1='39.27' x2='59.82' y2='39.27' style='stroke-width: 1.07;' />
 <line x1='59.82' y1='39.27' x2='101.17' y2='39.27' style='stroke-width: 1.07;' />
@@ -103,6 +103,6 @@
 <text x='101.17' y='123.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='5.37px' lengthAdjust='spacingAndGlyphs'>F</text>
 <text x='72.65' y='136.20' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='18.96px' lengthAdjust='spacingAndGlyphs'>Sex</text>
 <text transform='translate(13.36,67.84) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='91.12px' lengthAdjust='spacingAndGlyphs'>Estradiol Signaling</text>
-<text x='35.59' y='14.93' style='font-size: 13.20px; font-family: "Arial";' textLength='70.14px' lengthAdjust='spacingAndGlyphs'>Clusters 2|2</text>
+<text x='72.65' y='14.93' text-anchor='middle' style='font-size: 13.20px; font-family: "Arial";' textLength='22.38px' lengthAdjust='spacingAndGlyphs'>2&gt;2</text>
 </g>
 </svg>

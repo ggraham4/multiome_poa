@@ -78,10 +78,11 @@ library(ggsignif)
 es2 <- estradiol_2_19+
   theme_classic()+
   geom_jitter(color= 'black', shape =1, size = 2)+
-  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling')+
-  theme(legend.position = 'none', axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling', title = '2>19')+
+  theme(legend.position = 'none', axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), plot.title = element_text(hjust = 0.5))+
   ylim(0.45, 1.8)+
   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(1.6), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)
+es2
 
 ggsave(plot = es2,
        file = "estradiol_2_19.svg",
@@ -96,8 +97,8 @@ estradiol_2_2 <- plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2|
 es2_2 <- estradiol_2_2+
   theme_classic()+
   geom_jitter(color= 'black', shape =1, size = 2)+
-  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling')+
-  theme(legend.position = 'none')+
+  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling', title = '2>2')+
+  theme(legend.position = 'none', plot.title = element_text(hjust = 0.5))+
   ylim(0.45, 1.8)+
   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(1.6), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)+
   geom_signif(xmin = c(1), xmax = c(1.9), y_position = c(1.6), annotation =c("*"), color = "black", tip_length = c(0,0), textsize=6)
@@ -115,8 +116,8 @@ estradiol_2_11 <- plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2
 es2_11 <- estradiol_2_11+
   theme_classic()+
   geom_jitter(color= 'black', shape =1, size = 2)+
-  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling')+
-  theme(legend.position = 'none', axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling', title = '2>11')+
+  theme(legend.position = 'none', axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), plot.title = element_text(hjust = 0.5))+
   ylim(0.45, 1.8)+
   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(1.6), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)+
   geom_signif(xmin = c(1), xmax = c(1.9), y_position = c(1.6), annotation =c("*"), color = "black", tip_length = c(0,0), textsize=6)
@@ -135,8 +136,8 @@ estradiol_2_8 <- plot_communication_cluster_pair('Estradiol_byCYP19A1_ESR2', '2|
 es2_8 <- estradiol_2_8+
   theme_classic()+
   geom_jitter(color= 'black', shape =1, size = 2)+
-  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling')+
-  theme(legend.position = 'none', axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
+  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'Estradiol Signaling', title = '2>8')+
+  theme(legend.position = 'none', axis.title.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank(), plot.title = element_text(hjust = 0.5))+
   ylim(0.45, 1.8)+
   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(1.6), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)+
   geom_signif(xmin = c(1), xmax = c(1.9), y_position = c(1.6), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)

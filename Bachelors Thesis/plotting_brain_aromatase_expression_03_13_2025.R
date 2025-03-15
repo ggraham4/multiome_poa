@@ -25,8 +25,8 @@ aromatase_plot <- ggplot(aromatase_data, aes(x = Sex, y = mean_expression))+
   geom_boxplot(alpha = 0.25, outlier.shape = NA, aes(color = Sex, fill = Sex))+
   geom_jitter(  shape = 1, color = 'black', size =2)+
   theme_classic()+
-  theme(legend.position ='none',plot.title = element_text(hjust=0))+
-  labs(title = 'Cluster 2', y = 'Mean +/- SE cyp19a1b')+
+  theme(legend.position ='none',plot.title = element_text(hjust=0.5))+
+  labs(title = 'Cluster 2', y = 'Mean cyp19a1b')+
   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(2.6), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)+
   ylim(0.45,3)
 aromatase_plot
