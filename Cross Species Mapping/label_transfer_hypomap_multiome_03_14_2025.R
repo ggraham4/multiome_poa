@@ -90,6 +90,9 @@ merged <- RunUMAP(merged, dims = 1:30, reduction = "integrated.harmony")
 DimPlot(merged, reduction = "umap", group.by = c("source"))
 DimPlot(merged, reduction = "umap", group.by = c("harmony.wnn_res0.4_clusters"))
 DimPlot(merged, reduction = "umap", group.by = c("clusters49"))
+DimPlot(merged, reduction = "umap", group.by = c("C25_named"), label = T)+
+  theme(legend.position = 'none')
+
 
 
 
