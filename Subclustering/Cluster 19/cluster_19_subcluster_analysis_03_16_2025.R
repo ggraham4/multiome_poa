@@ -270,6 +270,8 @@ cluster_19_data$status <- factor(cluster_19_data$status, levels = c('M','D',"E",
  cell_counts$prop[cell_counts$Var2 == 'E'] = cell_counts$Freq[cell_counts$Var2 == 'E']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'E',])
  cell_counts$prop[cell_counts$Var2 == 'NF'] = cell_counts$Freq[cell_counts$Var2 == 'NF']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'NF',])
  
+ cell_counts$Var2 <- factor(cell_counts$Var2, levels = c('M','D',"E",'NF','F'))
+ 
  ggplot(cell_counts, aes(x = fct_reorder(Var1, prop, .desc = T), y = prop, group = interaction(Var1, Var2), color = Var2))+
    geom_point(aes(color = Var2), position = position_dodge(0.5), size =2)
  
