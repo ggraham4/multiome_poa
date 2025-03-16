@@ -1,0 +1,1083 @@
+#Reclustering cluster 19 
+{
+  library(parallel)
+  library(clusterProfiler)
+  library(blme)
+  library(Seurat)
+  library(tidyverse)
+  library(tidyr)
+  library(lme4)
+  library(dplyr)
+  library(MASS)
+  library(SeuratObject)
+  library(Signac)
+  library('glmGamPoi')
+  library(scran)
+  library(parallel)
+  library(factoextra)
+  library(readxl)
+  library(factoextra)
+  library(forcats)
+  library(ggrepel)
+  library(biomaRt)
+  library(openxlsx)
+  library(emmeans)
+  library(CytoTRACE)
+  library(ggrepel)
+  
+  define_degs <- function(data, singular = TRUE) {
+    if (!singular) {
+      data <- data[data$singular == FALSE, ]
+    }
+    
+    # Assign classes based on conditions
+    data$class <- NA  # Initialize class column
+    
+    data$class[data$d_m_q.value < 0.05 & 
+                 data$d_m_estimate > 0 & 
+                 data$d_f_q.value > 0.05] <- 'Early Upregulated'
+    
+    
+    data$class[data$d_m_q.value > 0.05 & 
+                 data$d_f_q.value < 0.05 & 
+                 data$d_f_estimate < 0] <- 'Late Upregulated'
+    
+    data$class[data$d_m_q.value < 0.05 & 
+                 data$d_m_estimate < 0 & 
+                 data$d_f_q.value > 0.05] <- 'Early Downregulated'
+    
+    
+    data$class[data$d_m_q.value > 0.05 & 
+                 data$d_f_q.value < 0.05 & 
+                 data$d_f_estimate > 0] <- 'Late Downregulated'
+    
+    data$class[data$d_m_q.value < 0.05 & 
+                 data$d_f_q.value < 0.05 & 
+                 data$d_f_estimate > 0 & 
+                 data$d_m_estimate > 0] <- 'Transiently Upregulated'
+    
+    data$class[data$d_m_q.value < 0.05 & 
+                 data$d_f_q.value < 0.05 & 
+                 data$d_f_estimate < 0 & 
+                 data$d_m_estimate < 0] <- 'Transiently Downregulated'
+    
+    data$class[data$d_m_q.value < 0.05 & 
+                 data$d_f_q.value < 0.05 & 
+                 data$d_m_estimate < 0 & 
+                 data$d_f_estimate > 0] <- 'Progressively Downregulated'
+    
+    data$class[data$d_m_q.value < 0.05 & 
+                 data$d_f_q.value < 0.05 & 
+                 data$d_m_estimate > 0 & 
+                 data$d_f_estimate < 0] <- 'Progressively Upregulated'
+    
+    data$class[data$f_m_q.value < 0.05 & 
+                 data$d_f_q.value > 0.05 & 
+                 data$d_m_q.value > 0.05 & 
+                 data$f_m_estimate > 0 ] <- 'Terminally Upregulated'
+    
+    data$class[data$f_m_q.value < 0.05 & 
+                 data$d_f_q.value > 0.05 & 
+                 data$d_m_q.value > 0.05 & 
+                 data$f_m_estimate < 0  ] <- 'Terminally Downregulated'
+    
+    
+    data$issignif <- NA
+    data$issignif <- ifelse(data$f_m_q.value<0.05|
+                              data$d_m_q.value<0.05|
+                              data$d_f_q.value<0.05,
+                            '*',NA)
+    
+    return(data)
+  }
+  
+  mean_expression_cluster_data <- function(object, gene, cluster, clustering = 'harmony.wnn_res0.4_clusters'){
+    counts <- t(object@assays$RNA$counts[,object@meta.data[[clustering]] == cluster])
+    Counts_of_interest <- as.data.frame(counts[,gene])
+    Counts_of_interest[[gene]] <- Counts_of_interest[,1]
+    Counts_of_interest$individual <- object@meta.data$individual[object@meta.data[[clustering]] == cluster]
+    results <- data.frame()
+    
+    for (i in unique(object@meta.data$individual)) {
+      Counts <- Counts_of_interest[[gene]][Counts_of_interest$individual==i]
+      mean <- mean(Counts)
+      mean_se <- sd(Counts) / sqrt(length(Counts))
+      df <- data.frame(
+        individual = i,
+        mean = mean,
+        se = mean_se
+      )
+      results <- rbind(results, df)
+    }
+    results$Sex <- str_sub(results$individual, -1)
+    results$Sex[results$individual == 'T17D'] = 'NF'
+    results$Sex[results$individual == 'A12D'] = 'E'
+    results$Sex[results$individual == 'T11D'] = 'E'
+    results$Sex[results$individual == 'GH'] = 'NRM'
+    return(results)
+  }
+  
+  
+  
+}
+
+obj <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
+
+cluster_19 <- subset(obj, harmony.wnn_res0.4_clusters ==19)
+cluster_19 <- FindSubCluster(cluster_19, 19, 'harmony.wsnn',  subcluster.name= 'sub')
+
+Idents(cluster_19) <- 'sub'
+
+arr <- list(x = -3.5, y = -6, x_len = 2, y_len = 2)
+
+dimplot_19 <- DimPlot(cluster_19, label = T, reduction = 'harmony_wnn.umap')+
+  theme_void()+
+  annotate("segment", 
+           x = arr$x, xend = arr$x + c(arr$x_len, 0), 
+           y = arr$y, yend = arr$y + c(0, arr$y_len), 
+           arrow = arrow(type = "closed", length = unit(10, 'pt'))) +
+  theme(legend.position = 'none')+
+  annotate('text',
+           x = -4.3, y = -5.2, label = 'UMAP_2', angle = 90, size = 4)+
+  annotate('text',
+           x = -3, y = -6.5, label = 'UMAP_1', size = 4)
+dimplot_19
+
+ggsave(plot = dimplot_19,
+       file = "dimplot_19.svg",
+       device = "svg",
+       units = "in",
+       width = 7,
+       height = 7,
+       path = "Bachelors Thesis/Plots/Figure 4")
+
+
+
+### What are the differences between the subclusters ####
+FeaturePlot(cluster_19, c('gad2','slc17a6b'))
+
+gaba_glut_markers <- DotPlot(object = cluster_19, 
+        group.by = "sub", 
+        features = c('LOC111588076','gad2', 'LOC111584103','slc17a6b','slc17a7a'),
+        dot.min = 0.1,
+        col.min =-2.3)  +
+  scale_x_discrete(labels = c('gad1',
+                   'gad2',
+                   'vglut2.1',
+                   'slc17a6b',
+                   'slc17a7a'))+
+  coord_flip()+
+  theme(axis.text.x = element_text(angle = -90), legend.position = 'none', axis.title.y = element_blank())+
+  labs(y= 'Subcluster')
+
+ggsave(plot = gaba_glut_markers,
+       file = "gaba_glut_markers.svg",
+       device = "svg",
+       units = "in",
+       width = 2,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 4")
+
+
+#split cells into glut, gaba , and mixed
+cluster_19$primary_neurotransmitter <- ifelse(((cluster_19@assays$RNA$data['LOC111588076',]>0 
+                                               | cluster_19@assays$RNA$data['gad2',]>0) &
+                                                (cluster_19@assays$RNA$data['LOC111584103',]==0 & 
+                                                   cluster_19@assays$RNA$data['slc17a6b',]==0 &  
+                                                   cluster_19@assays$RNA$data['slc17a7a',]==0)), 'GABA',NA)
+
+cluster_19$primary_neurotransmitter <- ifelse(((cluster_19@assays$RNA$data['LOC111588076',]==0 
+                                                & cluster_19@assays$RNA$data['gad2',]==0) &
+                                                 (cluster_19@assays$RNA$data['LOC111584103',]>0 | 
+                                                    cluster_19@assays$RNA$data['slc17a6b',]>0 |  
+                                                    cluster_19@assays$RNA$data['slc17a7a',]>0)), 'GLUT',cluster_19$primary_neurotransmitter)
+
+ccluster_19$primary_neurotransmitter <- ifelse(((cluster_19@assays$RNA$data['LOC111588076',]>0 
+                                                | cluster_19@assays$RNA$data['gad2',]>0) &
+                                                 (cluster_19@assays$RNA$data['LOC111584103',]>0 | 
+                                                    cluster_19@assays$RNA$data['slc17a6b',]>0 |  
+                                                    cluster_19@assays$RNA$data['slc17a7a',]>0)), 'Mixed',cluster_19$primary_neurotransmitter)
+
+cluster_19$primary_neurotransmitter <- ifelse(is.na(cluster_19$primary_neurotransmitter), 'Neither', cluster_19$primary_neurotransmitter)
+
+table(cluster_19$primary_neurotransmitter)
+
+ prim_neuro <-DimPlot(cluster_19, label = F, reduction = 'harmony_wnn.umap', group.by ='primary_neurotransmitter')+
+   theme_void()+
+   annotate("segment", 
+            x = arr$x, xend = arr$x + c(arr$x_len, 0), 
+            y = arr$y, yend = arr$y + c(0, arr$y_len), 
+            arrow = arrow(type = "closed", length = unit(10, 'pt'))) +
+   theme(legend.position=c(.5,0.3))+
+   annotate('text',
+            x = -4.3, y = -5.2, label = 'UMAP_2', angle = 90, size = 4)+
+   annotate('text',
+            x = -3, y = -6.5, label = 'UMAP_1', size = 4)
+ 
+ ggsave(plot = prim_neuro,
+        file = "prim_neuro.svg",
+        device = "svg",
+        units = "in",
+        width = 7,
+        height = 7,
+        path = "Bachelors Thesis/Plots/Figure 4")
+ 
+ ##markers by primary neurotransmitter type
+ Idents(cluster_19) <- 'primary_neurotransmitter'
+ markers_prim_type <- FindAllMarkers(cluster_19 )
+
+ markers_mixed <-   markers_prim_type$gene[markers_prim_type$cluster=='Mixed'&markers_prim_type$p_val_adj<0.05]
+ 
+ clown_go<- readRDS('Functions/clown_go')
+clown_go(markers_mixed)%>%dotplot()
+
+markers_GABA <-   markers_prim_type$gene[markers_prim_type$cluster=='GABA' & markers_prim_type$p_val_adj<0.05]
+
+clown_go(markers_GABA)%>%dotplot()
+
+markers_GLUT <-   markers_prim_type$gene[markers_prim_type$cluster=='GLUT'& markers_prim_type$p_val_adj<0.05] 
+
+clown_go(markers_GLUT)%>%dotplot()
+
+markers_neither <-   markers_prim_type[markers_prim_type$cluster=='Neither',] #top marker is amyloid beta??? what on earth
+markers_neither$gene[markers_neither$p_val_adj<0.05 & markers_neither$pct.1>markers_neither$pct.2] # really no good markers weird
+
+clown_go(markers_neither$gene[markers_neither$p_val_adj<0.05])%>%dotplot() #this is really something huh, the top markers all seem related to metabolism but they are all goig to be not expressed in this celltype
+# my primary theory here is these are normal cells and just sequencing didn't happent to pickup a glut or gaba transcript
+
+### cytotrace
+cluster_19_matrix <- as.matrix(cluster_19@assays$RNA$counts) #not necessary to normalize
+cluster_19_cyto <- CytoTRACE(mat = cluster_19_matrix
+)
+
+cluster_19$cyto <-cluster_19_cyto$CytoTRACE
+
+cluster_19_data <- data.frame(individual = cluster_19@meta.data$individual,
+                              status = cluster_19@meta.data$Status,
+                              prim_neuro = cluster_19$primary_neurotransmitter,
+                              cluster = cluster_19@meta.data$sub,
+                              cyto = cluster_19@meta.data$cyto)%>%
+  subset(status != 'NRM')
+cluster_19_data$status <- factor(cluster_19_data$status, levels = c('M','D',"E",'NF','F'))
+
+ ggplot(cluster_19_data, aes(x = fct_reorder(prim_neuro, cyto, .desc = T), y = cyto, group = interaction(prim_neuro, status), color = status))+
+  geom_boxplot(aes(fill = status), alpha = 0.25)
+
+ cell_counts <- table(cluster_19$primary_neurotransmitter, cluster_19$Status)%>%as.data.frame()
+ cell_counts$prop[cell_counts$Var2 == 'D'] = cell_counts$Freq[cell_counts$Var2 == 'D']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'D',])
+ cell_counts$prop[cell_counts$Var2 == 'M'] = cell_counts$Freq[cell_counts$Var2 == 'M']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'M',])
+ cell_counts$prop[cell_counts$Var2 == 'F'] = cell_counts$Freq[cell_counts$Var2 == 'F']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'F',])
+ cell_counts$prop[cell_counts$Var2 == 'E'] = cell_counts$Freq[cell_counts$Var2 == 'E']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'E',])
+ cell_counts$prop[cell_counts$Var2 == 'NF'] = cell_counts$Freq[cell_counts$Var2 == 'NF']/ nrow(cluster_19@meta.data[cluster_19@meta.data$Status == 'NF',])
+ 
+ ggplot(cell_counts, aes(x = fct_reorder(Var1, prop, .desc = T), y = prop, group = interaction(Var1, Var2), color = Var2))+
+   geom_point(aes(color = Var2), position = position_dodge(0.5), size =2)
+ 
+ 
+ 
+#####################################################
+
+markers_19 <- FindAllMarkers(cluster_19)
+
+top_markers <- markers_19 %>%
+  group_by(cluster) %>%
+  slice_min(order_by = p_val_adj, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+DotPlot(object = cluster_19, 
+        group.by = "sub", 
+        features = top_markers$gene) +
+  coord_flip()
+
+
+markers_19_0 <- markers_19$gene[markers_19$p_val_adj<0.05& markers_19$cluster=='19_0']
+markers_19_1 <- markers_19$gene[markers_19$p_val_adj<0.05& markers_19$cluster=='19_1']
+markers_19_2 <- markers_19$gene[markers_19$p_val_adj<0.05& markers_19$cluster=='19_2']
+
+unique_markers_19_0 <- markers_19_0[!(markers_19_0%in% markers_19_1 |markers_19_0 %in%markers_19_2)]
+unique_markers_19_1 <- markers_19_1[!(markers_19_1%in% markers_19_0 |markers_19_1 %in%markers_19_2)]
+unique_markers_19_2 <- markers_19_2[!(markers_19_2%in% markers_19_0 |markers_19_2 %in%markers_19_1)]
+#test if there are any overlaps
+unique(unique_markers_19_0 %in%unique_markers_19_1)
+unique(unique_markers_19_1 %in%unique_markers_19_2)
+unique(unique_markers_19_0 %in%unique_markers_19_2)
+#Swag
+
+go_19_0 <- clown_go(unique_markers_19_0)
+dotplot(go_19_0)+ labs(title = '19_0')
+
+go_19_2 <- clown_go(unique_markers_19_2)
+dotplot(go_19_2)+ labs(title = '19_2')
+
+#go_19_1 <- clown_go(unique_markers_19_1)
+#dotplot(go_19_1)+ labs(title = '19_1')
+
+
+#### CytoTRACE ######
+cluster_19_matrix <- as.matrix(cluster_19@assays$RNA$counts)
+cluster_19_cyto <- CytoTRACE(mat = cluster_19_matrix
+)
+
+cluster_19$cyto <-cluster_19_cyto$CytoTRACE
+
+FeaturePlot(cluster_19, 'cyto')
+
+cluster_19_data <- data.frame(individual = cluster_19@meta.data$individual,
+                              status = cluster_19@meta.data$Status,
+                              cluster = cluster_19@meta.data$sub,
+                              cyto = cluster_19@meta.data$cyto)
+
+cluster_19_data <- subset(cluster_19_data, status == 'F' |status == 'M' | status == 'D')
+
+cluster_19_cyto_gross <- lmer(cyto~cluster *status+ (1|individual), data = cluster_19_data)
+
+car::Anova(cluster_19_cyto_gross, type = 'III')
+
+cyto_gross_plot <- ggplot(cluster_19_data, aes(x = cluster, y = cyto, group = interaction(cluster, status), color = status))+
+  geom_violin(alpha = 0)+
+  geom_point(position = position_dodge(0.9))
+cyto_gross_plot
+
+library(sjPlot)
+plot_model(cluster_19_cyto_gross,terms = c('cluster','status'), type = 'eff')
+
+
+cyto_gross_pairs <- pairs(emmeans(cluster_19_cyto_gross, c('cluster','status')),adjust = 'none', by = 'cluster')
+cyto_gross_pairs
+
+library(ggsignif)
+
+effects <- as.data.frame(ggeffects::ggeffect(cluster_19_cyto_gross, terms = c('cluster','status')))
+effects$group<- factor(effects$group, levels = c('M','D','F'))
+ggplot(effects, aes(x = x, y = predicted, color = group))+
+  geom_pointrange(aes(x=x, y = predicted, ymin = predicted - std.error, ymax = predicted+std.error), position = position_dodge(0.5))+
+  labs(x ='Cluster', y = 'Mean CytoTRACE +/- SE', color = 'Status')+
+  geom_signif(xmin = 1, xmax = 1.17,
+              y_position = 0.8,
+              annotation = '*' , 
+              color = "black",
+              tip_length = c(0,0), textsize = 10)+
+  geom_signif(xmin = 1.835, xmax = 2,
+              y_position = 0.55,
+              annotation = '**' , 
+              color = "black",
+              tip_length = c(0,0), textsize = 10)+
+  geom_signif(xmin = 1.835, xmax = 2.17,
+              y_position = 0.7,
+              annotation = '*' , 
+              color = "black",
+              tip_length = c(0,0), textsize = 10)+
+  
+  geom_signif(xmin = 3, xmax = 3.17,
+              y_position = 0.55,
+              annotation = '*' , 
+              color = "black",
+              tip_length = c(0.,0), textsize = 10)+
+  theme_classic()+
+  ylim(0.2, 0.9)
+
+#### Negative binomial ####
+neg_bin_mult<- readRDS('Functions/DEG_functions/neg_bin_mult.rds')
+
+neg_bin <- data.frame()
+for (i in 0:2) {
+  cluster <- paste0('19_',i)
+  print(cluster)
+  output <- neg_bin_mult(obj = cluster_19,
+                         clustering = 'sub',
+                         cluster = cluster)
+  output$cluster = cluster
+  neg_bin <- rbind(neg_bin, output)
+}
+
+neg_bin$f_m_q.value <- p.adjust(neg_bin$f_m_p.value, 'fdr', nrow(neg_bin))
+neg_bin$d_m_q.value <- p.adjust(neg_bin$d_m_p.value, 'fdr', nrow(neg_bin))
+neg_bin$d_f_q.value <- p.adjust(neg_bin$d_f_p.value, 'fdr', nrow(neg_bin))
+
+neg_bin_defined <- define_degs(neg_bin)
+
+neg_bin_defined_filtered <- neg_bin_defined%>%
+  filter(!is.na(issignif)& is.na(warning))
+
+neg_bin_defined_counts<- neg_bin_defined_filtered%>%
+  group_by(cluster, class)%>%
+  summarize(class_count = n())
+
+deg_counts <-ggplot(neg_bin_defined_counts, aes(x = cluster, y = class_count, fill = class)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(position="stack", stat="identity")
+deg_counts
+
+neg_bin_defined_counts_no_singular<- neg_bin_defined_filtered%>%
+  filter(singular !=T)%>%
+  group_by(cluster, class)%>%
+  summarize(class_count = n())
+
+deg_counts_no_singular<-ggplot(neg_bin_defined_counts_no_singular, aes(x = cluster, y = class_count, fill = class)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(position="stack", stat="identity")
+deg_counts_no_singular
+
+
+neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_0' ,]
+neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_1' ,]
+neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_2' ,]
+
+### GO of DEGs####
+
+genes_19_0 <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_0']
+go_19_0 <- clown_go(genes_19_0)
+dotplot(go_19_0)
+
+genes_19_0_late_up <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_0'& neg_bin_defined_filtered$class=='Late Upregulated']
+go_19_0_late_up <- clown_go(genes_19_0_late_up)
+dotplot(go_19_0_late_up)
+
+genes_19_0_term_down <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_0'& neg_bin_defined_filtered$class=='Terminally Downregulated']
+go_19_0_term_down <- clown_go(genes_19_0_term_down)
+dotplot(go_19_0_term_down)
+
+
+genes_19_1 <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_1']
+go_19_1 <- clown_go(genes_19_1)
+dotplot(go_19_1)
+
+genes_19_1_term_down <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_1'& neg_bin_defined_filtered$class=='Terminally Downregulated']
+go_19_1_term_down <- clown_go(genes_19_1_term_down)
+dotplot(go_19_1_term_down)
+
+
+genes_19_2 <- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_2']
+go_19_2 <- clown_go(genes_19_2)
+dotplot(go_19_2)
+
+genes_19_2_late_up<- neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_2'& neg_bin_defined_filtered$class=='Late Upregulated']
+go_19_2_late_up <- clown_go(genes_19_2_late_up)
+dotplot(go_19_2_late_up)
+
+
+#### Proportion Differences ####
+
+
+total_cells_m <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='M',])
+total_cells_f <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='F',])
+total_cells_d <- nrow(cluster_19@meta.data[cluster_19@meta.data$Status=='D',])
+
+cluster_19_cells <- cluster_19@meta.data%>%
+  filter(Status == 'F' | Status == 'M'| Status == 'D')%>%
+  group_by(sub, Status)%>%
+  summarize(n())
+
+cluster_19_cells$total <- NA
+cluster_19_cells$total[cluster_19_cells$Status=='D'] <- total_cells_d
+cluster_19_cells$total[cluster_19_cells$Status=='F'] <- total_cells_f
+cluster_19_cells$total[cluster_19_cells$Status=='M'] <- total_cells_m
+
+cluster_19_cells$in_cluster <- cluster_19_cells[,3]
+cluster_19_cells$non <- cluster_19_cells$total-cluster_19_cells$in_cluster
+cluster_19_cells$non <- unlist(cluster_19_cells$non)
+cluster_19_cells$in_cluster <- unlist(cluster_19_cells$in_cluster)
+
+counts_19_0 <- subset(cluster_19_cells, sub == '19_0')
+
+cluster_19_0_matrix <- matrix(NA,nrow(counts_19_0) ,2)
+cluster_19_0_matrix[,1] <- counts_19_0$in_cluster
+cluster_19_0_matrix[,2] <- counts_19_0$non
+
+cluster_19_0_glm <- glm(cluster_19_0_matrix~Status, family = binomial('logit'), data=counts_19_0)
+summary(cluster_19_0_glm)
+pairs(emmeans(cluster_19_0_glm, 'Status'),adjust = 'none')
+
+counts_19_0$prop <- counts_19_0$in_cluster/(counts_19_0$in_cluster+counts_19_0$non)
+counts_19_0$Status <- factor(counts_19_0$Status, levels = c('M','D','F'))
+
+ggplot(counts_19_0, aes(x = Status, y = prop, fill = Status))+
+  geom_bar(stat = 'identity')
+
+
+counts_19_1 <- subset(cluster_19_cells, sub == '19_1')
+
+cluster_19_1_matrix <- matrix(NA,nrow(counts_19_1) ,2)
+cluster_19_1_matrix[,1] <- counts_19_1$in_cluster
+cluster_19_1_matrix[,2] <- counts_19_1$non
+
+cluster_19_1_glm <- glm(cluster_19_1_matrix~Status, family = binomial('logit'), data=counts_19_1)
+summary(cluster_19_1_glm)
+pairs(emmeans(cluster_19_1_glm, 'Status'),adjust = 'none')
+
+counts_19_1$prop <- counts_19_1$n/counts_19_1$total
+counts_19_1$Status <- factor(counts_19_1$Status, levels = c('M','D','F'))
+ggplot(counts_19_1, aes(x = Status, y = prop, fill = Status))+
+  geom_bar(stat = 'identity')
+
+
+counts_19_2 <- subset(cluster_19_cells, sub == '19_2')
+
+cluster_19_2_matrix <- matrix(NA,nrow(counts_19_2) ,2)
+cluster_19_2_matrix[,1] <- counts_19_2$in_cluster
+cluster_19_2_matrix[,2] <- counts_19_2$non
+
+cluster_19_2_glm <- glm(cluster_19_2_matrix~Status, family = binomial('logit'), data=counts_19_2)
+summary(cluster_19_2_glm)
+pairs(emmeans(cluster_19_2_glm, 'Status'),adjust = 'none')
+
+counts_19_2$prop <- counts_19_2$n/counts_19_2$total
+counts_19_2$Status <- factor(counts_19_2$Status, levels = c('M','D','F'))
+ggplot(counts_19_2, aes(x = Status, y = prop, fill = Status))+
+  geom_bar(stat = 'identity')
+
+
+#### does 19_0 compensate for the loss in 19_1
+### I shoulda done this the first time
+cluster_19@meta.data$index <- 1
+cluster_19_count_data <- as.data.frame(table(cluster_19@meta.data$index, cluster_19@meta.data$individual, cluster_19@meta.data$sub, cluster_19@meta.data$Status))
+cluster_19_individual_counts <- cluster_19_count_data%>% group_by(Var4, Var3, Var2)%>%
+  summarize(count = sum(Freq))
+
+cluster_19_total_counts <- as.data.frame(table(cluster_19$individual))
+
+cluster_19_total_counts_table <- cluster_19_individual_counts%>%right_join(cluster_19_total_counts, join_by('Var2' =='Var1'))
+cluster_19_total_counts_table$prop = cluster_19_total_counts_table$count/cluster_19_total_counts_table$Freq
+
+sex_table = data.frame(sex = cluster_19@meta.data$Status, Var2 =  cluster_19@meta.data$individual)%>%distinct()
+cluster_19_w_sex <- cluster_19_total_counts_table%>%full_join(sex_table, by = 'Var2')
+cluster_19_w_sex <- cluster_19_w_sex[cluster_19_w_sex$sex ==cluster_19_w_sex$Var4, ]
+
+cluster_19_w_sex<- cluster_19_w_sex[ cluster_19_w_sex$sex %in% c('M','D','F'),]
+
+cluster_19_w_sex$sex<- factor(cluster_19_w_sex$sex, levels = c('M','D','F'))
+ggplot(cluster_19_w_sex, aes(x = Var3, y = prop, shape = sex, group = sex))+
+  stat_summary(geom = 'bar', fun = "mean", position = 'dodge', fill = NA, size = 1, color = 'black')+
+  stat_summary(geom = 'errorbar', fun.data = mean_se, width = 0.4, position = position_dodge(.9), linewidth = 1)+
+  scale_shape_manual(values = c(1,2,3))+
+  geom_point(position = position_jitterdodge(dodge.width=.9), size = 4, aes(color = sex))+
+  theme_minimal()
+
+### now how do I actually analyze it
+cluster_19_w_sex$fake_sex = ifelse(cluster_19_w_sex$sex=='D', 'D', 'Diff')
+
+fake_19 = cluster_19_w_sex%>%
+  group_by(Var3, fake_sex)%>%
+  summarize(sum_cells = sum(count),
+            sum_total = sum(Freq), 
+            prop = sum_cells/sum_total)
+
+diff_in_19_0 = fake_19$prop[fake_19$fake_sex=='D' & fake_19$Var3=='19_0'] - fake_19$prop[fake_19$fake_sex=='Diff'& fake_19$Var3=='19_0']
+(diff_in_19_0+1)*  fake_19$sum_total[fake_19$fake_sex=='D' & fake_19$Var3=='19_0']
+
+
+diff_in_19_2 = fake_19$prop[fake_19$fake_sex=='D' & fake_19$Var3=='19_2'] - fake_19$prop[fake_19$fake_sex=='Diff'& fake_19$Var3=='19_2']
+(diff_in_19_2+1)*  fake_19$sum_total[fake_19$fake_sex=='D' & fake_19$Var3=='19_2']
+#ok the difference is 7% higher in 19_0 and 5% lower in 19_2
+
+cluster_19_w_sex$fake_cluster = ifelse(cluster_19_w_sex$Var3 == '19_1', '19_1', '19_0 + 19_2')
+
+ggplot(cluster_19_w_sex, aes(x = fake_cluster, y = prop, shape = sex, group = sex))+
+  stat_summary(geom = 'bar', fun = "mean", position = 'dodge', fill = NA, size = 1, color = 'black')+
+  stat_summary(geom = 'errorbar', fun.data = mean_se, width = 0.4, position = position_dodge(.9), linewidth = 1)+
+  scale_shape_manual(values = c(1,2,3))+
+  geom_point(position = position_jitterdodge(dodge.width=.9), size = 4, aes(color = sex))+
+  theme_minimal()
+
+cluster_19_w_sex_fake_summed <-  cluster_19_w_sex%>% 
+  group_by(fake_cluster, sex)%>%
+  summarize(sum = sum(count),
+            total = sum(Freq), 
+            prop = sum/total) ##wait this is wrong why is it not adding to 1
+#because the fake cluster doubles the freq, it needs to be the values from 19_1
+
+cluster_19_w_sex_fake_summed$total <- unlist(rep(cluster_19_w_sex_fake_summed[4:6,4],2))
+cluster_19_w_sex_fake_summed$prop = cluster_19_w_sex_fake_summed$sum/cluster_19_w_sex_fake_summed$total
+
+ggplot(cluster_19_w_sex_fake_summed, aes(x = fake_cluster, y = prop, shape = sex, group = sex))+
+  stat_summary(geom = 'bar', fun = "mean", position = 'dodge', fill = NA, size = 1, color = 'black')+
+  stat_summary(geom = 'errorbar', fun.data = mean_se, width = 0.4, position = position_dodge(.9), linewidth = 1)+
+  scale_shape_manual(values = c(1,2,3))+
+  geom_point(position = position_jitterdodge(dodge.width=.9), size = 4, aes(color = sex))+
+  theme_minimal()
+
+## it looks pretty close
+
+###
+
+
+### Lasso Regression ####
+lasso_scorer <- function(deg_data, cluster, multiome_object = cluster_19){
+  library(glmnet)
+  #subset data
+  data<- subset(deg_data, cluster == cluster & !is.na(gene))
+  #remove clusters with no DEGs
+  if(nrow(data)<1){return(NULL)}
+  #coerce to numeric
+  data$d_f_q.value <- as.numeric(data$d_f_q.value)
+  data$d_m_q.value <- as.numeric(data$d_m_q.value)
+  data$f_m_q.value <- as.numeric(data$f_m_q.value)
+  
+  #list degs
+  
+  degs <- data$gene[data$f_m_q.value<0.05|
+                      data$d_f_q.value<0.05|
+                      data$d_m_q.value<0.05]
+  degs <- degs[!is.na(degs)]
+  
+  if(length(degs) ==0){return(NULL)}
+  
+  degs_expression <- data.frame()
+  for(i in degs){
+    gene_expression <-mean_expression_cluster_data(
+      object = cluster_19,
+      i,
+      cluster,
+      clustering ='sub'
+    )
+    
+    new_data <-data.frame(
+      cluster= cluster,
+      gene = i,
+      mean = gene_expression$mean,
+      sex = gene_expression$Sex,
+      individual = gene_expression$individual
+    )
+    degs_expression <- rbind(new_data, degs_expression)
+  }
+  
+  #Define sexes as binomial  
+  degs_expression$fish.class <- ifelse(degs_expression$sex == 'F',1,NA)
+  degs_expression$fish.class <- ifelse(degs_expression$sex == 'M',0,degs_expression$fish.class)
+  #remove the other weird sexes
+  degs_expression <- subset(degs_expression, sex == 'F'|
+                              sex=='M'|
+                              sex == 'D')
+  
+  #pivot to make matrix
+  pivoted_data<- degs_expression%>%
+    pivot_wider(names_from = gene, 
+                values_from = mean)
+  
+  #training should only be males and females
+  training_data <- pivoted_data[!is.na(pivoted_data$fish.class),]
+  training_data <- training_data[complete.cases(training_data[, 5:ncol(training_data)]), ]
+  
+  
+  
+  
+  x.training <- as.matrix(na.omit(training_data[,5:ncol(training_data)]))
+  if(ncol(x.training)<2){return(NULL)}
+  
+  y.training <- training_data$fish.class
+  
+  #calculate lambda
+  lasso <-cv.glmnet(y = y.training, x = x.training, family = "binomial", alpha = 1, lambda = NULL)
+  
+  
+  #use as lambda in final trainer
+  min <- lasso$lambda.min
+  
+  #train
+  lasso.final <- glmnet(x=x.training, y=y.training, alpha = 1, family = "binomial",
+                        lambda = min)
+  
+  #now predict dominants
+  test_data <- pivoted_data[is.na(pivoted_data$fish.class),]
+  test_data <- test_data[complete.cases(test_data[, 5:ncol(test_data)]), ]
+  
+  
+  x.test <- as.matrix(na.omit(test_data[,5:ncol(test_data)]))
+  if(ncol(x.test)<2){return(NULL)}
+  
+  
+  #predict probabilities
+  probabilities <- lasso.final %>% predict(newx = x.test, type = 'response')
+  
+  
+  #make a dataframe with results
+  predicted.classes <- ifelse(probabilities > 0.5, 'f', "m")
+  
+  predicted_data <- as.data.frame(probabilities)
+  made.data <- as.data.frame(probabilities)
+  made.data$predicted <- predicted.classes
+  made.data$fish <- test_data$individual
+  made.data$probabilities <- probabilities
+  
+  return(made.data)
+  
+}
+
+
+score_data <- data.frame()
+for(i in 0:2){
+  
+  cluster = paste0('19_',i)
+  probs <- lasso_scorer(deg_data =results_cluster19_0, cluster = cluster, multiome_object = cluster_19)
+  probs$cluster = cluster
+  score_data <- rbind(score_data, probs)
+  
+}
+library(forcats)
+
+ggplot(subset(score_data, cluster == '19_0'), aes(x = fct_reorder(.f=fish, .x = probabilities), y = probabilities, color = predicted))+
+  geom_point()+
+  geom_text(data = subset(score_data, cluster == '19_0'),aes(label = fish, vjust = 2))
+
+
+
+ggplot(subset(score_data, cluster == '19_1'), aes(x = fct_reorder(.f=fish, .x = probabilities), y = probabilities, color = predicted))+
+  geom_point()+
+  geom_text(data = subset(score_data, cluster == '19_1'),aes(label = fish, vjust = 2))
+
+ggplot(subset(score_data, cluster == '19_2'), aes(x = fct_reorder(.f=fish, .x = probabilities), y = probabilities, color = predicted))+
+  geom_point()+
+  geom_text(data = subset(score_data, cluster == '19_2'),aes(label = fish, vjust = 2))
+
+cell_clusters <- Idents(cluster_19)
+
+cluster_labels <- score_data%>%
+  group_by(cluster)%>%
+  summarize(mean = mean(probabilities))
+
+cluster_to_predicted_sex <- setNames(cluster_labels$mean, cluster_labels$cluster)
+
+metadata <- cluster_to_predicted_sex[as.character(cell_clusters)]
+names(metadata) <- names(cell_clusters)
+cluster_19 <- AddMetaData(cluster_19, metadata, col.name = "probabilities")
+
+FeaturePlot(cluster_19, feature = 'probabilities')
+
+
+mean(score_data$probabilities[score_data$cluster=='19_0'])
+mean(score_data$probabilities[score_data$cluster=='19_1'])
+mean(score_data$probabilities[score_data$cluster=='19_2'])
+
+
+##### Continuity #####
+Idents(cluster_19) <- 'harmony.wnn_res0.4_clusters'
+DimPlot(cluster_19)
+
+#First, I want to make a PCA based on the DEGs
+cluster_19_degs <- read.csv('/Users/ggraham/Desktop/snRNA-seq R Files 122524/Seurat Outputs/122324 Neg Bin with Doms/cluster_19.csv')
+cluster_19_degs <- cluster_19_degs%>%
+  subset(d_m_q.value <0.05|
+           d_f_q.value<0.05|
+           f_m_q.value<0.05)
+deg_list <- cluster_19_degs$gene
+
+pca_data <- data.frame()
+for(i in deg_list){
+  data <- mean_expression_cluster_data(cluster_19,
+                                       i,
+                                       19)
+  data$gene <- i
+  pca_data <- rbind(pca_data, data)
+}
+
+pca_data_pivoted <- pca_data %>%
+  dplyr::select(individual, mean, Sex, gene)%>%
+  dplyr::filter(Sex == 'D'| Sex =='F' | Sex == 'M')%>%
+  pivot_wider(names_from = gene, 
+              values_from = mean)
+
+cluster_19_prcomp <- prcomp(pca_data_pivoted[,3:ncol(pca_data_pivoted)])
+fviz_pca_biplot(cluster_19_prcomp)+
+  geom_text(label = pca_data_pivoted$individual)+
+  geom_point(aes(color = pca_data_pivoted$Sex))
+
+cluster_19_pca_loadings <- cluster_19_prcomp$x
+
+cluster_19_pca_loadings <- as.data.frame(cluster_19_pca_loadings[,1:2])
+cluster_19_pca_loadings$Sex <- pca_data_pivoted$Sex
+
+grouped_means <- cluster_19_pca_loadings%>%
+  group_by(Sex)%>%
+  summarize(across(starts_with("PC"), mean))
+
+mean_m <- grouped_means[grouped_means$Sex=='M',2:3]
+
+mean_f <- grouped_means[grouped_means$Sex=='F',2:3]
+
+mean_d <- grouped_means[grouped_means$Sex=='D',2:3]
+
+f_m_distance <- stats::dist(rbind(as.numeric(mean_m), as.numeric(mean_f)))
+
+d_m_distance <- stats::dist(rbind(as.numeric(mean_m), as.numeric(mean_d)))
+
+d_f_distance <- stats::dist(rbind(as.numeric(mean_d), as.numeric(mean_f)))
+
+continuum_score <- f_m_distance/(d_m_distance+d_f_distance)
+
+ggplot(grouped_means, aes(x = PC1, y = PC2, color = Sex))
+
+##### How old is cluster 19 really ###
+neuron_only <- subset(obj, harmony.wnn_res0.4_clusters !=2&
+                        harmony.wnn_res0.4_clusters !=14&
+                        harmony.wnn_res0.4_clusters !=29&
+                        harmony.wnn_res0.4_clusters !=22&
+                        harmony.wnn_res0.4_clusters !=26&
+                        harmony.wnn_res0.4_clusters !=28&
+                        harmony.wnn_res0.4_clusters !=18&
+                        harmony.wnn_res0.4_clusters !=4)
+
+DotPlot(object = neuron_only, 
+        group.by = "harmony.wnn_res0.4_clusters", 
+        features = c('gad2','LOC111584103','slc17a6b','elavl3'),
+        cols = c("#D2B4DE", "#8E44AD", "#6C3483")
+) + 
+  coord_flip()
+
+#alright I'm convinced theyre all neurons
+
+
+neuron_only_matrix <- as.matrix(neuron_only@assays$RNA$counts)
+neuron_only_cyto <- CytoTRACE(mat = neuron_only_matrix
+)
+
+neuron_only$cyto <-neuron_only_cyto$CytoTRACE
+
+FeaturePlot(neuron_only, 'cyto')
+
+cyto_data <- data.frame(cluster = neuron_only$harmony.wnn_res0.4_clusters,
+                        cyto = neuron_only$cyto,
+                        individual = neuron_only$individual,
+                        status = neuron_only$Status)
+
+cyto_data$color <- ifelse(cyto_data$cluster==19, '19', NA)
+
+ggplot(cyto_data, aes(x = cluster, y = cyto, fill = color))+
+  geom_boxplot()+
+  geom_hline(yintercept = mean(cyto_data$cyto))
+
+cyto_model <- lmer(cyto~cluster+(1|individual), data = cyto_data)
+summary(cyto_model)
+car::Anova(cyto_model, type = 'III')
+
+t.test(x=cyto_data$cyto[cyto_data$cluster ==19], y= rep(1/2, times = length(cyto_data$cyto[cyto_data$cluster ==19])))
+
+random <- rnorm(n = length(cyto_data$cyto[cyto_data$cluster ==19]),mean= 1/2,sd = sd(cyto_data$cyto))
+
+nll <-t.test(x=cyto_data$cyto[cyto_data$cluster ==19], y= random)
+nll
+
+#I want to look at this cyto data more later
+#write.csv(cyto_data, 'X:/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/011125 all neurons cyto.csv')
+
+##### I want to look at proportion degs in this cluster, it will be fast because its a smaller matrix so I can be inefficient
+
+### Proportion DEGs ####
+
+prop_deg_function <- function(object = obj, cluster = 19, clustering = 'harmony.wnn_res0.4_clusters'){
+  start <- Sys.time()
+  library(lme4)
+  library(dplyr)
+  library(parallel)
+  library(car)
+  
+  options(dplyr.summarise.inform = FALSE)
+  
+  #extract counts matrix 
+  counts <- t(as.matrix(object@assays$RNA$counts[, object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")]))
+  
+  binary_counts <- (counts>0)+0
+  
+  n_cells <- nrow(binary_counts)
+  n_genes <- ncol(binary_counts)
+  
+  #convert to matrix
+  counts_matrix <- matrix(data = binary_counts, 
+                          nrow =n_cells,
+                          ncol= n_genes)
+  
+  rownames(counts_matrix) <- rownames(binary_counts)
+  colnames(counts_matrix) <- colnames(binary_counts)
+  
+  ##Remove 0 genes 
+  filtered_cols_matrix <- counts_matrix[,which(colSums(counts_matrix) != 0)]
+  
+  #make meta data column
+  meta_data <- data.frame(
+    cells = rownames(object@meta.data[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D"),]),
+    Status = object@meta.data$Status[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")],
+    individual =object@meta.data$individual[object@meta.data[[clustering]] == cluster & (object@meta.data$Status == "M" | object@meta.data$Status == "F" | object@meta.data$Status == "D")]
+  )
+  
+  
+  n_cells_individual <- meta_data%>%
+    group_by(individual)%>%
+    summarize(n_cells = n())
+  
+  genes <- colnames(filtered_cols_matrix)
+  
+  
+  deg_function <- function(gene){
+    message(paste0('gene ', which(genes == gene), ' of ', n_genes))
+    
+    gene_expression <- filtered_cols_matrix[, gene, drop = FALSE]
+    
+    meta_data$gene <- gene_expression
+    
+    data_to_analyze$gene <- data_to_analyze[,1]
+    
+    joined_data_restrictions <- joined_data_to_analyze%>%
+      group_by(Status)%>%
+      summarize(cells_expressing = sum(gene))
+    
+    if (any(joined_data_restrictions$cells_expressing < 1)) return(NULL)
+    
+    data_for_matrix <- meta_data %>%
+      group_by(individual, Status) %>%
+      summarise(
+        cells_expressing = sum(gene),
+        cells_total = n()
+      )
+    
+    model_matrix <- with(data_for_matrix, cbind(cells_expressing, cells_total - cells_expressing))
+    
+    
+    if (length(unique(model_matrix[, 1])) == 1) return(NULL)
+    
+    
+    glmer_model <- suppressMessages(glmer(model_matrix~Status + (1|individual), family = binomial('logit'), data = data_for_matrix))
+    
+    if (is.null(glmer_model)) return(NULL)
+    
+    pairwise_comps <- as.data.frame(pairs(emmeans(glmer_model, 'Status'), adjust ='none'))
+    
+    data_for_output <- data_for_matrix %>%
+      group_by(Status) %>%
+      summarise(
+        prop_expressing = sum(cells_expressing) / sum(cells_total),
+        cells_expressing = sum(cells_expressing),
+        cells_total = sum(cells_total)
+      ) %>%
+      pivot_wider(names_from = 'Status', values_from = c(cells_expressing,cells_total, prop_expressing))
+    
+    data_for_output$anova_p.value <- car::Anova(glmer_model, type = 'III')[2,3]
+    data_for_output$d_f_p.value <- pairwise_comps$p.value[pairwise_comps$contrast=='D - F']
+    data_for_output$d_m_p.value <- pairwise_comps$p.value[pairwise_comps$contrast=='D - M']
+    data_for_output$f_m_p.value <- pairwise_comps$p.value[pairwise_comps$contrast=='F - M']
+    data_for_output$singular = isSingular(glmer_model)
+    data_for_output$warning = ifelse(length(glmer_model@optinfo$conv$lme4$code) != 0, substr(glmer_model@optinfo$conv$lme4$messages, 1, 50), NA)
+    data_for_output$gene <- gene
+    data_for_output$cluster <- cluster
+    
+    return(data_for_output)
+    
+  }
+  
+  
+  deg_output <- mclapply(X=genes, FUN=deg_function
+                         ,mc.cores= detectCores()-1
+  )
+  
+  deg_output2 <- do.call(rbind, deg_output)
+  
+  deg_output2$anova_q.value <- p.adjust(deg_output2$anova_p.value, 'fdr', nrow(deg_output2))
+  
+  deg_output2$d_f_q.value <- p.adjust(deg_output2$d_f_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$d_m_q.value <- p.adjust(deg_output2$d_m_p.value, 'fdr', nrow(deg_output2))
+  deg_output2$f_m_q.value <- p.adjust(deg_output2$f_m_p.value, 'fdr', nrow(deg_output2))
+  
+  end <- Sys.time()
+  print(end-start)
+  return(deg_output2)
+  
+}
+
+deg_output2 <-prop_deg_function(object = cluster_19, cluster = 19, clustering = 'harmony.wnn_res0.4_clusters') 
+
+deg_output2<- deg_output2[deg_output2$gene!='Error : Response is constant',]
+deg_output2$gene[deg_output2$anova_q.value<0.05 & is.na(deg_output2$warning)]
+
+write.csv(deg_output2, '/Volumes/jrhodes/Fish Lab/Experiments/sex change single nuc POA/Seurat Outputs/cluster 19 prop degs 011525.csv')
+
+deg_output3 <- deg_output2[is.na(deg_output2$warning),]
+deg_output3$d_f_q.value <- p.adjust(deg_output3$d_f_p.value, 'fdr', nrow(deg_output3))
+deg_output3$d_m_q.value <- p.adjust(deg_output3$d_m_p.value, 'fdr', nrow(deg_output3))
+deg_output3$f_m_q.value <- p.adjust(deg_output3$f_m_p.value, 'fdr', nrow(deg_output3))
+deg_output3$anova_q.value <- p.adjust(deg_output3$anova_p.value, 'fdr', nrow(deg_output3))
+
+deg_output3$color <- ifelse(deg_output3$anova_q.value<0.05 | ####### Using P values not q values because wtf is this data
+                              deg_output3$d_f_q.value<0.05|
+                              deg_output3$f_m_q.value<0.05| 
+                              deg_output3$d_m_q.value<0.05,
+                            'signif',
+                            NA)
+
+deg_output3$label <- ifelse( is.na(deg_output3$warning)&(
+  deg_output3$anova_q.value<0.1 | 
+    deg_output3$d_f_q.value<0.1|
+    deg_output3$f_m_q.value<0.1| 
+    deg_output3$d_m_q.value<0.1),
+  deg_output3$gene,
+  NA)
+
+
+ggplot(deg_output3, aes(x = as.numeric(prop_expressing_F),y =  as.numeric(prop_expressing_M), color = color))+
+  geom_point(alpha = 0.25, aes(size = as.numeric(prop_expressing_D)))+
+  geom_text(data = deg_output3, aes(label = label), color ='blue', size =3)
+
+FeaturePlot(data, 'pgr', split.by = 'Status')
+
+#### Trajectory analysis ####
+
+cluster_19$cell_type <- ifelse(cluster_19$sub=='19_0', '19_0; immature',NA)
+cluster_19$cell_type <- ifelse(cluster_19$sub=='19_1', '19_1; mixed',cluster_19$cell_type)
+cluster_19$cell_type <- ifelse(cluster_19$sub=='19_2', '19_2; pgr+',cluster_19$cell_type)
+
+gene_meta_data <- data.frame(row.names = rownames(cluster_19@assays$RNA$data),
+                             gene_short_name=
+                               rownames(cluster_19@assays$RNA$data)
+)
+library(monocle3)                                                 
+cds <- new_cell_data_set(cluster_19@assays$RNA$data,
+                         cell_metadata = cluster_19@meta.data,
+                         gene_metadata =gene_meta_data)
+## Step 1: Normalize and pre-process the data
+cds <- preprocess_cds(cds, num_dim = 100)
+
+## Step 2: Remove batch effects with cell alignment
+#cds <- align_cds(cds, alignment_group = "batch") #this isnt working but Im using the data column anyway
+
+## Step 3: Reduce the dimensions using UMAP
+cds <- reduce_dimension(cds)
+
+## Step 4: Cluster the cells
+cds <- cluster_cells(cds)
+
+## Step 5: Learn a graph
+cds <- learn_graph(cds)
+
+## Step 6: Order cells
+get_earliest_principal_node <- function(cds=cds, var=c('19_0','19_1','19_2')){
+  cell_ids <- which(colData(cds)[, "sub"] %in% var)
+  
+  closest_vertex <-
+    cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds), ])
+  root_pr_nodes <-
+    igraph::V(principal_graph(cds)[["UMAP"]])$name[as.numeric(names
+                                                              (which.max(table(closest_vertex[cell_ids,]))))]
+  
+  root_pr_nodes
+}
+cds <- order_cells(cds, root_pr_nodes=get_earliest_principal_node(cds))
+
+
+plot_cells(cds, color_cells_by= 'sub',
+           show_trajectory_graph = T,
+           group_label_size=7, 
+           cell_size = 1,
+           graph_label_size = 5)+
+  theme(legend.position = 'top')
+
+plot_cells(cds, color_cells_by= 'pseudotime',
+           show_trajectory_graph = T,
+           group_label_size=7, 
+           cell_size = 1,
+           graph_label_size = 5)+
+  theme(legend.position = 'top')
+
+
+
+
+
+
+
