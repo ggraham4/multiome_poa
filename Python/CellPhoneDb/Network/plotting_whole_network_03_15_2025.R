@@ -61,7 +61,7 @@ swatch(P40)
 
 
 hist(matrix_subset) #only show top 5% of interactions
-signif_interaction_value = max(matrix_subset)*0.79
+signif_interaction_value = max(matrix_subset)*0
 
 matrix_subset_threshold <- ifelse(matrix_subset<signif_interaction_value, 0, matrix_subset)
 #transpose such that columns are now senders and rows are now receivers
@@ -95,12 +95,13 @@ cluster_colors[names(cluster_colors) %in% purple_clusters] <- "gray"
 V(g2)$color <- cluster_colors
 
 # Plot the graph 
-set.seed(4)
+set.seed(7)
 plot(g2, 
-     edge.color = 'black',
-     edge.arrow.size =.5,
-    edge.curved = 0.2,
-    vertex.label.color='black')
+     edge.color = adjustcolor("black", alpha.f = .25),
+     edge.arrow.size =.2,
+     edge.alpha = 0.95,
+     edge.curved = 0,
+     vertex.label.color='black')
 
 # ok so the plot is right it just doesnt 'Look' right
 

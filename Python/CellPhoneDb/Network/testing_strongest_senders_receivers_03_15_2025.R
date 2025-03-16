@@ -48,7 +48,7 @@ for(i in colnames(matrix)){
     }
     
   }
-} ### here, the matrix is organized such that rows are senders and columns are receivers
+}  ### here, the matrix is organized such that rows are senders and columns are receivers #this is the correct input for igraph directed
 
 ### doing stats
 
@@ -57,6 +57,7 @@ for(i in colnames(matrix)){
 transposed_mat <- t(matrix)
 
 hist(colSums(transposed_mat))
+hist(rowSums(transposed_mat))
 
 ### I want to make it such that cells are shuffled around to various columns 
 
