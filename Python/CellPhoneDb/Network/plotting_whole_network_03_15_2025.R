@@ -103,8 +103,21 @@ plot(g2,
      edge.curved = 0,
      vertex.label.color='black')
 
-# ok so the plot is right it just doesnt 'Look' right
+heatmap <- ggplot(shortened_name, aes(y = fct_reorder(sender, interactions,.desc = T), x = fct_reorder(receiver, interactions, .desc = T), fill =sqrt(interactions)))+
+  geom_tile()+
+  labs(y ='Sender', x = 'Receiver', fill = 'Sqrt Interactions')+
+  scale_fill_gradientn(colors =c('blue','white','red'))+
+  theme(axis.text.x = element_text(angle = -90, vjust = -0, size = 8), axis.text.y= element_text(size =8), axis.title.x= element_text(size =12), axis.title.y = element_text(size = 12))+
+  theme(legend.position = 'bottom')
+heatmap
 
+ggsave(plot = heatmap,
+       file = "heatmap_communication.svg",
+       device = "svg",
+       units = "in",
+       width = 3.5,
+       height = 4,
+       path = "Bachelors Thesis/Plots/Figure 3")
 
 
 

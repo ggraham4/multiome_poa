@@ -78,7 +78,7 @@ glut_27_14 <- plot_communication_cluster_pair('Glutamate_byGLS_and_SLC17A7_GRM7'
 g_27_14 <- glut_27_14+
   theme_classic()+
   geom_jitter(color= 'black', shape =1, size = 2)+
-  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'DHEA Signaling', title = '10>24')+
+  labs(x = 'Sex', fill = 'Sex', color = 'Sex', y = 'DHEA Signaling', title = '27>14')+
   theme(legend.position = 'none', axis.title.y = element_blank(), plot.title = element_text(hjust = 0.5), axis.text.y = element_blank(), axis.ticks.y = element_blank())+
   ylim(0, 1.5)+
   geom_signif(xmin = c(2), xmax = c(5), y_position = c(0.9), annotation =c("***"), color = "black", tip_length = c(0,0), textsize=6)+
@@ -93,7 +93,7 @@ ggsave(plot = g_27_14,
        width = 1.35,
        height = 2,
        path = "Bachelors Thesis/Plots/Figure 3")
-sc=scsdcscDfgdsafgdsgdgsahfahfh
+
 
 
 
