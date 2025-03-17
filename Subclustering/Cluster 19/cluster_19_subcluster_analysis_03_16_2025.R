@@ -405,6 +405,55 @@ sub_cells = cluster_19@meta.data%>%
  
  glmer_model <- glmer(glmer_matrix~sub*Status.x +(1|individual),data = full_data, family = binomial('logit'))
  car::Anova(glmer_model, type = 'III')
+ 
+ 
+ ### DEGS #####
+ neg_bin_mult_windows<- readRDS('Functions/DEG_functions/neg_bin_mult_windows.rds')
+ 
+ neg_bin <- data.frame()
+ for (i in 0:2) {
+   cluster <- paste0('19_',i)
+   print(cluster)
+   output <- neg_bin_mult_windows(obj = cluster_19,
+                          clustering = 'sub',
+                          cluster = cluster)
+   output$cluster = cluster
+   neg_bin <- rbind(neg_bin, output)
+ }
+ 
+ neg_bin$f_m_q.value <- p.adjust(neg_bin$f_m_p.value, 'fdr', nrow(neg_bin))
+ neg_bin$d_m_q.value <- p.adjust(neg_bin$d_m_p.value, 'fdr', nrow(neg_bin))
+ neg_bin$d_f_q.value <- p.adjust(neg_bin$d_f_p.value, 'fdr', nrow(neg_bin))
+ 
+ neg_bin_defined <- define_degs(neg_bin)
+ 
+ neg_bin_defined_filtered <- neg_bin_defined%>%
+   filter(!is.na(issignif)& is.na(warning))
+ 
+ neg_bin_defined_counts<- neg_bin_defined_filtered%>%
+   group_by(cluster, class)%>%
+   summarize(class_count = n())
+ 
+ deg_counts <-ggplot(neg_bin_defined_counts, aes(x = cluster, y = class_count, fill = class)) +
+   geom_bar(stat = "identity", position = "dodge") +
+   geom_bar(position="stack", stat="identity")
+ deg_counts
+ 
+ neg_bin_defined_counts_no_singular<- neg_bin_defined_filtered%>%
+   filter(singular !=T)%>%
+   group_by(cluster, class)%>%
+   summarize(class_count = n())
+ 
+ deg_counts_no_singular<-ggplot(neg_bin_defined_counts_no_singular, aes(x = cluster, y = class_count, fill = class)) +
+   geom_bar(stat = "identity", position = "dodge") +
+   geom_bar(position="stack", stat="identity")
+ deg_counts_no_singular
+ 
+ 
+ neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_0' ,]
+ neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_1' ,]
+ neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_2' ,]
+ 
 
  #####################################################
 
