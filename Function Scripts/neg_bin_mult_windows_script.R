@@ -107,6 +107,8 @@ neg_bin_mult_windows <- function(obj,
     }, error = function(e) {
       return(NULL)
     })
+    if(!exists('glmer_model')){return(NULL)}
+    
     
     pairs <- pairs(emmeans(glmer_model, 'Status'), adjust = 'none')
     
