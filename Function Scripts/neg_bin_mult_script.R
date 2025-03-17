@@ -93,7 +93,7 @@ neg_bin_mult <- function(obj,
   offset <- log.sizeFactors.RAW
   index <- v
   
-  results <- mclapply(1:index, function(i) {
+  results <- lapply(1:index, function(i) {
     message('Calculating Gene', paste0(i, ' of ', index, '...'))
     
     dispersion <- dispersions.RAW[i]
@@ -107,6 +107,7 @@ neg_bin_mult <- function(obj,
      }, error = function(e) {
       return(NULL)
     })
+    if(!exists('glmer_model')){return(NULL)}
     
     pairs <- pairs(emmeans(glmer_model, 'Status'), adjust = 'none')
     
@@ -122,7 +123,7 @@ neg_bin_mult <- function(obj,
       singular = ifelse(isSingular(glmer_model), TRUE, FALSE)
     )
     return(output_df)
-  }, mc.cores = n_cores
+  }#, mc.cores = n_cores
   )
   
   results <- do.call(rbind, results)
