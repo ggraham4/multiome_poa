@@ -879,6 +879,7 @@ phase_data$Status <- factor(phase_data$Status, levels = c('M','D','E','NF','F'))
    facet_grid(~Phase)
  
  #ok when I have more time I will do a mixed logistic I think there is somethhing here
+ #except it makes no sense, neurons shouldnt be in S phase
  
  #####################################################
 
