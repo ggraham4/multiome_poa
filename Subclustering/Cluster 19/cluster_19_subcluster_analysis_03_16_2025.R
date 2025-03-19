@@ -256,7 +256,6 @@ cluster_19$cyto <-cluster_19_cyto$CytoTRACE
 
 cluster_19_data <- data.frame(individual = cluster_19@meta.data$individual,
                               status = cluster_19@meta.data$Status,
-                              prim_neuro = cluster_19$primary_neurotransmitter,
                               cluster = cluster_19@meta.data$sub,
                               cyto = cluster_19@meta.data$cyto)%>%
   subset(status != 'NRM')
@@ -589,7 +588,22 @@ sub_cells = cluster_19@meta.data%>%
         path = "Bachelors Thesis/Plots/Figure 4")
  
  
+ ##subcluster markers
+ Idents(cluster_19) <- 'sub'
+ sub_markers <- FindAllMarkers(cluster_19)
  
+markers_19_0 <- sub_markers$gene[sub_markers$cluster == '19_0' & sub_markers$pct.1>sub_markers$pct.2 & sub_markers$p_val_adj <0.05]
+clown_go(markers_19_0)%>%dotplot()
+
+go_19_0 <- clown_go(markers_19_0)
+go_19_0$geneID[go_19_0$Description =='nervous system development']
+
+markers_19_1 <- sub_markers$gene[sub_markers$cluster == '19_1' & sub_markers$pct.1>sub_markers$pct.2 & sub_markers$p_val_adj <0.05]
+clown_go(markers_19_1)%>%dotplot()
+
+markers_19_2 <- sub_markers$gene[sub_markers$cluster == '19_2' & sub_markers$pct.1>sub_markers$pct.2 & sub_markers$p_val_adj <0.05]
+clown_go(markers_19_2)%>%dotplot()
+
  #####################################################
 
 
