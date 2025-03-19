@@ -604,6 +604,282 @@ clown_go(markers_19_1)%>%dotplot()
 markers_19_2 <- sub_markers$gene[sub_markers$cluster == '19_2' & sub_markers$pct.1>sub_markers$pct.2 & sub_markers$p_val_adj <0.05]
 clown_go(markers_19_2)%>%dotplot()
 
+
+### differences in proportion ###
+total_cells_individual <- cluster_19@meta.data%>%
+  group_by(individual)%>%
+  summarize(total_cells = n())
+
+total_cells_cluster <- cluster_19@meta.data%>%
+  group_by(sub,individual, Status)%>%
+  summarize(cluster_cells = n())
+
+full_data <- total_cells_cluster%>%
+  right_join(total_cells_individual, by  = 'individual')%>%
+  subset(Status != 'NRM')
+
+full_data$success = full_data$cluster_cells
+full_data$failure = full_data$total_cells - full_data$cluster_cells
+
+### all 3 have prop differences, so I'm going to add in pairwise comparisons
+out <- data.frame()
+for(i in unique(cluster_19$sub)){
+  data <- full_data%>%
+    subset(sub == i & Status %in% c('M','D','F'))
+  
+logistic <- glmer(cbind(data$success, data$failure)~Status +(1|individual), 
+                  data = data, 
+                  family = binomial('logit'))
+type_iii <- car::Anova(logistic, type = 'III')
+
+pairs <- pairs(emmeans(logistic, "Status", type = 'log'), adjust = 'none')%>%
+  as.data.frame() 
+
+newd <- data.frame(cluster = i,
+                   anova_p = type_iii$`Pr(>Chisq)`[1],
+                   singular = isSingular(logistic),
+                   d_f_p.value = pairs$p.value[pairs$contrast == 'D - F'],
+                   d_m_p.value = pairs$p.value[pairs$contrast == 'D - M'],
+                   f_m_p.value = pairs$p.value[pairs$contrast == 'F - M']
+)
+out <- rbind(out, newd)
+}
+full_data$Status <- factor(full_data$Status, levels = c('M','D',"E","NF",'F'))
+prop_19_0 <- ggplot(subset(full_data, sub=='19_0'), aes(y = cluster_cells/total_cells, x = Status, fill = Status))+
+  geom_boxplot(alpha = 0.25, outlier.shape = NA,aes(color = Status))+
+  geom_jitter(  shape = 1, color = 'black', size =2)+
+  theme_classic()+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        axis.title = element_text(size =12),
+        axis.text = element_text(size = 10))+
+  labs(x = 'Sex', y = 'Proportion of Cells', title = '19_0')+
+  geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(.65), annotation =c("*"), color = "black", tip_length = c(0,0), textsize=6)+
+  ylim(0.03,0.75)
+prop_19_0
+
+ggsave(plot = prop_19_0,
+       file = "prop_19_0.svg",
+       device = "svg",
+       units = "in",
+       width = 1.6,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 4")
+
+prop_19_1 <- ggplot(subset(full_data, sub=='19_1'), aes(y = cluster_cells/total_cells, x = Status, fill = Status))+
+  geom_boxplot(alpha = 0.25, outlier.shape = NA,aes(color = Status))+
+  geom_jitter(  shape = 1, color = 'black', size =2)+
+  theme_classic()+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        axis.title = element_text(size =12),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text = element_text(size = 10))+
+  labs(x = 'Sex', y = 'Proportion of Cells', title = '19_1')+
+  ylim(0.03,0.75)
+prop_19_1
+
+ggsave(plot = prop_19_1,
+       file = "prop_19_1.svg",
+       device = "svg",
+       units = "in",
+       width = 1.2,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 4")
+
+windowsFonts(Arial=windowsFont("Arial"))
+windowsFonts(Calibri=windowsFont("Calibri"))
+
+prop_19_2 <- ggplot(subset(full_data, sub=='19_2'), aes(y = cluster_cells/total_cells, x = Status, fill = Status))+
+  geom_boxplot(alpha = 0.25, outlier.shape = NA,aes(color = Status))+
+  geom_jitter(  shape = 1, color = 'black', size =2)+
+  theme_classic()+
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5),
+        axis.title = element_text(size =12),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text = element_text(size = 10))+
+  geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(.65), annotation =c(""), color = "black", tip_length = c(0,0), textsize=4)+
+  labs(x = 'Sex', y = 'Proportion of Cells', title = '19_2')+
+  ylim(0.03,0.75)
+prop_19_2
+
+ggsave(plot = prop_19_2,
+       file = "prop_19_2.svg",
+       device = "svg",
+       units = "in",
+       width = 1.2,
+       height = 2,
+       path = "Bachelors Thesis/Plots/Figure 4")
+
+
+DimPlot(cluster_19, reduction = 'atacUMAP')
+
+
+#### slingshot trajectory analysis ####
+
+sce= SingleCellExperiment(assays = list(
+  counts = GetAssayData(cluster_19, slot='counts'),
+  logcounts = GetAssayData(cluster_19, slot='data')
+))
+
+reducedDims(sce)= list(
+  PCA = Embeddings(cluster_19),
+  UMAP = Embeddings(cluster_19, 'harmony_wnn.umap')
+)
+
+colData(sce)$cell_type = cluster_19$sub
+colData(sce)$cluster = cluster_19$sub
+
+
+set.seed(123)
+library(slingshot)
+
+sce <- slingshot(sce, 
+                 clusterLabels = 'cluster',
+                 reducedDim = 'UMAP',
+                 start.clus = '19_0')
+
+
+pseudotime_slingshot <- slingPseudotime(sce)
+avg_pseudotime <- rowMeans(pseudotime_slingshot, na.rm = T)
+avg_pseudotime[is.na(avg_pseudotime)] <- min(avg_pseudotime, na.rm =T)
+avg_pseudotime_norm <- 100* (avg_pseudotime - min(avg_pseudotime))/
+  (max(avg_pseudotime)- min(avg_pseudotime))
+
+cluster_19$slingshot_pseudotime <- avg_pseudotime_norm
+
+curves = slingCurves(sce)
+umap_coords <- reducedDims(sce)$UMAP
+
+plot_data <- data.frame(UMAP1 =umap_coords[,1],
+                        UMAP2 = umap_coords[,2],
+                        Pseudotime = cluster_19$slingshot_pseudotime,
+                        CellType = cluster_19$harmony.wnn_res0.4_clusters)
+
+slingshot_plot <- ggplot(plot_data, aes(x = UMAP1, y = UMAP2, color = Pseudotime))+
+  geom_point(size =0.8, alpha = 0.7)+
+  scale_color_viridis_c()+
+  labs(title = 'Slingshot Trajectories')+
+  theme_minimal()
+
+#add curves
+for(i in seq_along(curves)){
+  curve_data <- data.frame(UMAP1 = curves[[i]]$s[,1],
+                           UMAP2 = curves[[i]]$s[,2])
+  slingshot_plot <- slingshot_plot+ 
+    geom_path(data = curve_data, aes(x = UMAP1, y = UMAP2),
+              size = 1, color = 'black', alpha = 0.8)
+  
+}
+
+slingshot_plot
+
+std_umap <-DimPlot(cluster_19, reduction = 'harmony_wnn.umap', label=T)
+
+print(slingshot_plot + std_umap)
+#alright well that's i guess a result
+
+#### Diffusion pseudotime #####
+library(destiny)
+sce <- as.SingleCellExperiment(cluster_19)
+var_genes = VariableFeatures(cluster_19)
+dm = DiffusionMap(sce, k =30, n_pcs =20, verbose =T)
+dc <- eigenvectors(dm)[,1:2]
+cluster_19[['diffmap']]<- CreateDimReducObject(
+  embeddings = dc,
+  key = 'DC_',
+  assay = 'RNA'
+)
+root_cell_type <- '19_0'
+#find radial glia indicies
+root_cell_indicies <- which(cluster_19$sub == root_cell_type)
+
+#choose median radial glia as root
+root_cell_dc <- dc[root_cell_indicies,]
+root_cell_center <- colMeans(root_cell_dc)
+
+#calculate distances for all cells
+dists <- apply(root_cell_dc, 1, function(x) sum((x- root_cell_center)^2))
+
+#set smallest distance as root cell
+root_cell <- root_cell_indicies[which.min(dists)]
+dpt <- DPT(dm, tips = root_cell)
+cluster_19$diffusion_pseudotime <- rank(dpt$dpt) #why do rank also what is rank 
+cluster_19$diffusion_pseudotime <- 100* (cluster_19$diffusion_pseudotime-
+                                    min(cluster_19$diffusion_pseudotime))/
+  (max(cluster_19$diffusion_pseudotime)-
+     min(cluster_19$diffusion_pseudotime)) ##have no idea what this does, I think it normalizes?
+# ok so its 100 * (score above min)/range(score) so its a percentage I think
+p1 <- ggplot(data.frame(DC1 = dc[,1],
+                        DC2 = dc[,2],
+                        CellType = cluster_19$sub))+
+  geom_point(aes(x = DC1, y = DC2, color = CellType), size = 1)+
+  theme_minimal()+
+  guides(color = guide_legend(override.aes =list(size =3)))+ #waht does this do??
+  labs(title= "Diffusion Map", x = 'DC1',y = 'Dc2')
+
+p2 <- FeaturePlot(cluster_19, features = 'diffusion_pseudotime',
+                  reduction = 'harmony_wnn.umap',
+                  label = T,
+                  pt.size = 1)+
+  scale_color_viridis_c()+
+  labs(title = 'Diffusion Pseudotime')
+
+p1+p2
+
+## theyre all going to predict that 190-191-192, but that'ts just kind of cause that's how the graph is setup
+# i want to try rna velocity
+
+diff_score_data <- data.frame(individual = cluster_19$individual,
+                              Status = cluster_19$Status, 
+                              cluster = cluster_19$sub,
+                              pseudotime = cluster_19$diffusion_pseudotime)%>%
+  group_by(individual, Status, cluster)%>%
+  summarize(pseudotime = mean(pseudotime),
+            se_pseudotime = sd(pseudotime)/sqrt(n()))
+library(forcats)
+diff_score_data$Status <- factor(diff_score_data$Status, levels = c('NRM','M','D',"E",'NF','F'))
+
+plot <- ggplot(diff_score_data, aes(x = fct_reorder(cluster, pseudotime), y = pseudotime))+
+  geom_jitter(size = 1, alpha =0.5, aes(color = Status))+
+  geom_boxplot(fill = NA, outlier.shape = NA)+
+  theme_minimal()+
+  labs(x = 'Cluster',y = 'Mean +/- SE Diff Pseudotime')#+
+ # stat_summary(geom = 'line', fun = 'mean', aes(group = Status, color= Status)) # conceptually this doesnt make sense
+plot
+
+phase_data <- data.frame(Phase =cluster_19@meta.data$Phase,
+                         sub = cluster_19$sub,
+                         Status = cluster_19$Status,
+                         individual = cluster_19$individual)%>%
+  group_by(individual, Status, sub, Phase)%>%
+  summarize(n_phase = n())%>%
+  right_join(total_cells_cluster, by = c('sub', 'Status', 'individual'))%>%
+  mutate(percent_n_phase = n_phase/cluster_cells)%>%
+  subset(Status != 'NRM')
+
+phase_data$Status <- factor(phase_data$Status, levels = c('M','D','E','NF','F'))
+
+ ggplot(phase_data, aes( x = Status, y = percent_n_phase, color = Status, fill = Status))+
+   geom_boxplot(alpha =0.25,
+                outlier.shape = NA)+
+   geom_jitter(size = 2, color ='black', shape = 1)+
+   facet_grid(Phase~sub)
+ 
+
+ ggplot(subset(phase_data, sub == '19_2'), aes( x = Status, y = percent_n_phase, color = Status, fill = Status))+
+   geom_boxplot(alpha =0.25,
+                outlier.shape = NA)+
+   geom_jitter(size = 2, color ='black', shape = 1)+
+   facet_grid(~Phase)
+ 
+ #ok when I have more time I will do a mixed logistic I think there is somethhing here
+ 
  #####################################################
 
 
