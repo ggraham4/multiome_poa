@@ -285,25 +285,35 @@ mean(obj_subset_2@meta.data$UMI)
 
 mean(Matrix::colSums(obj_subset_2, slot = 'counts'))
 
+arr <- list(x = -15, y = -15, x_len = 4, y_len = 4)
+
 
 umap <- DimPlot(obj_subset, 
                 reduction = 'harmony_wnn.umap',
                 group.by = 'harmony.wnn_res0.4_clusters', label = T, label.size = 3, pt.size = 0.0001)+
   theme(legend.position = 'none')+
-  labs(x = 'UMAP_1', y = 'UMAP_2', title = NULL)+
-  theme(axis.text.x = element_text(size = 8), axis.text.y = element_text(size = 8), axis.title.x = element_text(size = 10), axis.title.y = element_text(size = 10))+
-  theme(plot.margin=grid::unit(c(0,0,0,0), "mm"))+
-  theme(axis.text.x = element_text(size = 10), axis.text.y = element_text(size = 10), axis.title.x = element_text(size = 12), axis.title.y = element_text(size = 12))
+  theme_void()+
+  theme(legend.position = 'none', plot.title = element_blank())+
+  annotate('text',
+           x = -17, y = -12.5, label = 'UMAP_2', angle = 90, size =3)+
+  annotate('text',
+           x = -12.5, y = -17, label = 'UMAP_1', size =3)+
+  annotate("segment", 
+           x = arr$x, xend = arr$x + c(arr$x_len, 0), 
+           y = arr$y, yend = arr$y + c(0, arr$y_len), 
+           arrow = arrow(type = "closed", length = unit(10, 'pt'))) 
+
   
 umap
 
 ggsave(plot = umap,
-      file = "umap.svg",
-      device = "svg",
+      file = "umap.tiff",
+      device = "tiff",
       units = "in",
       width = 2.5,
       height = 2.5,
-      path = "Bachelors Thesis/Plots/Figure 2")
+      path = "Bachelors Thesis/Plots/Figure 2",
+      dpi = 300)
 
 ##RNA ####
 rna_umap <- DimPlot(obj_subset, 

@@ -99,7 +99,7 @@ neg_bin_mult_windows <- function(obj,
     dispersion <- dispersions.RAW[i]
     outcome <- df_counts_no_0_all_subjects[, i]
     
-    
+    glmer_model <- NULL
     tryCatch({suppressMessages(
       glmer_model <- glmer(outcome ~ Status + (1 | subject),
                            offset = offset,
@@ -107,7 +107,8 @@ neg_bin_mult_windows <- function(obj,
     }, error = function(e) {
       return(NULL)
     })
-    if(!exists('glmer_model')){return(NULL)}
+    if(is.null(glmer_model)){return(NULL)}
+    if(!is.null(glmer_model)){
     
     
     pairs <- pairs(emmeans(glmer_model, 'Status'), adjust = 'none')
@@ -124,6 +125,7 @@ neg_bin_mult_windows <- function(obj,
       singular = ifelse(isSingular(glmer_model), TRUE, FALSE)
     )
     return(output_df)
+    }
   }, mc.cores = n_cores
   )
   

@@ -430,31 +430,166 @@ sub_cells = cluster_19@meta.data%>%
  neg_bin_defined_filtered <- neg_bin_defined%>%
    filter(!is.na(issignif)& is.na(warning))
  
+ #write.csv(neg_bin_defined_filtered, 'DEG Outputs/subclusters_19_03_18_2025.csv')
+ 
  neg_bin_defined_counts<- neg_bin_defined_filtered%>%
    group_by(cluster, class)%>%
    summarize(class_count = n())
  
- deg_counts <-ggplot(neg_bin_defined_counts, aes(x = cluster, y = class_count, fill = class)) +
-   geom_bar(stat = "identity", position = "dodge") +
-   geom_bar(position="stack", stat="identity")
+ neg_bin_defined_counts$colors <- NA
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Early Upregulated', 'blue', NA)
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Early Downregulated', 'red', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Late Downregulated', 'pink', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Late Upregulated', 'orange', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Progressively Upregulated', 'cyan', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Progressively Downregulated', 'hotpink', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Terminally Downregulated', 'maroon', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Terminally Upregulated', 'darkgreen', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Transiently Downregulated', 'yellow', neg_bin_defined_counts$colors )
+ neg_bin_defined_counts$colors <- ifelse(neg_bin_defined_counts$class == 'Transiently Upregulated', 'green', neg_bin_defined_counts$colors )
+ 
+ 
+ neg_bin_defined_counts$class <- factor(neg_bin_defined_counts$class, 
+                                                   levels = rev(c('Transiently Upregulated',
+                                                                  'Transiently Downregulated',
+                                                                  'Terminally Upregulated',
+                                                                  "Terminally Downregulated",
+                                                                  'Progressively Upregulated',
+                                                                  'Progressively Downregulated',
+                                                                  'Late Upregulated',
+                                                                  'Late Downregulated',
+                                                                  'Early Upregulated',
+                                                                  'Early Downregulated')))
+ 
+ class_colors <- c(
+   'Transiently Upregulated' = 'green',
+   'Transiently Downregulated' = 'yellow',
+   'Terminally Upregulated' = 'darkgreen',
+   'Terminally Downregulated' = 'maroon',
+   'Progressively Upregulated' = 'cyan',
+   'Progressively Downregulated' = 'hotpink',
+   'Late Upregulated' = 'orange',
+   'Late Downregulated' = 'pink',
+   'Early Upregulated' = 'blue',
+   'Early Downregulated' = 'red'
+ )
+ 
+ # Now update your plot
+ deg_counts <- ggplot(neg_bin_defined_counts, aes(x = as.factor(cluster), y = class_count, fill = class)) +
+   labs(x = "Subcluster", y = "Number of DEGs", fill = 'Expression Pattern') +
+   geom_bar(position="stack", stat="identity") +
+   theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0)) +
+   scale_fill_manual(values = class_colors) +
+   theme_minimal() +
+   theme(axis.text.x = element_text(vjust = 0.4, angle = -90),
+         legend.text = element_text(size = 8),
+         legend.title = element_text(size = 10),
+         legend.background = element_rect(color = 'white'),
+         legend.direction = 'vertical',
+         legend.title.position = 'top',
+         legend.position = 'right'
+   ) +
+   theme(axis.title = element_text(size = 14),
+         axis.text =element_text(size = 12),
+         axis.title.y = element_text(hjust =1)
+         )+
+   ylim(0, 11)
  deg_counts
  
- neg_bin_defined_counts_no_singular<- neg_bin_defined_filtered%>%
-   filter(singular !=T)%>%
-   group_by(cluster, class)%>%
-   summarize(class_count = n())
+ ggsave(plot = deg_counts,
+        file = "19_degs.svg",
+        device = "svg",
+        units = "in",
+        width = 3,
+        height = 2,
+        path = "Bachelors Thesis/Plots/Figure 4")
  
- deg_counts_no_singular<-ggplot(neg_bin_defined_counts_no_singular, aes(x = cluster, y = class_count, fill = class)) +
-   geom_bar(stat = "identity", position = "dodge") +
-   geom_bar(position="stack", stat="identity")
- deg_counts_no_singular
  
+
  
  neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_0' ,]
  neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_1' ,]
  neg_bin_defined_filtered[neg_bin_defined_filtered$cluster=='19_2' ,]
  
-
+ clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_0'])%>%dotplot()
+ clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_1'])%>%dotplot()
+ clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_2'])%>%dotplot()
+ 
+ clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='19_0' & neg_bin_defined_filtered$class == 'Late Upregulated'])%>%dotplot()
+ 
+ 
+ ### plotting hsd17b14 ####
+ clust_19_1_data <- cluster_19@assays$RNA$data[,cluster_19$sub =='19_1']%>%
+   t()%>%
+   as.data.frame()%>%
+   dplyr::select('hsd17b14')
+ 
+ hsd17b14_data <- data.frame(hsd17b14_expression = clust_19_1_data,
+                              individual = cluster_19$individual[obj$sub =='19_1'],
+                              Sex = cluster_19$Status[cluster_19$sub =='19_1'])%>%
+   group_by(individual, Sex)%>%
+   summarize(mean_expression = mean(hsd17b14),
+             se = sd(hsd17b14)/sqrt(n()))%>%
+   subset(Sex != 'NRM')%>%
+   na.omit()
+ library(ggsignif)
+ 
+ hsd17b14_data$Sex <- factor(hsd17b14_data$Sex, levels = c('M','D','E',"NF",'F'))
+ hsd17b14_data_plot <- ggplot(hsd17b14_data, aes(x = Sex, y = mean_expression))+
+   geom_boxplot(alpha = 0.25, outlier.shape = NA, aes(color = Sex, fill = Sex))+
+   geom_jitter(  shape = 1, color = 'black', size =2)+
+   theme_classic()+
+   theme(legend.position ='none',plot.title = element_text(hjust=0.5))+
+   labs(title = '19_1', y = 'Mean hsd17b14')+
+   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(.17), annotation =c("***"), color = "black", tip_length = c(0,0), textsize=6)+
+   ylim(-0.02,.2)
+ hsd17b14_data_plot
+ 
+ ggsave(plot = hsd17b14_data_plot,
+        file = "hsd17b14_data_plot.svg",
+        device = "svg",
+        units = "in",
+        width = 1.6,
+        height = 2,
+        path = "Bachelors Thesis/Plots/Figure 4")
+ 
+ ### plot pgr
+ clust_19_1_data_pgr <- cluster_19@assays$RNA$data[,cluster_19$sub =='19_2']%>%
+   t()%>%
+   as.data.frame()%>%
+   dplyr::select('pgr')
+ 
+ pgr_data <- data.frame(pgr_expression = clust_19_1_data_pgr,
+                             individual = cluster_19$individual[obj$sub =='19_2'],
+                             Sex = cluster_19$Status[cluster_19$sub =='19_2'])%>%
+   group_by(individual, Sex)%>%
+   summarize(mean_expression = mean(pgr),
+             se = sd(pgr)/sqrt(n()))%>%
+   subset(Sex != 'NRM')%>%
+   na.omit()
+ library(ggsignif)
+ 
+ pgr_data$Sex <- factor(pgr_data$Sex, levels = c('M','D','E',"NF",'F'))
+ pgr_data_plot <- ggplot(pgr_data, aes(x = Sex, y = mean_expression))+
+   geom_boxplot(alpha = 0.25, outlier.shape = NA, aes(color = Sex, fill = Sex))+
+   geom_jitter(  shape = 1, color = 'black', size =2)+
+   theme_classic()+
+   theme(legend.position ='none',plot.title = element_text(hjust=0.5))+
+   labs(title = '19_2', y = 'Mean pgr')+
+   geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(1.8), annotation =c("*"), color = "black", tip_length = c(0,0), textsize=6)+
+   ylim(0,2)
+ pgr_data_plot
+ 
+ ggsave(plot = pgr_data_plot,
+        file = "pgr_data_plott.svg",
+        device = "svg",
+        units = "in",
+        width = 1.6,
+        height = 2,
+        path = "Bachelors Thesis/Plots/Figure 4")
+ 
+ 
+ 
  #####################################################
 
 
