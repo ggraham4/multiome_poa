@@ -1,0 +1,437 @@
+---
+title: "subclustering_cluster_2_03_20_2025"
+format: html
+editor: visual
+bibliography: references.bib
+---
+
+```         
+quarto::quarto_render(here::here("C:/Users/Gabe/Desktop/multiome_poa/Subclustering/Cluster 2/radial_glia_WGCNA_analysis_03_20_2025.qmd"),                       execute_dir = here::here(),                       output_format = "all", as_job = TRUE)
+```
+
+Libraries
+
+```{r}
+library(here)
+#| echo: false
+
+{
+  library(parallel)
+  library(clusterProfiler)
+  library(blme)
+  library(Seurat)
+  library(tidyverse)
+  library(tidyr)
+  library(lme4)
+  library(dplyr)
+  library(MASS)
+  library(SeuratObject)
+  library(Signac)
+  library(glmGamPoi)
+  library(scran)
+  library(parallel)
+  library(factoextra)
+  library(readxl)
+  library(factoextra)
+  library(forcats)
+  library(ggrepel)
+  library(biomaRt)
+  library(openxlsx)
+  library(emmeans)
+  library(CytoTRACE)
+  library(ggrepel)
+  library(tidyverse)
+  library(cowplot)
+  library(patchwork)
+  library(Polychrome)
+  library(scCustomize)
+
+P40 <- createPalette(40, c("#FF0000", "#00FF00", "#0000FF"), range = c(30, 80))
+swatch(P40)
+names(P40) <- NULL
+
+mean_expression_cluster_plot<- readRDS('Functions/mean_expression_cluster_plot.rds')
+prop_cluster_plot<- readRDS( 'Functions/prop_cluster_plot.rds')
+define_degs_prop<- readRDS('Functions/define_degs_prop.rds')
+mean_expression_cluster_data<- readRDS('Functions/mean_expression_cluster_data.rds')
+prop_deg_function.rds<- readRDS('Functions/DEG_functions/prop_deg_function.rds')
+define_behavior_degs<- readRDS('Functions/define_behavior_degs')
+clown_go<- readRDS('Functions/clown_go')
+define_degs<- readRDS('Functions/define_degs')
+
+}
+
+```
+
+### Load in the Seurat Object and Subset to Radial Glia, find subclusters
+
+```{r}
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+radial_glia <- subset(obj, harmony.wnn_res0.4_clusters==2)
+radial_glia <- FindSubCluster(radial_glia, cluster = 2, subcluster.name = 'sub', graph.name = 'harmony.wsnn')
+
+```
+
+Read in Markers from Previous Analysis
+
+```{r}
+glia_markers <- readRDS('Subclustering/Cluster 2/glia subcluster markers.rds')
+
+```
+
+```{r}
+zack_markers <- read.csv('Subclustering/Cluster 2/zack_glia_markers_ocellaris.csv')
+
+```
+
+### **Visualize Zack's Markers**
+
+Quiescent
+
+```{r}
+Idents(radial_glia)<- 'sub'
+DotPlot(radial_glia, unique(zack_markers$gene[zack_markers$rg_state=='quiescent']))+
+  coord_flip()
+```
+
+Cycling
+
+```{r}
+DotPlot(radial_glia, unique(zack_markers$gene[zack_markers$rg_state=='cycling']))+
+  coord_flip()
+
+```
+
+Neuronal Differentiation
+
+```{r}
+DotPlot(radial_glia, unique(zack_markers$gene[zack_markers$rg_state=='neuronal differentiation']))+
+  coord_flip()
+
+```
+
+Ok to me, classifications are as follows so far:
+
+2_0: Quiescent
+
+2_1: Cycling/Quiescent
+
+2_2: Quiescent
+
+2_3: Strongly Quiescent
+
+2_4: Cycling
+
+2_5: Cycling / Quiescent
+
+2_6: Quiescent
+
+2_7: Quiescent / Neuronal Differentiation
+
+2_8: Quiescent
+
+2_9: Neuronal Differentiation
+
+### **What does WGCNA have to say about this?**
+
+Set Up for WGCNA
+
+```{r}
+library(hdWGCNA)
+radial_glia <- SetupForWGCNA(
+  radial_glia,
+  gene_select = "fraction",
+  fraction = 0.05, 
+  wgcna_name = "radial_glia" 
+)
+
+```
+
+Construct metacells
+
+```{r}
+radial_glia <- MetacellsByGroups(
+  seurat_obj = radial_glia,
+  group.by = c("sub"),
+  reduction = 'harmony_wnn.umap', 
+  k = 10, #reduce k  due to small number of cells
+  max_shared = 5, 
+  ident.group = 'sub',
+  min_cells = 25 #set to 25 such that all subclusters can be included
+)
+
+```
+
+Normalize metacell expression
+
+```{r}
+radial_glia <- NormalizeMetacells(radial_glia)
+
+```
+
+Coexpression network analysis
+
+```{r}
+clusters_list <- unique(radial_glia$sub
+                       )
+radial_glia <- SetDatExpr(
+  radial_glia,
+  group_name = paste0(clusters_list),
+  #changing this to be all clusters
+  group.by='sub', 
+  assay = 'RNA', 
+  layer = 'data' 
+)
+```
+
+Select soft power threshold
+
+```{r}
+radial_glia <- TestSoftPowers(
+  radial_glia,
+  networkType = 'signed' #not sure if this should be altered either
+)
+```
+
+Plot soft power results
+
+```{r}
+plot_list <- PlotSoftPowers(radial_glia)
+wrap_plots(plot_list, ncol=2)
+```
+
+5 is our soft power threshold
+
+```{r}
+radial_glia <- ConstructNetwork(
+  radial_glia,
+  tom_name = 'radial_glia_subclusters_03_20_2025_TOM',
+tom_outdir = 'A:/anemonefish_multiome_radial_glia_03_20_2025/',
+overwrite_tom = T,
+soft_power = 5
+  )
+
+```
+
+Plot
+
+```{r}
+PlotDendrogram(radial_glia, main='RGC hdWGCNA Dendrogram')
+
+```
+
+3 main modules interesting
+
+Module Eigengenes
+
+```{r}
+radial_glia <- ModuleEigengenes(
+ radial_glia,
+ group.by.vars="sub"
+)
+```
+
+Harmonized and non-harmonized module eigengenes
+
+```{r}
+# harmonized module eigengenes:
+hMEs <- GetMEs(radial_glia)
+# module eigengenes:
+MEs <- GetMEs(radial_glia, harmonized=FALSE)
+
+```
+
+Compute eigengene based connectivity
+
+```{r}
+radial_glia@misc[["radial_glia"]][["wgcna_net"]][["TOMFiles"]] <-"A:/anemonefish_multiome_radial_glia_03_20_2025/radial_glia_subclusters_03_20_2025_TOM_TOM.rda"
+
+radial_glia <- ModuleConnectivity(
+  radial_glia,
+  group.by = 'sub', group_name =  paste0(clusters_list)
+  
+)
+
+```
+
+Get module assignment table
+
+```{r}
+modules <- GetModules(radial_glia) %>% subset(module != 'grey')
+```
+
+Get hub genes
+
+```{r}
+hub_df <- GetHubGenes(radial_glia, n_hubs = 10)
+
+```
+
+Compute hub signature score
+
+```{r}
+radial_glia <- ModuleExprScore(
+  radial_glia,
+  n_genes = 25,
+  method='UCell'
+)
+
+```
+
+Plot hMEs
+
+```{r}
+plot_list <- ModuleFeaturePlot(
+  radial_glia,
+  reduction = 'harmony_wnn.umap',
+  features='hMEs', # plot the hMEs
+  order=TRUE 
+)
+wrap_plots(plot_list, ncol=3)
+```
+
+```{r}
+ModuleRadarPlot(
+  radial_glia,
+  barcodes =  radial_glia@meta.data %>% rownames(),
+  axis.label.size=4,
+  grid.label.size=4
+)
+```
+
+Fascinating, blue module corresponds strongly to 2_9 our newborn neuron cluster, interestingly, brown module corresponds with 2_9 and 2_7 suggesting these may be progenitors or something. Turquoise and yellow I am less clear on.
+
+Analyze what the modules are enriched for
+
+```{r}
+modules <- GetModules(radial_glia)
+mods <- levels(modules$module); mods <- mods[mods != 'grey']
+
+radial_glia@meta.data <- cbind(radial_glia@meta.data, MEs)
+
+```
+
+```{r}
+DotPlot(radial_glia, features=mods, group.by = 'sub')+
+  coord_flip()
+```
+
+Ok well 2_9 is enriched for everything which is not surprising as it is some kind of stem cell, but the blue and brown modules are the most specific. I think this somewhat aligns with some of my cells being in between quiscent and cycling in my above classification
+
+Analyze them
+
+```{r}
+clown_go <- readRDS("C:/Users/Gabe/Desktop/multiome_poa/Functions/clown_go") 
+module_go_function <- function(module_name){
+  genes <-  modules$gene_name[modules$module==module_name]
+ return(clown_go(genes)%>%dotplot())
+  }
+
+```
+
+```{r}
+setwd('C:/Users/Gabe/Desktop/multiome_poa')
+module_go_function('brown')
+
+```
+
+```{r}
+setwd('C:/Users/Gabe/Desktop/multiome_poa')
+module_go_function('blue')
+```
+
+```{r}
+setwd('C:/Users/Gabe/Desktop/multiome_poa')
+module_go_function('yellow')
+```
+
+Ok this is really unexpected, yellow??
+
+Looking at the previous graphs this might make sense, 2_9 is enriched in this one too, also 2_2 and 2_3, very interesting because my marker genes suggest 2_2 and 3 are quiescent. I wonder if maybe they are progenitors for different lineages?
+
+```{r}
+setwd('C:/Users/Gabe/Desktop/multiome_poa')
+module_go_function('turquoise')
+```
+
+Plot number of genes per module
+
+```{r}
+modules%>%
+  group_by(module)%>%
+  subset(module!='grey')%>%
+  summarize(n = n())%>%
+  plot()
+```
+
+Ok this is super interesting. Blue is enriched for 2_9 because 2_9 expresses everything, as for turquoise I have no idea. It's crazy how small yellow is and how strong its GO signal is
+
+Plot network
+
+```{r}
+ModuleNetworkPlot(
+  radial_glia,
+  outdir = 'A:/',
+   n_inner = 20, # number of genes in inner ring
+    n_outer = 30, # number of genes in outer ring
+    n_conns = Inf, # show all of the connections
+    plot_size=c(10,10), # larger plotting area
+    vertex.label.cex=1 # font size
+)
+```
+
+```{r}
+options('future.globals.maxSize'=Inf)
+HubGeneNetworkPlot(
+  radial_glia,
+  n_hubs = 3, n_other=5,
+  edge_prop = 0.75,
+  mods = 'all'
+)
+
+```
+
+```{r}
+radial_glia <- RunModuleUMAP(
+  radial_glia,
+  n_hubs = length(unique(modules$module))-1, 
+  n_neighbors=15, 
+  min_dist=0.1 
+)
+```
+
+```{r}
+umap_df <- GetModuleUMAP(radial_glia)
+
+ggplot(umap_df, aes(x=UMAP1, y=UMAP2)) +
+  geom_point(
+   color=umap_df$color, # color each point by WGCNA module
+   size=umap_df$kME*2 # size of each point based on intramodular connectivity
+  ) +
+  umap_theme()
+
+```
+
+Gorg
+
+```{r}
+ModuleUMAPPlot(
+  radial_glia,
+  edge.alpha=0.25,
+  sample_edges=TRUE,
+  edge_prop=0.1, 
+  label_hubs=2 ,
+  keep_grey_edges=FALSE,
+    return_graph = F
+)
+```
+
+```{r}
+saveRDS(radial_glia, file='A:/anemonefish_multiome_radial_glia_03_20_2025/radial_glia_object.rds')
+```
+
+### ---
+
+Also I just discovered this function of quarto
+
+@oldham2006 which links to my zotero somehow so cool
