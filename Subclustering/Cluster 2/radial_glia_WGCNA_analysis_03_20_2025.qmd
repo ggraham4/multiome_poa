@@ -291,12 +291,25 @@ wrap_plots(plot_list, ncol=3)
 ```
 
 ```{r}
-ModuleRadarPlot(
+rgc_modules = ModuleRadarPlot(
   radial_glia,
   barcodes =  radial_glia@meta.data %>% rownames(),
   axis.label.size=4,
-  grid.label.size=4
+  grid.label.size=3
 )
+rgc_modules
+```
+
+```{r}
+#setwd('C:/Users/Gabe/Desktop/multiome_poa')
+#ggsave(plot = rgc_modules,
+#       file = "rgc_modules.svg",
+#       device = "svg",
+#       units = "in",
+#       width = 8,
+#       height = 6,
+#       path = "Bachelors Thesis/Plots/Figure 5")
+
 ```
 
 Fascinating, blue module corresponds strongly to 2_9 our newborn neuron cluster, interestingly, brown module corresponds with 2_9 and 2_7 suggesting these may be progenitors or something. Turquoise and yellow I am less clear on.
