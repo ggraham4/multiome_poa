@@ -14,6 +14,7 @@ Libraries
 ```{r}
 library(here)
 #| echo: false
+setwd('C:/Users/Gabe/Desktop/multiome_poa')
 
 {
   library(parallel)
@@ -231,6 +232,13 @@ radial_glia <- ModuleEigengenes(
 )
 ```
 
+```{r}
+#| echo: false
+
+radial_glia <- readRDS(file='A:/anemonefish_multiome_radial_glia_03_20_2025/radial_glia_object.rds')
+library(hdWGCNA)
+```
+
 Harmonized and non-harmonized module eigengenes
 
 ```{r}
@@ -244,6 +252,8 @@ MEs <- GetMEs(radial_glia, harmonized=FALSE)
 Compute eigengene based connectivity
 
 ```{r}
+clusters_list <- unique(radial_glia$sub
+                       )
 radial_glia@misc[["radial_glia"]][["wgcna_net"]][["TOMFiles"]] <-"A:/anemonefish_multiome_radial_glia_03_20_2025/radial_glia_subclusters_03_20_2025_TOM_TOM.rda"
 
 radial_glia <- ModuleConnectivity(
@@ -335,16 +345,16 @@ Analyze them
 
 ```{r}
 clown_go <- readRDS("C:/Users/Gabe/Desktop/multiome_poa/Functions/clown_go") 
-module_go_function <- function(module_name){
+module_go_function <- function(module_name,...){
   genes <-  modules$gene_name[modules$module==module_name]
- return(clown_go(genes)%>%dotplot())
+ return(clown_go(genes,...)%>%dotplot())
   }
 
 ```
 
 ```{r}
 setwd('C:/Users/Gabe/Desktop/multiome_poa')
-module_go_function('brown')
+module_go_function('brown', whole.list = modules$gene_name)
 
 ```
 
@@ -440,7 +450,7 @@ ModuleUMAPPlot(
 ```
 
 ```{r}
-saveRDS(radial_glia, file='A:/anemonefish_multiome_radial_glia_03_20_2025/radial_glia_object.rds')
+#saveRDS(radial_glia, file='A:/anemonefish_multiome_radial_glia_03_20_2025/radial_glia_object.rds')
 ```
 
 ### ---
