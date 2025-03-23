@@ -47,7 +47,7 @@ library(here)
 }
 
 obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
-radial_glia <- subset(obj, sub==2)
+radial_glia <- subset(obj, harmony.wnn_res0.4_clusters==2)
 radial_glia <- FindSubCluster(radial_glia, cluster = 2, subcluster.name = 'sub', graph.name = 'harmony.wsnn')
 
 glia_markers <- readRDS('Subclustering/Cluster 2/glia subcluster markers.rds')
@@ -65,11 +65,11 @@ for(i in unique(glia_markers$cluster)){
   
 }
 
-clown_go(overexpressed_genes$`2_0`$genes)%>%dotplot()
+#clown_go(overexpressed_genes$`2_0`$genes)%>%dotplot()
 clown_go(overexpressed_genes$`2_1`$genes)%>%dotplot() 
 #axon guidance, ephrins, rna pol II
 
-clown_go(overexpressed_genes$`2_2`$genes)%>%dotplot()
+#clown_go(overexpressed_genes$`2_2`$genes)%>%dotplot()
 clown_go(overexpressed_genes$`2_3`$genes)%>%dotplot()
 #cell adhesion, NS development, cell development
 
@@ -87,7 +87,7 @@ clown_go(overexpressed_genes$`2_7`$genes)%>%dotplot()
 
 clown_go(overexpressed_genes$`2_8`$genes)%>%dotplot()
 
-clown_go(overexpressed_genes$`2_9`$genes)%>%dotplot()
+#clown_go(overexpressed_genes$`2_9`$genes)%>%dotplot()
 #really?
 
 ##### Lineages #####
@@ -117,10 +117,10 @@ sce <- slingshot(sce,
 pseudotime_slingshot <- slingPseudotime(sce)
 avg_pseudotime <- rowMeans(pseudotime_slingshot, na.rm = T)
 avg_pseudotime[is.na(avg_pseudotime)] <- min(avg_pseudotime, na.rm =T)
-avg_pseudotime_norm <- 100* (avg_pseudotime - min(avg_pseudotime))/
-  (max(avg_pseudotime)- min(avg_pseudotime))
+#avg_pseudotime_norm <- 100* (avg_pseudotime - min(avg_pseudotime))/
+#  (max(avg_pseudotime)- min(avg_pseudotime))
 
-radial_glia$slingshot_pseudotime <- avg_pseudotime_norm
+radial_glia$slingshot_pseudotime <- avg_pseudotime
 
 curves = slingCurves(sce)
 umap_coords <- reducedDims(sce)$UMAP
@@ -194,7 +194,7 @@ slingshot_plot2
 #       units = "in",
 #       width = 3.3,
 #       height = 3,
-#       path = "Bachelors Thesis/Plots/Figure 4")
+#       path = "Bachelors Thesis/Plots/Figure 5")
 
 
 
@@ -215,7 +215,7 @@ plot <- ggplot(sling_score_data, aes(x = fct_reorder(cluster, pseudotime), y = p
         axis.title = element_text(size =12),
         axis.text = element_text(size = 10),
         axis.text.x = element_text(angle = -90))+
-  ylim(55,80)
+  ylim(20,27.5)
   
 plot
 
@@ -362,3 +362,12 @@ ggsave(plot = radial_glia_markers,
        width = 2.5,
        height = 2.5,
        path = "Bachelors Thesis/Plots/Figure 5")
+
+
+
+###########
+DotPlot(radial_glia, features = c('LOC111563038' # pankx1
+                                  ))+
+  coord_flip()
+
+FeaturePlot(radial_glia, 'elavl3', reduction = 'harmony_wnn.umap' , label = T, repel = T)

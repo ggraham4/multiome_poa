@@ -150,13 +150,13 @@ turq_plot_2_3 <- ggplot(subset(turquoise_data, sub =='2_3'), aes(x = Status, y =
   ylim(min(subset(turquoise_data, sub =='2_3')$turquoise),17 )
 turq_plot_2_3
 
-ggsave(plot = turq_plot_2_3,
-       file = "turq_plot_2_3.svg",
-       device = "svg",
-       units = "in",
-       width = 1.6,
-       height = 2,
-       path = "Bachelors Thesis/Plots/Figure 5")
+#ggsave(plot = turq_plot_2_3,
+  #     file = "turq_plot_2_3.svg",
+  #     device = "svg",
+  #     units = "in",
+  #     width = 1.6,
+  #     height = 2,
+  #     path = "Bachelors Thesis/Plots/Figure 5")
 
 
 
