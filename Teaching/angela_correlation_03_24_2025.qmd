@@ -1,0 +1,49 @@
+---
+title: "Angela Correlation"
+format: html
+editor: visual
+---
+
+**The paper we talked about**
+
+## <https://pmc.ncbi.nlm.nih.gov/articles/PMC5444764/>
+
+Libraries
+
+```{r}
+library(Seurat)
+  library(lme4)
+  library(car)
+```
+
+Read in data
+
+```{r}
+obj <- readRDS('/Users/ggraham/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+
+```
+
+Extract expression of these two genes from data slot
+
+```{r}
+hsd3b1_expression = obj@assays$RNA$data['hsd3b1',]
+hsd17b14_expression = obj@assays$RNA$data['hsd17b14',]
+
+```
+
+Model with a random effect of individual to account for variation
+
+```{r}
+mod <- lmer(hsd3b1_expression~hsd17b14_expression + (1|obj$individual))
+summary(mod)
+car::Anova(mod, type = 'III')
+
+
+```
+
+Simple Plot
+
+```{r}
+plot(x = hsd17b14_expression, y = hsd3b1_expression)
+
+```
