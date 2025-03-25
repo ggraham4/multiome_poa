@@ -150,6 +150,7 @@ ggsave(plot = deg_counts,
 #overall
 clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='2_2'])%>%dotplot()## cytokine mediated??
 clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='2_4'])%>%dotplot() ### important
+clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='2_4'])$geneID
 
 #late down
 #clown_go(neg_bin_defined_filtered$gene[neg_bin_defined_filtered$cluster=='2_0' & neg_bin_defined_filtered$class =='Late Downregulated'])%>%dotplot() ### important
@@ -244,44 +245,6 @@ ggsave(plot = aromatase_plot,
        device = "svg",
        units = "in",
        width = 1.6,
-       height = 2,
-       path = "Bachelors Thesis/Plots/Figure 5")
-
-#### in 2_3
-radial_glia_data_2_3 <- radial_glia@assays$RNA$data[,radial_glia$sub =='2_3']%>%
-  t()%>%
-  as.data.frame()%>%
-  dplyr::select('LOC111577263')
-
-aromatase_data_2_3 <- data.frame(aromatase_expression = radial_glia_data_2_3,
-                             individual = radial_glia$individual[radial_glia$sub =='2_3'],
-                             Sex = radial_glia$Status[radial_glia$sub =='2_3'])%>%
-  group_by(individual, Sex)%>%
-  summarize(mean_expression = mean(LOC111577263),
-            se = sd(LOC111577263)/sqrt(n()))%>%
-  subset(Sex != 'NRM')
-library(ggsignif)
-
-aromatase_data_2_3$Sex <- factor(aromatase_data$Sex, levels = c('M','D','E',"NF",'F'))
-aromatase_data_2_3_plot <- ggplot(aromatase_data_2_3, aes(x = Sex, y = mean_expression))+
-  geom_boxplot(alpha = 0.25, outlier.shape = NA, aes(color = Sex, fill = Sex))+
-  geom_jitter(  shape = 1, color = 'black', size =2)+
-  theme_classic()+
-  theme(legend.position ='none',plot.title = element_text(hjust=0.5))+
-  labs(title = '2_3', y = 'Mean cyp19a1b')+
-  geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(4), annotation =c("***"), color = "black", tip_length = c(0,0), textsize=6)+
-  geom_signif(xmin = c(1), xmax = c(1.9), y_position = c(4), annotation =c("**"), color = "black", tip_length = c(0,0), textsize=6)+
-  theme(axis.text.y= element_blank(),
-          axis.ticks.y = element_blank(),
-          axis.title.y = element_blank())+
-  ylim(1,4.5)
-aromatase_data_2_3_plot
-
-ggsave(plot = aromatase_data_2_3_plot,
-       file = "aromatase_expression_2_3.svg",
-       device = "svg",
-       units = "in",
-       width = 1.2,
        height = 2,
        path = "Bachelors Thesis/Plots/Figure 5")
 
