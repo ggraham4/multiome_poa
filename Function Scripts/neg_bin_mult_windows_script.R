@@ -99,35 +99,67 @@ neg_bin_mult_windows <- function(obj,
     dispersion <- dispersions.RAW[i]
     outcome <- df_counts_no_0_all_subjects[, i]
     
-    glmer_model <- NULL
-    tryCatch({suppressMessages(
-      glmer_model <- glmer(outcome ~ Status + (1 | subject),
-                           offset = offset,
-                           family = MASS::negative.binomial(theta = 1 / dispersion)))
+    # Safely attempt to fit the GLMM model
+    glmer_model <- tryCatch({
+      suppressMessages(
+        glmer(outcome ~ Status + (1 | subject),
+              offset = offset,
+              family = MASS::negative.binomial(theta = 1 / dispersion))
+      )
     }, error = function(e) {
+      message("GLMM model error for gene ", valid_genes[i], ": ", e$message)
       return(NULL)
     })
-    if(is.null(glmer_model)){return(NULL)}
-    if(!is.null(glmer_model)){
     
+    # If model fitting failed, return NULL
+    if(is.null(glmer_model)) return(NULL)
     
-    pairs <- pairs(emmeans(glmer_model, 'Status'), adjust = 'none')
+    # Safely attempt to compute emmeans and pairs
+    pairs_result <- tryCatch({
+      # Compute emmeans
+      emm_result <- emmeans(glmer_model, 'Status')
+      
+      # Compute pairs with error handling
+      pairs_result <- pairs(emm_result, adjust = 'none')
+      
+      # Convert to data frame and handle potential errors
+      pairs_df <- try(as.data.frame(pairs_result))
+      
+      if(inherits(pairs_df, "try-error") || nrow(pairs_df) == 0) {
+        message("Pairs computation failed for gene ", valid_genes[i])
+        return(NULL)
+      }
+      
+      pairs_df
+    }, error = function(e) {
+      message("Pairs computation error for gene ", valid_genes[i], ": ", e$message)
+      return(NULL)
+    })
     
-    output_df <- data.frame(
-      gene = valid_genes[i],
-      f_m_estimate = as.data.frame(pairs[pairs@grid$contrast == 'F - M'])[, 2], # Ensure the correct reference to pairs columns
-      f_m_p.value = as.data.frame(pairs[pairs@grid$contrast == 'F - M'])[, 6],
-      d_m_estimate = as.data.frame(pairs[pairs@grid$contrast == 'D - M'])[, 2],
-      d_m_p.value = as.data.frame(pairs[pairs@grid$contrast == 'D - M'])[, 6],
-      d_f_estimate = as.data.frame(pairs[pairs@grid$contrast == 'D - F'])[, 2],
-      d_f_p.value = as.data.frame(pairs[pairs@grid$contrast == 'D - F'])[, 6],
-      warning = ifelse(length(glmer_model@optinfo$conv$lme4$code) != 0, substr(glmer_model@optinfo$conv$lme4$messages, 1, 50), NA),
-      singular = ifelse(isSingular(glmer_model), TRUE, FALSE)
-    )
-    return(output_df)
-    }
-  }, mc.cores = n_cores
-  )
+    # If pairs computation failed, return NULL
+    if(is.null(pairs_result)) return(NULL)
+    
+    # Safely extract comparisons
+    tryCatch({
+      output_df <- data.frame(
+        gene = valid_genes[i],
+        f_m_estimate = pairs_result[pairs_result$contrast == 'F - M', 'estimate'],
+        f_m_p.value = pairs_result[pairs_result$contrast == 'F - M', 'p.value'],
+        d_m_estimate = pairs_result[pairs_result$contrast == 'D - M', 'estimate'],
+        d_m_p.value = pairs_result[pairs_result$contrast == 'D - M', 'p.value'],
+        d_f_estimate = pairs_result[pairs_result$contrast == 'D - F', 'estimate'],
+        d_f_p.value = pairs_result[pairs_result$contrast == 'D - F', 'p.value'],
+        warning = ifelse(length(glmer_model@optinfo$conv$lme4$code) != 0, 
+                         substr(glmer_model@optinfo$conv$lme4$messages, 1, 50), 
+                         NA),
+        singular = isSingular(glmer_model)
+      )
+      return(output_df)
+    }, error = function(e) {
+      message("Output dataframe creation error for gene ", valid_genes[i], ": ", e$message)
+      return(NULL)
+    })
+  }, mc.cores = n_cores)
   
   results <- do.call(rbind, results)
   results <- as.data.frame(results, stringsAsFactors = FALSE)

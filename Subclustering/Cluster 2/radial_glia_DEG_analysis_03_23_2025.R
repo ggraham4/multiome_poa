@@ -54,7 +54,7 @@ radial_glia <- readRDS(file='A:/anemonefish_multiome_radial_glia_03_20_2025/radi
 neg_bin_mult_windows<- readRDS('Functions/DEG_functions/neg_bin_mult_windows.rds')
 
 neg_bin <- data.frame()
-for (i in 0:9) {
+for (i in 7:9) {
   cluster <- paste0('2_',i)
   print(cluster)
   output <- neg_bin_mult_windows(obj = radial_glia,
@@ -63,10 +63,6 @@ for (i in 0:9) {
   output$cluster = cluster
   neg_bin <- rbind(neg_bin, output)
 }
-
-neg_bin$f_m_q.value <- p.adjust(neg_bin$f_m_p.value, 'fdr', nrow(neg_bin))
-neg_bin$d_m_q.value <- p.adjust(neg_bin$d_m_p.value, 'fdr', nrow(neg_bin))
-neg_bin$d_f_q.value <- p.adjust(neg_bin$d_f_p.value, 'fdr', nrow(neg_bin))
 
 neg_bin_defined <- define_degs(neg_bin)
 
