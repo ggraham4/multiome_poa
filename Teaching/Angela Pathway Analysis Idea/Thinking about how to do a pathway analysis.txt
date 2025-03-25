@@ -1,0 +1,25 @@
+Thinking about how to do a pathway analysis 
+
+1) Identify A ocellaris members of the pathway of interest
+Methods:
+a) Translate human genes from known pathways to clownfish gene names
+b) look at GO terms or KEGG terms related to the term of interest (more unbiased) 
+
+2) Identify the most likely pathway that is occuring via expression of enzymes that catalyze steps
+Methods:
+a) Compute pearson's correlations between each possible step of the pathway, pick the step that has the highest pearson's R
+	* I think we should also do a perumation analysis shuffling the names of all of the possible constituent members of the pathway
+	to see if the pathway we want to analyze is significnat
+
+3) Summmarize expression
+Methods:
+a)Create a module via AddModuleScore()
+b) Use PC1 from all of the pathway constituents (this is what WGCNA does)
+
+4) Differential expression
+Methods:
+a) lm(module_expression ~ Status) followed by
+car::Anova(model, type = 'III') and if Status is *, 
+pairs(emmeans(model, 'Status'), adjust ='none')
+
+	
