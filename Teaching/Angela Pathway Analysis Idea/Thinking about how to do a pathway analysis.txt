@@ -7,7 +7,7 @@ b) look at GO terms or KEGG terms related to the term of interest (more unbiased
 
 2) Identify the most likely pathway that is occuring via expression of enzymes that catalyze steps
 Methods:
-a) Compute pearson's correlations between each possible step of the pathway, pick the step that has the highest pearson's R
+a)Find the most likely step to occur given expression, I think we can do that by computing a spearman correlation between step lets say 1 and the two possibilities of step 2, see which has the highest coeffiecient
 	* I think we should also do a perumation analysis shuffling the names of all of the possible constituent members of the pathway
 	to see if the pathway we want to analyze is significnat
 
