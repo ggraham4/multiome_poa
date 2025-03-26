@@ -1,0 +1,1 @@
+I think what I want to do is pick a set of a few enzymes we are interested in, find all of the GO or KEGG terms they have in common, and then extract all of the genes in those pathways
