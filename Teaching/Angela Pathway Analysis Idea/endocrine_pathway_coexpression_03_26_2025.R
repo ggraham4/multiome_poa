@@ -8,6 +8,7 @@ obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
 obj$endocrine <- ifelse(obj@assays$RNA$data['hsd17b14',] >0, 'endocrine', NA)
 obj$endocrine <- ifelse(obj@assays$RNA$data['hsd3b1',] >0, 'endocrine', obj$endocrine)
 obj$endocrine <- ifelse(obj@assays$RNA$data['hsd17b1',] >0, 'endocrine', obj$endocrine)
+obj$endocrine <- ifelse(obj@assays$RNA$data['sts',] >0, 'endocrine', obj$endocrine)
 obj$endocrine <- ifelse(obj@assays$RNA$data['LOC111577263',] >0, 'endocrine', obj$endocrine)
 obj$endocrine <- ifelse(is.na(obj$endocrine), 'no_endocrine', obj$endocrine)
 
@@ -51,3 +52,21 @@ endocrine_like_genes_data <- table(endocrine_marker_all_signif$gene,
 endocrine_like_genes <- endocrine_like_genes_data$Var1%>%droplevels()
 # ok well this includes EAAT1 so that might not be good
 #also laminin
+
+#11 clusters express hsd3b1, which are they
+hsd3b1_clusters = table(endocrine_marker_all_signif$gene,
+      endocrine_marker_all_signif$harmony.wnn_res0.4_clusters)%>%
+  as.data.frame()%>%
+  subset(Var1 == 'hsd3b1' & Freq >0)
+
+hsd3b1_pos_clusters =hsd3b1_clusters$Var2
+
+table(endocrine_marker_all_signif$gene,
+      endocrine_marker_all_signif$harmony.wnn_res0.4_clusters)%>%
+  as.data.frame()%>%
+  subset(Var2 %in% hsd3b1_pos_clusters)%>%
+  group_by(Var1)%>% 
+  summarize(n_clusters = sum(Freq))%>%
+  subset(n_clusters > 11/2 
+  ) 
+# alright well this is not going anywhere so... next analysis
