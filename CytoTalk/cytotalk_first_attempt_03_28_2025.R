@@ -12,9 +12,9 @@ human_named_sce =as.SingleCellExperiment(human_named)
 #read into cytotalk
 lst_scrna <- CytoTalk::from_single_cell_experiment(human_named_sce)
 
-#run cytotalk, lets use 27 -> 14 as an example
-type_a = '27'
-type_b = '14'
+#run cytotalk, lets use 1 -> 0 as an example
+type_a = '1'
+type_b = '0'
 
 results <- CytoTalk::run_cytotalk(lst_scrna, type_a, type_b)
 # holy FUCK this thing is slow

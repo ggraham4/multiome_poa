@@ -1,0 +1,300 @@
+# Endocrine Pathway Analysis Example
+
+Here, I am going to show an example of some first steps toward analyzing what is happening to DHEA
+
+Load in libararies
+
+```{r}
+library(biomaRt)
+library(Seurat)
+library(tidyverse)
+library(lme4)
+library(car)
+library(emmeans)
+
+```
+
+Load in Seurat Object (modify to your system path here)
+
+```{r}
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+```
+
+Read in human to ocellaris.csv (I think I sent you this but if not it's on my github:
+
+<https://github.com/ggraham4/multiome_poa/blob/main/Reference/hsapiens_to_aocellaris.csv>
+
+```{r}
+human_to_ocellaris <- read_csv("C:/Users/Gabe/Desktop/multiome_poa/Reference/hsapiens_to_aocellaris.csv")
+
+```
+
+# Setting up biomaRt
+
+biomaRt provides access to a variety of online data largely regarding information about specific genes. This includes a wide variety of things like orthologs from one species to another (that's how hsapiens_to_ocellaris.csv was made), gene length, gene chromosome location, and much more that I wont go into here.
+
+Relevant to our idea here, biomaRt provides gene ontology (GO) terms, that describes the biological process a gene plays a role in. GO terms are essentially hierarchical, meaning if a gene plays a role in lets say "androgen biosynthesis", it will also be classified as playing a role in "steroid hormone metabolism", "cholesterol metabolism", "oxioreductase activity" etc., because those are all more generic ways of describing androgen biosynthesis. Additionally, genes are often enriched for several GO terms simply because they have several abilities. Thus, each gene has several GO terms. Lets see what we can do with this info below.
+
+Connect to human biomart - the reason I am using the human biomart and not the A ocellaris biomaRt is because the human genome is MUCH better annotated than the clownfish genome, so we can borrow some human information and transfer it to clownfish genes
+
+```{r}
+human_mart <- useEnsembl(biomart = 'genes',
+                             dataset = 'hsapiens_gene_ensembl')
+
+```
+
+List the attributes available to human_mart: these are all things you could learn about a gene
+
+```{r}
+att = attributes(human_mart)$attributes
+head(att)
+
+```
+
+Query info from human biomaRt; this may take a moment
+
+```{r}
+human_go <- getBM(mart = human_mart, #call the human mart
+                      attributes = c('entrezgene_accession', #entrezgene_acession is the NIH gene name
+                                     'go_id', #go ID
+                                     'name_1006' # name_1006 is the GO term
+                      ))
+
+```
+
+Join the human mart to the human to ocellaris gene translation - adds human GO terms to aocellaris genes
+
+```{r}
+joined <- human_to_ocellaris%>% #%>% pipe operator passes this argument to the next function
+  right_join(human_go, by =join_by('hsapiens_name' == 'entrezgene_accession'))%>% #right join tacks one data frame onto another based on a common column: in this case, hsapeinens name corresponds to entrezgene acession 
+  subset(!is.na(hsapiens_name)& #remove missing or empty gene names
+           hsapiens_name != ''&
+           !is.na(aocellaris_name)& # an important not here is you cannot say aocellaris_name != NA, dealing with NAs (and NaNs and NULLs) requries a special helper function is.na()
+           aocellaris_name != '')
+
+
+```
+
+Subset to genes enriched for a specific GO term; as an example we can do a very generic one like 'steroid metabolic process'
+
+```{r}
+genes_subset <- joined%>%
+  subset(name_1006 == 'steroid metabolic process') #subsets the whole df
+
+steroid_metabolism_genes = unique(genes_subset$aocellaris_name) # make a list of all unique a ocellaris genes in the above df 
+head(steroid_metabolism_genes)
+```
+
+Some of these are genes we are familiar with; HSD family members
+
+# What exactly do we want to ask?
+
+I think what we are trying to ask is a few things
+
+1)  What is the most likely enzymatic pathway DHEA is being metabolized in
+
+2)  Do the sexes differ in the expression of this pathway or its constituents
+
+My feeling is the best way to ask 1 is to ask which genes correlate with eachother and assume (and this is a big assumption) that they constitute a pathway. Of course this will need to be validated with literature.
+
+Because our data is heavily 0 inflated (it is mostly 0s), we should pseudobulk the expression of each gene. Pseudobulking is essentially taking the mean expression of a gene in an individual across all nuclei in a cluster.
+
+```{r}
+steroid_gene_data <- obj@assays$RNA$data[steroid_metabolism_genes,] %>%t()%>%as.data.frame() #transpose so that CELLS ARE NOW ROWS AND GENES ARE NOW COLUMNS
+
+steroid_gene_data$individual = obj$individual #add meta data to list
+steroid_gene_data$Status = obj$Status #
+steroid_gene_data$harmony.wnn_res0.4_clusters = obj$harmony.wnn_res0.4_clusters
+
+steroid_gene_data <- steroid_gene_data%>%
+  group_by(individual, Status, harmony.wnn_res0.4_clusters)%>% #group by variables we care about
+  summarize(across(all_of(steroid_metabolism_genes), mean, .names = "{.col}")) #summarize the mean for each gene across those variables
+```
+
+What does the distribution look like?
+
+Negative binomial, we can log transform
+
+```{r}
+hist(steroid_gene_data$hsd11b2)
+```
+
+We will also need to add a log transformation to all of the columns
+
+```{r}
+steroid_gene_data_log <- steroid_gene_data
+
+steroid_gene_data_log[,4:ncol(steroid_gene_data_log)] <- lapply(steroid_gene_data_log[, 4:ncol(steroid_gene_data_log)], FUN =function(x) x+0.001)
+
+steroid_gene_data_log[,4:ncol(steroid_gene_data_log)] <- lapply(steroid_gene_data_log[, 4:ncol(steroid_gene_data_log)], log)
+
+steroid_gene_data_log <- do.call(rbind, steroid_gene_data_log)%>%t()%>%as.data.frame()
+
+steroid_gene_data_log[,4:ncol(steroid_gene_data_log)] <- lapply(steroid_gene_data_log[, 4:ncol(steroid_gene_data_log)], FUN =as.numeric)
+```
+
+```{r}
+hist(steroid_gene_data_log$slc22a5)
+```
+
+#this isnt working...
+
+# Bonus: Do the sexes differ in endocrine + vs endocrine - cells
+
+This is an analysis I always do with these kinds of data so I decided to add it on as extra if you want to ask this about other kind of data
+
+Do ask this, we can add a column to the seurat object indicating if a specific nucleus expresses any of the genes above or now.
+
+```{r}
+#Its kind of convoluted to ask if any of a set of rows in our data is >0, one way is to use an apply function, whcih applies a defined function over a whole list
+
+obj$endocrine <- apply(X = obj@assays$RNA$data[steroid_metabolism_genes,], # here, our list is the gene names,and we have subset to the genes we defined above as being enriched for our GO term
+                       MARGIN = 2, #margin = 2 means it applies this function over the columns of the data frame, Margin = 1 would apply it over rows
+                       FUN= function(x) ifelse(any(x > 0), 'endocrine',
+                                                'no_endocrine'))
+#FUN defines the function we want to apply to the columns. In this case, it uses ifelse to define a cell as 'endocrine' if it expresses any steroid metabolism genes, and no endocrine if the opposite is true
+```
+
+What number of cells are endocrine + vs endocrine -
+
+```{r}
+table(obj$endocrine)
+```
+
+Close to a 50:50 split
+
+```{r}
+Idents(obj) <- 'harmony.wnn_res0.4_clusters'
+DimPlot(obj, split.by = 'endocrine', reduction = 'harmony_wnn.umap', label = T)
+
+```
+
+# How to ask this statistically
+
+To statistically test this, we can use a mixed logistic regression, which assesses if the rate of success versus failure differs based on treatment. In this case, success would be a cell being endocrine+, failure would be a cell being endocrine -, and the treatment would be sex. Because a cell has a binary outcome (1 - endocrine + or 0 - endocrine -) we can model this using a binomial distribution
+
+Analyze each cluster individually using a for loop. If you haven't been taught for loops, this will probably not make sense so I can show you.
+
+First, an example of a single cluster
+
+```{r}
+#lets look at data for cluster 2 (radial_glia)
+  rgc_data = data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters ==2], #add sex (Status) from the object subset to the specific cluster we are analyzing
+                          
+                          individual =obj$individual[obj$harmony.wnn_res0.4_clusters ==2], #add individual ID from the object subset to the specific cluster we are analyzing
+                          endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters ==2], #add endocrine classification from the object subset to the specific cluster we are analyzing
+                          cluster =2)%>% 
+    subset(Status %in% c('M',"D","F"))%>% # subset to m, d, and f, our major groups
+    group_by(individual, Status)%>% #group by preserves unique combinations of these values and collapses acorss other values
+    summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+              non_endocrine_cells = sum(endocrine == 'no_endocrine'))
+  #summarize creates a new columns based opn the group_by function and any operation we define
+  head(rgc_data)
+```
+
+Logistic regression for cluster 2
+
+```{r}
+cluster_2_logistic <- glmer(cbind(rgc_data$endocrine_cells, rgc_data$non_endocrine_cells) # cbind makes these two columns of the data frame into a matrix, where the first column is successes, and the second is failures
+                            ~ #tilde means we will be predicting based on the variables we define afeter
+                          Status+ #fit success vs failure rate based on sex
+                          (1|individual), # add a random effect (via (1|...)) of individual because data points are not independent
+                          data = rgc_data,
+                          family = binomial() # specity binomial distribution
+                          )
+car::Anova(cluster_2_logistic, type = 'III') #see if there is an effect of status using type II anova
+```
+
+In this specific case, there is not a significant difference, lets now apply this code to every cluster
+
+We do this using a for loop. If you havent learned for loops, I can show you more in detail another time
+
+```{r}
+data= data.frame() #initialize an empty dataframe, we will be adding stuff into this
+for(i in 0:31){ #there are 31 clusters
+  if(i == 30 | i == 15){next} #ignore clusters 15 and 30 cause they are problematic
+  
+  #this data manipulation is the same as above, except we have replaced 2 for i; the variable that is iterated in the for loop
+  
+  model_data = suppressMessages( data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters ==i],
+                          individual =obj$individual[obj$harmony.wnn_res0.4_clusters ==i],
+                          endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters ==i],
+                          cluster =i)%>%
+    subset(Status %in% c('M',"D","F"))%>%
+    group_by(individual, Status)%>%
+    summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+              non_endocrine_cells = sum(endocrine == 'no_endocrine')))
+
+  
+  glmer_model = glmer(cbind(model_data$endocrine_cells, model_data$non_endocrine_cells)~Status + (1|individual),
+                      family = binomial(), data =model_data)
+  
+  av= car::Anova(glmer_model, type = 'III')%>%as.data.frame() 
+  
+  out_data = data.frame(cluster = i,
+                        p_val = av$`Pr(>Chisq)`[2], #store the p value as a number
+                        singular = isSingular(glmer_model))
+  data = rbind(data, out_data)  
+  
+}
+data$signif = ifelse(data$p_val<0.05, '*', NA)
+
+```
+
+Singular means it estimated the random effect as 0, meaning it treated all data as independent even if that's not the case. This can be a problem but for now we can ignore it
+
+```{r}
+data
+```
+
+Fascinating, we see significant differences in 3 (albeit singular), and 4 (oligodendrocytes)
+
+Lets plot oligodendrocytes
+
+```{r}
+data_for_plot_4 = data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters==4],
+                             individual =obj$individual[obj$harmony.wnn_res0.4_clusters==4],
+                             endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters==4])%>%
+  subset(Status!= 'NRM')%>%
+  group_by(individual, Status)%>%
+  summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+            non_endocrine_cells = sum(endocrine == 'no_endocrine'))%>%
+  mutate(prop_endocrine = endocrine_cells/(endocrine_cells+non_endocrine_cells))
+
+data_for_plot_4$Status = factor(data_for_plot_4$Status, levels= c('M','D','E','NF','F'))
+
+ggplot(data_for_plot_4, aes(x = Status, y = prop_endocrine))+
+  geom_boxplot(aes(fill = Status))+
+  geom_jitter(shape =1)+
+  labs(x='Sex', y =  'Proportion Endocrine+ Cells', title = "Oligodendrocytes", fill = 'Sex')
+
+```
+
+Wow that seems like an obvious significant difference to me certainly between dominants and females. We can test for pairwise differences using the package emmeans
+
+Set up the model again for oligodendrocytes
+
+```{r}
+ 
+  model_data_og = suppressMessages( data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters ==4],
+                          individual =obj$individual[obj$harmony.wnn_res0.4_clusters ==4],
+                          endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters ==4],
+                          cluster =i)%>%
+    subset(Status %in% c('M',"D","F"))%>%
+    group_by(individual, Status)%>%
+    summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+              non_endocrine_cells = sum(endocrine == 'no_endocrine')))
+
+  
+  glmer_model_4 = glmer(cbind(model_data_og$endocrine_cells, model_data_og$non_endocrine_cells)~Status + (1|individual),
+                      family = binomial(), data =model_data_og)
+
+```
+
+Pairwise comparisons using emmeans
+
+```{r}
+pairs(emmeans(glmer_model_4, 'Status'))
+```
+
+So pairwise comparisons (with Tukey adjusted p values) find That females and males significantly differ, but dominants barely miss that threshold. Even though p\>0.05, it barely is and I think we can use our judgement here and say it is a real difference.
