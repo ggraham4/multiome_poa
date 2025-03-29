@@ -104,6 +104,10 @@ adata.var
 
 ### run cellphonedb
 from cellphonedb.src.core.methods import cpdb_degs_analysis_method
+import multiprocessing
+import IPython
+multiprocessing.set_start_method('spawn', force=True)
+
 
 for i in set(obj.obs.individual):
     if i == 'GH':
@@ -111,7 +115,7 @@ for i in set(obj.obs.individual):
 
     meta_file_path = f"{"A:/CellPhoneDB 030225/"}{i}{"/human_named_meta.tsv"}"
     counts_path = f"{"A:/CellPhoneDB 030225/"}{i}{"/normalised_log_counts.h5ad"}"
-    deg_path = f"{"A:/CellPhoneDB 030225/"}{i}{"/human_named_meta.tsv"}"
+    deg_path = f"{"A:/CellPhoneDB 030225/"}{i}{"/DEGs.tsv"}"
     cpdb_file_path = 'A:/CellPhoneDB 030225/v5.0.0/cellphonedb.zip'
     out_path = f"{"A:/CellPhoneDB 030225/"}{i}"
 
@@ -128,9 +132,9 @@ for i in set(obj.obs.individual):
         debug = False,                                              # Saves all intermediate tables emplyed during the analysis in pkl format.
         output_path = out_path,                                     # Path to save results
         output_suffix = None,                                       # Replaces the timestamp in the output files by a user defined string in the  (default: None)
-        threads = 11
+        threads = 1
         )
-    
+#put me on suicide watch pls
 
 
 
