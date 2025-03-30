@@ -18,3 +18,4 @@ type_b = '0'
 
 results <- CytoTalk::run_cytotalk(lst_scrna, type_a, type_b)
 # holy FUCK this thing is slow
+#doesnt even work 

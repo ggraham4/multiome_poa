@@ -111,33 +111,12 @@ steroid_gene_data <- steroid_gene_data%>%
   summarize(across(all_of(steroid_metabolism_genes), mean, .names = "{.col}")) #summarize the mean for each gene across those variables
 ```
 
-What does the distribution look like?
-
-Negative binomial, we can log transform
+# I think it is ok to use pearson for non normal data from what I read as long as you dgaf about the p value
 
 ```{r}
-hist(steroid_gene_data$hsd11b2)
+hist(steroid_gene_data$hsd3b7[steroid_gene_data$harmony.wnn_res0.4_clusters == '4'],5)
+
 ```
-
-We will also need to add a log transformation to all of the columns
-
-```{r}
-steroid_gene_data_log <- steroid_gene_data
-
-steroid_gene_data_log[,4:ncol(steroid_gene_data_log)] <- lapply(steroid_gene_data_log[, 4:ncol(steroid_gene_data_log)], FUN =function(x) x+0.001)
-
-steroid_gene_data_log[,4:ncol(steroid_gene_data_log)] <- lapply(steroid_gene_data_log[, 4:ncol(steroid_gene_data_log)], log)
-
-steroid_gene_data_log <- do.call(rbind, steroid_gene_data_log)%>%t()%>%as.data.frame()
-
-steroid_gene_data_log[,4:ncol(steroid_gene_data_log)] <- lapply(steroid_gene_data_log[, 4:ncol(steroid_gene_data_log)], FUN =as.numeric)
-```
-
-```{r}
-hist(steroid_gene_data_log$slc22a5)
-```
-
-#this isnt working...
 
 # Bonus: Do the sexes differ in endocrine + vs endocrine - cells
 
