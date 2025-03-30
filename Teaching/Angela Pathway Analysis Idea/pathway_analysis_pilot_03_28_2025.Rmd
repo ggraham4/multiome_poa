@@ -111,7 +111,7 @@ steroid_gene_data <- steroid_gene_data%>%
   summarize(across(all_of(steroid_metabolism_genes), mean, .names = "{.col}")) #summarize the mean for each gene across those variables
 ```
 
-# I think it is ok to use pearson for non normal data from what I read as long as you dgaf about the p value
+# I think it is ok to use pearson for non normal data from what I read as long as you dgaf about the p value - still should pseudobulk though
 
 ```{r}
 hist(steroid_gene_data$hsd3b7[steroid_gene_data$harmony.wnn_res0.4_clusters == '4'],5)
