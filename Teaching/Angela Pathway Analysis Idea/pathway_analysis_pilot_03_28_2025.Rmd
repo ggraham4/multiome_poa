@@ -11,6 +11,8 @@ library(tidyverse)
 library(lme4)
 library(car)
 library(emmeans)
+library(igraph)
+library(ggraph)
 
 ```
 
@@ -97,6 +99,8 @@ I think what we are trying to ask is a few things
 
 My feeling is the best way to ask 1 is to ask which genes correlate with eachother and assume (and this is a big assumption) that they constitute a pathway. Of course this will need to be validated with literature.
 
+# Data Preparation
+
 Because our data is heavily 0 inflated (it is mostly 0s), we should pseudobulk the expression of each gene. Pseudobulking is essentially taking the mean expression of a gene in an individual across all nuclei in a cluster.
 
 ```{r}
@@ -111,12 +115,111 @@ steroid_gene_data <- steroid_gene_data%>%
   summarize(across(all_of(steroid_metabolism_genes), mean, .names = "{.col}")) #summarize the mean for each gene across those variables
 ```
 
-# I think it is ok to use pearson for non normal data from what I read as long as you dgaf about the p value - still should pseudobulk though
+Before I do any stats, I want to give the clownfish genes human gene names for the simple reason that most clownfish genes are named like LOC111577263
 
 ```{r}
-hist(steroid_gene_data$hsd3b7[steroid_gene_data$harmony.wnn_res0.4_clusters == '4'],5)
+#Extract gene names from steroid gene data
+gene_names = colnames(steroid_gene_data[,4:ncol(steroid_gene_data)])
+
+#Define a function to translate the gene names
+get_human_names <- function(ocellaris_names) {
+  sapply(ocellaris_names, function(gene) { #sapply applies a function across a vector into a list
+    idx <- which(human_to_ocellaris$aocellaris_name == gene) #which asks which row indecies are true
+    if(length(idx) > 0) { #if there is a match
+      return(human_to_ocellaris$hsapiens_name[idx[1]]) #return the first result (there are often several matches)
+    } else { #else
+      return(gene) #keep the clownfish gene
+    }
+  })
+}
+
+human_names <- get_human_names(gene_names) #run the function
+
+colnames(steroid_gene_data)[4:ncol(steroid_gene_data)] <- human_names #rename the relevant colnames using our new vector
+```
+
+# Correlation Matrix
+
+In a broad search, we dont care so much about sex differences, we just want to ask which genes are correlated. Above, we grouped by individual and cluster, so each data point will be one individual within one cluster, and we will be correlating across these levels.
+
+```{r}
+#cor creates a correlation matrix from a matrix
+correlation_matrix = cor(as.matrix(steroid_gene_data[,4:ncol(steroid_gene_data)]))
+
+#remove any rows or columns tthat are NAs
+na_rows <- which(is.na(correlation_matrix[,1]))
+na_cols <- which(is.na(correlation_matrix[1,]))
+
+correlation_matrix = correlation_matrix[-na_rows, -na_cols]
+
+diag(correlation_matrix) = 0 #we dont care that a gene correlates with itself
+
+#first visualization - heatmap
+heatmap(correlation_matrix)
+```
+
+# Network Graph 
+
+Another way to visualize this network is using a network graph, which finds networks for correlated items (in this case genes)
+
+```{r}
+#Define a threshold because the whole matrix would be a mess
+signif_interaction_value = max(correlation_matrix)*0.2
+
+#Subset the correlation matrix based on that value
+top_correlation_matrix = ifelse(correlation_matrix<signif_interaction_value, 0, correlation_matrix)
+
+#use absolute value becasue we dont care as much about the directionality of the relationship
+top_correlation_matrix = abs(top_correlation_matrix)
+
+#make an undirected igraph
+g <- graph_from_adjacency_matrix((top_correlation_matrix), mode = "undirected", weighted = TRUE) 
+
+#remove vertecies that have no connections
+Isolated = which(degree(g)==0)
+g = delete_vertices(g, Isolated)
+
+#plot using ggraph
+ggraph(g, layout = 'fr')+
+  geom_edge_link(color = "darkgray") +
+  geom_node_point(
+    fill = "blue",
+    color = "red",
+    alpha = 0.5,
+    shape = 22,
+    aes(size = igraph::degree(g)),
+    show.legend = FALSE
+  ) +
+  scale_size(range = c(1, 10)) +
+  geom_node_text(aes(label = name),size =3, repel =T)+
+  theme_graph()
+
 
 ```
+
+# Hypothesis Testing with Permutation
+
+In 1, we asked "what is the most likely enzymatic pathway occuring here". A great way to assess this is using permutation. Permutation is very useful for a variety of reasons.
+
+1.   It is non-parametric, there are no assumptions about the character of the data
+2.  It is built directly off of our data
+3.  It allows very high confidence
+
+The cons are that permutation analyses have lower power than parametric tests like t-tests
+
+Here, I will show a way to assess which enzymes are significantly correlated with eachother, and build from that. The main idea is we want to compare real data from a set of genes to a null distribution generated from a random set of genes from our data.
+
+As a proof of concept, I am going to do the top 10 strongest connections in our data
+
+```{r}
+proof_data = data.frame(weight = E(g)$weight,
+                        name = paste0(get.edgelist(g)[,1], '|',get.edgelist(g)[,2]))
+
+
+
+```
+
+I am realizing it maybe doesnt make sense to find a network like this?
 
 # Bonus: Do the sexes differ in endocrine + vs endocrine - cells
 
