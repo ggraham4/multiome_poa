@@ -1,0 +1,178 @@
+# Idea about pathway analysis
+
+Prep stuff to ignore
+
+```{r}
+library(biomaRt)
+library(Seurat)
+library(tidyverse)
+library(lme4)
+library(car)
+library(emmeans)
+library(igraph)
+library(ggraph)
+
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+
+human_to_ocellaris <- read_csv("C:/Users/Gabe/Desktop/multiome_poa/Reference/hsapiens_to_aocellaris.csv")
+
+human_mart <- useEnsembl(biomart = 'genes',
+                             dataset = 'hsapiens_gene_ensembl')
+
+human_go <- getBM(mart = human_mart, #call the human mart
+                      attributes = c('entrezgene_accession', #entrezgene_acession is the NIH gene name
+                                     'go_id', #go ID
+                                     'name_1006' # name_1006 is the GO term
+                      ))
+
+joined <- human_to_ocellaris%>% #%>% pipe operator passes this argument to the next function
+  right_join(human_go, by =join_by('hsapiens_name' == 'entrezgene_accession'))%>% #right join tacks one data frame onto another based on a common column: in this case, hsapeinens name corresponds to entrezgene acession 
+  subset(!is.na(hsapiens_name)& #remove missing or empty gene names
+           hsapiens_name != ''&
+           !is.na(aocellaris_name)& # an important not here is you cannot say aocellaris_name != NA, dealing with NAs (and NaNs and NULLs) requries a special helper function is.na()
+           aocellaris_name != '')
+genes_subset <- joined%>%
+  subset(name_1006 == 'steroid metabolic process') #subsets the whole df
+
+steroid_metabolism_genes = unique(genes_subset$aocellaris_name) # make a list of all unique a ocellaris genes in the above df 
+head(steroid_metabolism_genes)
+
+```
+
+```{r}
+steroid_gene_data <- obj@assays$RNA$data[steroid_metabolism_genes,] %>%t()%>%as.data.frame() #transpose so that CELLS ARE NOW ROWS AND GENES ARE NOW COLUMNS
+
+steroid_gene_data$individual = obj$individual #add meta data to list
+steroid_gene_data$Status = obj$Status #
+steroid_gene_data$harmony.wnn_res0.4_clusters = obj$harmony.wnn_res0.4_clusters
+
+steroid_gene_data <- steroid_gene_data%>%
+  group_by(individual, Status, harmony.wnn_res0.4_clusters)%>% #group by variables we care about
+  summarize(across(all_of(steroid_metabolism_genes), mean, .names = "{.col}")) #summarize the mean for each gene across those variables
+#Extract gene names from steroid gene data
+gene_names = colnames(steroid_gene_data[,4:ncol(steroid_gene_data)])
+
+#Define a function to translate the gene names
+get_human_names <- function(ocellaris_names) {
+  sapply(ocellaris_names, function(gene) { #sapply applies a function across a vector into a list
+    idx <- which(human_to_ocellaris$aocellaris_name == gene) #which asks which row indecies are true
+    if(length(idx) > 0) { #if there is a match
+      return(human_to_ocellaris$hsapiens_name[idx[1]]) #return the first result (there are often several matches)
+    } else { #else
+      return(gene) #keep the clownfish gene
+    }
+  })
+}
+
+human_names <- get_human_names(gene_names) #run the function
+
+colnames(steroid_gene_data)[4:ncol(steroid_gene_data)] <- human_names #rename the relevant colnames using our new vector
+#cor creates a correlation matrix from a matrix
+correlation_matrix = cor(as.matrix(steroid_gene_data[,4:ncol(steroid_gene_data)]))
+
+#remove any rows or columns tthat are NAs
+na_rows <- which(is.na(correlation_matrix[,1]))
+na_cols <- which(is.na(correlation_matrix[1,]))
+
+correlation_matrix = correlation_matrix[-na_rows, -na_cols]
+
+diag(correlation_matrix) = 0 #we dont care that a gene correlates with itself
+
+#Define a threshold because the whole matrix would be a mess
+signif_interaction_value = max(correlation_matrix)*0.2
+
+#Subset the correlation matrix based on that value
+top_correlation_matrix = ifelse(correlation_matrix<signif_interaction_value, 0, correlation_matrix)
+
+#use absolute value becasue we dont care as much about the directionality of the relationship
+top_correlation_matrix = abs(top_correlation_matrix)
+
+#make an undirected igraph
+g <- graph_from_adjacency_matrix((top_correlation_matrix), mode = "undirected", weighted = TRUE) 
+
+#remove vertecies that have no connections
+Isolated = which(degree(g)==0)
+g = delete_vertices(g, Isolated)
+```
+
+Ok wait this is is interesting a nd I think how I want to ask this
+
+```{r}
+walk <-  random_walk(g,
+                 1,
+                 4)
+
+names(walk)
+```
+
+```{r}
+out_data <- data.frame()
+for(i in 1:10000){
+  path <- random_walk(g, 
+                      3,#starting node
+                      4 #steps
+                      )
+  steps <- names(path)
+  newd <- data.frame(steps = steps,
+                     n_step = 1:5,
+                     iter = i)
+  out_data = rbind(newd, out_data)
+  
+}
+```
+
+```{r}
+probability_data <- as.data.frame.matrix(table(out_data$steps, out_data$n_step)/10000)
+```
+
+```{r}
+most_likely_path <- c(
+  `1` = rownames(probability_data[probability_data$`1` == max(probability_data$`1`),]),
+  `2` = rownames(probability_data[probability_data$`2` == max(probability_data$`2`),]),
+  `3` = rownames(probability_data[probability_data$`3` == max(probability_data$`3`),]),
+  `4` = rownames(probability_data[probability_data$`4` == max(probability_data$`4`),])
+)
+most_likely_path
+```
+
+I would also like to see how this converges
+
+```{r}
+conv_data <- data.frame()
+temp_data <- data.frame()
+for(i in 1:1000){
+  path <- random_walk(g, 
+                      3,#starting node
+                      4 #steps
+                      )
+  steps <- names(path)
+  newd <- data.frame(steps = steps,
+                     n_step = 1:5,
+                     iter = i)
+  
+    temp_data <- rbind(temp_data, newd)
+    
+    freq_data <- as.data.frame.matrix(table(temp_data$steps, temp_data$n_step)/i)
+    
+    frequency_2 <- max(freq_data$`2`)
+    frequency_3 <- max(freq_data$`3`)
+    frequency_4 <- max(freq_data$`4`)
+  
+    iter_freq <- data.frame(
+      n_iter = i,
+      frequency_2=frequency_2,
+      frequency_3 = frequency_3,
+      frequency_4=frequency_4
+    )
+
+  conv_data = rbind(iter_freq, conv_data)
+  
+}
+
+```
+
+```{r}
+plot(x = conv_data$n_iter, y = conv_data$frequency_2)
+plot(x = conv_data$n_iter, y = conv_data$frequency_3)
+plot(x = conv_data$n_iter, y = conv_data$frequency_4)
+```

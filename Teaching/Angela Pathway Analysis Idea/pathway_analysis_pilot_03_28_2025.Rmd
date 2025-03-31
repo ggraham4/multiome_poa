@@ -31,7 +31,7 @@ human_to_ocellaris <- read_csv("C:/Users/Gabe/Desktop/multiome_poa/Reference/hsa
 
 ```
 
-# Setting up biomaRt
+## Setting up biomaRt
 
 biomaRt provides access to a variety of online data largely regarding information about specific genes. This includes a wide variety of things like orthologs from one species to another (that's how hsapiens_to_ocellaris.csv was made), gene length, gene chromosome location, and much more that I wont go into here.
 
@@ -99,7 +99,7 @@ I think what we are trying to ask is a few things
 
 My feeling is the best way to ask 1 is to ask which genes correlate with eachother and assume (and this is a big assumption) that they constitute a pathway. Of course this will need to be validated with literature.
 
-# Data Preparation
+## Data Preparation
 
 Because our data is heavily 0 inflated (it is mostly 0s), we should pseudobulk the expression of each gene. Pseudobulking is essentially taking the mean expression of a gene in an individual across all nuclei in a cluster.
 
@@ -138,7 +138,7 @@ human_names <- get_human_names(gene_names) #run the function
 colnames(steroid_gene_data)[4:ncol(steroid_gene_data)] <- human_names #rename the relevant colnames using our new vector
 ```
 
-# Correlation Matrix
+## Correlation Matrix
 
 In a broad search, we dont care so much about sex differences, we just want to ask which genes are correlated. Above, we grouped by individual and cluster, so each data point will be one individual within one cluster, and we will be correlating across these levels.
 
@@ -158,19 +158,17 @@ diag(correlation_matrix) = 0 #we dont care that a gene correlates with itself
 heatmap(correlation_matrix)
 ```
 
-# Network Graph 
+## Network Graph
 
 Another way to visualize this network is using a network graph, which finds networks for correlated items (in this case genes)
 
 ```{r}
 #Define a threshold because the whole matrix would be a mess
-signif_interaction_value = max(correlation_matrix)*0.2
+signif_interaction_value =0
 
-#Subset the correlation matrix based on that value
+#Subset the correlation matrix based on that value such that there are no negative correalations
 top_correlation_matrix = ifelse(correlation_matrix<signif_interaction_value, 0, correlation_matrix)
 
-#use absolute value becasue we dont care as much about the directionality of the relationship
-top_correlation_matrix = abs(top_correlation_matrix)
 
 #make an undirected igraph
 g <- graph_from_adjacency_matrix((top_correlation_matrix), mode = "undirected", weighted = TRUE) 
@@ -197,35 +195,120 @@ ggraph(g, layout = 'fr')+
 
 ```
 
-# Hypothesis Testing with Permutation
+# Hypothesis Testing Using a Random Walk
 
-In 1, we asked "what is the most likely enzymatic pathway occuring here". A great way to assess this is using permutation. Permutation is very useful for a variety of reasons.
+A random walk is an approach to asses inherently random processes. In our enzymatic pathway for example, lets say the correlation coefficient between HSD3B1 and HSD17B14 is 0.6. One interpretation could be that given a molecule that is processed by HSD3B1, there is a 60% chance it is passed to HSD17B14, and the same concept can be applied to the next enzyme after HSD17B14. Even though there is a 60% chance the molecule is passed to HSD17B14, for a single event, it is completely random where it ends up going. In a random walk, a node (gene) is selected as a starting point, and then based on the edge weight (correlation coefficient between the two genes), the walker chooses to step to the next node based on the correlation between the two nodes. Thus, 60% of the time, it will go from HSD3B1 to HSD17B14. After that, it then has a probability of going to the next node and the next node etc. By simulating a random walk thousands of times, we can see which pathway occurs the most frequently and is thus the most likely.
 
-1.   It is non-parametric, there are no assumptions about the character of the data
-2.  It is built directly off of our data
-3.  It allows very high confidence
-
-The cons are that permutation analyses have lower power than parametric tests like t-tests
-
-Here, I will show a way to assess which enzymes are significantly correlated with eachother, and build from that. The main idea is we want to compare real data from a set of genes to a null distribution generated from a random set of genes from our data.
-
-As a proof of concept, I am going to do the top 10 strongest connections in our data
+Here, as an example, we will run the random walk once. We set a starting node on the graph and specify the number of steps for the walker to take. We then look at which nodes (vertices) the walker traveled to
 
 ```{r}
-proof_data = data.frame(weight = E(g)$weight,
-                        name = paste0(get.edgelist(g)[,1], '|',get.edgelist(g)[,2]))
+walk <-  random_walk(g,
+                 4, #starting vertex (node), call V(g) to see the names of each vertex
+                 4) #number of steps the walker will take
 
+names(walk) # the steps the walker took
+```
 
+A single random walk doesnt tell us that much though, so we need so simulate thousands of walks to feel confident about a result. Here, we stimulate it 3000 times.
+
+```{r}
+out_data <- data.frame() #initialize empty data frame to put data into
+for(i in 1:3000){ #specify number of iterations
+  path <- random_walk(g, 
+                      4,#starting node
+                      4 #steps
+                      )
+  steps <- names(path) #see which steps the walker took
+  newd <- data.frame(steps = steps, #add to data frame
+                     n_step = 1:5,
+                     iter = i)
+  out_data = rbind(newd, out_data) #bind new data to out_data
+}
+```
+
+Then, convert to probabilities
+
+```{r}
+probability_data <- as.data.frame.matrix( #make a matrix from a table
+  table(
+    out_data$steps, out_data$n_step #that is x = 'which step', and y = 'gene', where cells are the frequency that gene was that step
+    )/max(out_data$iter)) #divide by total number of iteration
+
+head(probability_data) #for the first step, all but node 1 will have a probability of 0 because we set node 1 to be the first step when we defined the walk
+```
+
+We can then extract a consensus path based on which gene was the most likely for each step. I think technically there is a more precise way to do this, but for our purposes I think this is ok.
+
+```{r}
+most_likely_path <- c(
+  `1` = rownames(probability_data[probability_data$`1` == max(probability_data$`1`),]),
+  `2` = rownames(probability_data[probability_data$`2` == max(probability_data$`2`),]),
+  `3` = rownames(probability_data[probability_data$`3` == max(probability_data$`3`),]),
+  `4` = rownames(probability_data[probability_data$`4` == max(probability_data$`4`),])
+)
+most_likely_path
+```
+
+### Convergence
+
+Convergence is the idea that as you repeat a statistical process thousands of times, the probability of a given event converges to a single number. Convergence is important for a variety of reasons, but most importantly it allows us to be confident that our result is real and not due to random noise.
+
+Rerun the simulation but this time we store the frequency of the most likely node at each step. Then, we can see how it changes over a number of iterations. We will do it 10,000 times, which takes a bit to run.
+
+```{r}
+conv_data <- data.frame()
+temp_data <- data.frame()
+for(i in 1:10000){
+  path <- random_walk(g, 
+                      4,#starting node
+                      4 #steps
+                      )
+  steps <- names(path)
+  newd <- data.frame(steps = steps,
+                     n_step = 1:5,
+                     iter = i)
+  
+    temp_data <- rbind(temp_data, newd)
+    
+    freq_data <- as.data.frame.matrix(table(temp_data$steps, temp_data$n_step)/i)
+    #the same probability data above normalized for the given iteration we are on
+    
+    #store the frequency of the most likely gene for each step
+    frequency_2 <- max(freq_data$`2`)
+    frequency_3 <- max(freq_data$`3`)
+    frequency_4 <- max(freq_data$`4`)
+  
+    iter_freq <- data.frame(
+      n_iter = i,
+      frequency_2=frequency_2,
+      frequency_3 = frequency_3,
+      frequency_4=frequency_4
+    )
+
+  conv_data = rbind(iter_freq, conv_data)
+  
+}
 
 ```
 
-I am realizing it maybe doesnt make sense to find a network like this?
+Convergence is usually assessed by looking at a plot of probability over iteration. We are looking for the probability to essentially stabilize and become flat as the number of iterations increase.
+
+```{r}
+plot(x = conv_data$n_iter, y = conv_data$frequency_2)
+abline(v =2000)
+plot(x = conv_data$n_iter, y = conv_data$frequency_3)
+abline(v =2000)
+plot(x = conv_data$n_iter, y = conv_data$frequency_4)
+abline(v =2000)
+```
+
+We can see that after around 1000 - 2000, iterations, each step has converged
 
 # Bonus: Do the sexes differ in endocrine + vs endocrine - cells
 
 This is an analysis I always do with these kinds of data so I decided to add it on as extra if you want to ask this about other kind of data
 
-Do ask this, we can add a column to the seurat object indicating if a specific nucleus expresses any of the genes above or now.
+To ask this, we can add a column to the seurat object indicating if a specific nucleus expresses any of the genes above or now.
 
 ```{r}
 #Its kind of convoluted to ask if any of a set of rows in our data is >0, one way is to use an apply function, whcih applies a defined function over a whole list
@@ -251,7 +334,7 @@ DimPlot(obj, split.by = 'endocrine', reduction = 'harmony_wnn.umap', label = T)
 
 ```
 
-# How to ask this statistically
+## How to ask this statistically
 
 To statistically test this, we can use a mixed logistic regression, which assesses if the rate of success versus failure differs based on treatment. In this case, success would be a cell being endocrine+, failure would be a cell being endocrine -, and the treatment would be sex. Because a cell has a binary outcome (1 - endocrine + or 0 - endocrine -) we can model this using a binomial distribution
 
