@@ -47,6 +47,10 @@ cytotalk_wrapper = function(seurat_object,
                             sender,
                             receiver){
   library(parallel)
+  library(CytoTalk)
+  library(reticulate)
+  py_require('pcst_fast')
+  pcst_fast = import('pcst_fast')
   
   suppressWarnings(dir.create(paste0('A:/CytoTalk/',sender,'_',receiver)))
 
