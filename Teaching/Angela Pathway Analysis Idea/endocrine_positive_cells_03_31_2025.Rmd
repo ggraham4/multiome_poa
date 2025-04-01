@@ -1,0 +1,227 @@
+# Sex differences in Cells With Given Characteristics - An example of how to use logistic regression
+
+A type of analysis I do a lot is ask, do the sexes differ in the proportion (or expression but that is an analysis for another notebook) of cells expressing some gene or some set of genes? Since we are on the topic of steroid metabolic pathways, I was curious if there were any clusters where the sexes differed in the number of cells expressing steroid enzymes. This analysis is very generalizable, another situation I often do this in is immediate early gene (IEG) expression. If you read "Adult Sex Change Leads to Extensive Forebrain Reorganization", this is an analysis they do there. For more detail on the steps up to obj\$endocrine, see "pathway_analysis_pilot_03_28_2025"
+
+Read in libaries
+
+```{r warning=FALSE,message=FALSE,error=FALSE}
+library(biomaRt)
+library(Seurat)
+library(tidyverse)
+library(lme4)
+library(car)
+library(emmeans)
+
+```
+
+Read in object
+
+```{r}
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+```
+
+And human to ocellaris, if you dont have this download at <https://github.com/ggraham4/multiome_poa/blob/main/Reference/hsapiens_to_aocellaris.csv>
+
+```{r warning=FALSE,message=FALSE,error=FALSE}
+human_to_ocellaris <- read_csv("C:/Users/Gabe/Desktop/multiome_poa/Reference/hsapiens_to_aocellaris.csv")
+
+```
+
+Set up a biomart
+
+```{r}
+human_mart <- useEnsembl(biomart = 'genes',
+                             dataset = 'hsapiens_gene_ensembl')
+```
+
+Get GO terms
+
+```{r}
+human_go <- getBM(mart = human_mart, #call the human mart
+                      attributes = c('entrezgene_accession', #entrezgene_acession is the NIH gene name
+                                     'go_id', #go ID
+                                     'name_1006' # name_1006 is the GO term
+                      ))
+
+```
+
+Join to clownfish to human translation, thus giving ocellaris genes human GO terms
+
+```{r}
+joined <- human_to_ocellaris%>% #%>% pipe operator passes this argument to the next function
+  right_join(human_go, by =join_by('hsapiens_name' == 'entrezgene_accession'))%>% #right join tacks one data frame onto another based on a common column: in this case, hsapeinens name corresponds to entrezgene acession 
+  subset(!is.na(hsapiens_name)& #remove missing or empty gene names
+           hsapiens_name != ''&
+           !is.na(aocellaris_name)& # an important not here is you cannot say aocellaris_name != NA, dealing with NAs (and NaNs and NULLs) requries a special helper function is.na()
+           aocellaris_name != '')
+
+```
+
+Subset to genes with a specifc GO term of interest
+
+```{r}
+genes_subset <- joined%>%
+  subset(name_1006 == 'steroid metabolic process') #subsets the whole df
+
+steroid_metabolism_genes = unique(genes_subset$aocellaris_name) # make a list of all unique a ocellaris genes in the above df 
+head(steroid_metabolism_genes)
+```
+
+## How do we ask this?
+
+To ask this, we can add a column to the seurat object indicating if a specific nucleus expresses any of the genes above or now.
+
+```{r}
+#Its kind of convoluted to ask if more than one row in our data is >0, one way is to use an apply function, which applies a defined function over a whole list
+
+obj$endocrine <- apply(X = obj@assays$RNA$data[steroid_metabolism_genes,], # here, our list is the gene names,and we have subset to the genes we defined above as being enriched for our GO term
+                       MARGIN = 2, #margin = 2 means it applies this function over the columns of the data frame, Margin = 1 would apply it over rows
+                       FUN= function(x) ifelse(any(x > 0), 'endocrine',
+                                                'no_endocrine'))
+#FUN defines the function we want to apply to the columns. In this case, it uses ifelse to define a cell as 'endocrine' if it expresses any steroid metabolism genes, and no endocrine if the opposite is true
+```
+
+What number of cells are endocrine + vs endocrine -
+
+```{r}
+table(obj$endocrine)
+```
+
+Close to a 50:50 split
+
+Visualize
+
+```{r}
+Idents(obj) <- 'harmony.wnn_res0.4_clusters'
+DimPlot(obj, split.by = 'endocrine', reduction = 'harmony_wnn.umap', label = T)
+
+```
+
+## How to ask this statistically
+
+To statistically test this, we can use a mixed logistic regression, which assesses if the rate of success versus failure differs based on treatment given binary outcomes. In this case, success would be a cell being endocrine+, failure would be a cell being endocrine -, and the treatment would be sex. Because a cell has a binary outcome (1 - endocrine + or 0 - endocrine -) we can model this using a binomial distribution. Because sets of cells come from the same individual, we need to include a random effect to account for the data not being independent.
+
+First, an example of a single cluster
+
+```{r warning=FALSE,message=FALSE,error=FALSE}
+#lets look at data for cluster 2 (radial_glia)
+  rgc_data = data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters ==2], #add sex (Status) from the object subset to the specific cluster we are analyzing
+                          
+                          individual =obj$individual[obj$harmony.wnn_res0.4_clusters ==2], #add individual ID from the object subset to the specific cluster we are analyzing
+                          endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters ==2], #add endocrine classification from the object subset to the specific cluster we are analyzing
+                          cluster =2)%>% 
+    subset(Status %in% c('M',"D","F"))%>% # subset to m, d, and f, our major groups
+    group_by(individual, Status)%>% #group by preserves unique combinations of these values and collapses acorss other values
+    summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+              non_endocrine_cells = sum(endocrine == 'no_endocrine'))
+  #summarize creates a new columns based opn the group_by function and any operation we define
+  head(rgc_data)
+```
+
+Mixed logistic regression for cluster 2
+
+```{r}
+cluster_2_logistic <- glmer(cbind(rgc_data$endocrine_cells, rgc_data$non_endocrine_cells) # cbind makes these two columns of the data frame into a matrix, where the first column is successes, and the second is failures
+                            ~ #tilde means we will be predicting based on the variables we define afeter
+                          Status+ #fit success vs failure rate based on sex
+                          (1|individual), # add a random effect (via (1|...)) of individual because data points are not independent
+                          data = rgc_data,
+                          family = binomial() # specity binomial distribution
+                          )
+car::Anova(cluster_2_logistic, type = 'III') #see if there is an effect of status using type III anova
+```
+
+In this specific case, there is not a significant difference, lets now apply this code to every cluster
+
+We do this using a for loop.
+
+```{r}
+data= data.frame() #initialize an empty dataframe, we will be adding stuff into this
+for(i in 0:31){ #there are 31 clusters
+  if(i == 30 | i == 15){next} #ignore clusters 15 and 30 cause they are problematic
+  print(i)
+  #this data manipulation is the same as above, except we have replaced 2 for i; the variable that is iterated in the loop
+  
+  model_data = suppressMessages( data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters ==i],
+                          individual =obj$individual[obj$harmony.wnn_res0.4_clusters ==i],
+                          endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters ==i],
+                          cluster =i)%>%
+    subset(Status %in% c('M',"D","F"))%>%
+    group_by(individual, Status)%>%
+    summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+              non_endocrine_cells = sum(endocrine == 'no_endocrine')))
+
+  
+  glmer_model = glmer(cbind(model_data$endocrine_cells, model_data$non_endocrine_cells)~Status + (1|individual),
+                      family = binomial(), data =model_data)
+  
+  av= car::Anova(glmer_model, type = 'III')%>%as.data.frame() 
+  
+  out_data = data.frame(cluster = i,
+                        p_val = av$`Pr(>Chisq)`[2], #store the p value as a number
+                        singular = isSingular(glmer_model))
+  data = rbind(data, out_data)  
+  
+}
+data$signif = ifelse(data$p_val<0.05, '*', NA) #label data as significiant if it's significant
+
+```
+
+Singular means it estimated the random effect as 0, meaning it treated all data as independent even if that's not the case. This can be a problem but for now we can ignore it
+
+```{r}
+data
+```
+
+Fascinating, we see significant differences in 3 (albeit singular), and 4 (oligodendrocytes). Some people use p \<0.1 as a significance threshold. By this metric, we would also include cluster 1.
+
+Lets plot oligodendrocytes - cluster 4
+
+```{r}
+data_for_plot_4 = data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters==4],
+                             individual =obj$individual[obj$harmony.wnn_res0.4_clusters==4],
+                             endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters==4])%>%
+  subset(Status!= 'NRM')%>%
+  group_by(individual, Status)%>%
+  summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+            non_endocrine_cells = sum(endocrine == 'no_endocrine'))%>%
+  mutate(prop_endocrine = endocrine_cells/(endocrine_cells+non_endocrine_cells))
+
+data_for_plot_4$Status = factor(data_for_plot_4$Status, levels= c('M','D','E','NF','F'))
+
+ggplot(data_for_plot_4, aes(x = Status, y = prop_endocrine))+
+  geom_boxplot(aes(fill = Status))+
+  geom_jitter(shape =1)+
+  labs(x='Sex', y =  'Proportion Endocrine+ Cells', title = "Oligodendrocytes", fill = 'Sex')+
+  theme_minimal()
+
+```
+
+Wow that seems like an obvious significant difference to me between dominants and females. We can test for pairwise differences using the package emmeans
+
+Set up the model again for oligodendrocytes
+
+```{r}
+ 
+  model_data_og = suppressMessages( data.frame(Status = obj$Status[obj$harmony.wnn_res0.4_clusters ==4],
+                          individual =obj$individual[obj$harmony.wnn_res0.4_clusters ==4],
+                          endocrine = obj$endocrine[obj$harmony.wnn_res0.4_clusters ==4],
+                          cluster =i)%>%
+    subset(Status %in% c('M',"D","F"))%>%
+    group_by(individual, Status)%>%
+    summarize(endocrine_cells = sum(endocrine == 'endocrine'),
+              non_endocrine_cells = sum(endocrine == 'no_endocrine')))
+
+  
+  glmer_model_4 = glmer(cbind(model_data_og$endocrine_cells, model_data_og$non_endocrine_cells)~Status + (1|individual),
+                      family = binomial(), data =model_data_og)
+
+```
+
+Pairwise comparisons using emmeans
+
+```{r}
+pairs(emmeans(glmer_model_4, 'Status'), adjust ='none')
+```
+
+So pairwise comparisons find that females and males significantly differ, and dominants also significantly differ from females.
