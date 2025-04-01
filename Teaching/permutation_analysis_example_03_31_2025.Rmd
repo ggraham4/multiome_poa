@@ -1,0 +1,249 @@
+# Permutation Analysis - What to do when your data is weird
+
+The vast majority of times, you can analyze data using a parametric test or model - these are analyses like ANOVAs, LMs, GLMs etc. In those models, they estimate a null distribution using sample parameters from your data, and then compare the observed data to that distribution. However, there are several cases where your data may not fit that mold. A common example is non-normally distributed data. I also use them when I am not able to conceptually think of a way to use a parametric test. Here, as an example, I will be assessing the connectivity between clusters from my CellPhoneDB data to see which clusters receive the most inputs, and send the most inputs.
+
+Load in libraries
+
+```{r warning=FALSE,message=FALSE,error=FALSE}
+library(igraph)
+library(ggplot2)
+library(MASS) # For MDS implementation
+library(dplyr)
+library(igraph)
+library(readr)
+library(tidyverse)
+```
+
+Read in the relevant interactions calculated by CellPhoneDB. These are connections CellPhoneDB thinks are significant between two clusters given a specific ligand-receptor pair. Thus, you can imagine each cluster-cluster pair will have a value of a few hundred. This file can be found at:
+
+[https://github.com/ggraham4/multiome_poa/blob/main/Python/CellPhoneDb/Network/degs_analysis_relevant_interactions_03_03_2025_224407.](https://github.com/ggraham4/multiome_poa/blob/main/Python/CellPhoneDb/Network/degs_analysis_relevant_interactions_03_03_2025_224407.txt){.uri}txt
+
+```{r message = FALSE}
+example_data <- read_tsv('C:/Users/Gabe/Desktop/multiome_poa/Python/CellPhoneDb/Network/degs_analysis_relevant_interactions_03_03_2025_224407.txt')
+```
+
+We do some data wrangling because it's in an inconvenient format
+
+```{r message = FALSE}
+example_data_filtered = example_data%>%
+  dplyr::select(-c(1, 3:13)) #remove columns containing info IDC about
+
+example_data_filtered_long = example_data_filtered%>%
+  pivot_longer(cols = colnames(example_data_filtered[,-1]), values_to = 'signif', names_to = 'cluster_pair')%>%
+  subset(signif == 1)
+#pivot longer such that significance value is in one column, then subset to only significant interactions (signif = 1)
+
+#split clusters into senders (before |) and receivers (after |)
+example_data_filtered_long <- example_data_filtered_long %>%
+  mutate(
+    sender = sapply(strsplit(cluster_pair, "\\|"), `[`, 1),
+    receiver = sapply(strsplit(cluster_pair, "\\|"), `[`, 2)
+  )%>%
+  subset(sender != '30' & sender !='15' & receiver != '30' & receiver!= '15')
+#remove 30 and 15
+
+example_data_filtered_long_grouped <- example_data_filtered_long%>%
+  group_by(sender, receiver)%>%
+  summarize(interactions =n())
+#summarize the number of significant interactions
+```
+
+Make interaction matrix where rows are senders, columns are receivers, and the cell is the number of significant communications from the sender to the receiver
+
+```{r}
+# a square matrix 30 cols x 30 rows
+matrix = matrix(NA, 30, 30)
+
+#give columns and rows names
+colnames(matrix) = c(0:14, 16:29,31)
+rownames(matrix) = c(0:14, 16:29,31)
+
+#give the data frame a shorter name cause it's too long
+shortened_name = example_data_filtered_long_grouped
+
+#here this for loop essentially says for i in columns and j and columns (which has the same names as the rows):
+for(i in colnames(matrix)){
+  for(j in colnames(matrix)){
+    sender = which(colnames(matrix)==i) #find the col and row names of the matrix that correspond to the name
+    reciever = which(rownames(matrix)==j)
+    
+    if(length(shortened_name$interactions[shortened_name$sender == i & shortened_name$receiver ==j])==0){ # if there are no interactions, set it to 0
+      matrix[i,j]=0
+    }
+    else{ # otherwise, find the number of interactions that corresponds to the sender j and receiver i
+      matrix[i,j] = shortened_name$interactions[shortened_name$sender ==i & shortened_name$receiver ==j]
+    }
+    
+  }
+}  ### here, the matrix is organized such that rows are senders and columns are receivers #this is the correct input for igraph directed
+```
+
+Transpose this such that rows are now receivers and columns are now senders
+
+```{r}
+transposed_mat <- t(matrix)
+```
+
+Visualize distributions of columns (senders) and rows (receivers).
+
+```{r}
+hist(colSums(transposed_mat))
+hist(rowSums(transposed_mat))
+```
+
+Both are nearly normally distributed, but IDK how to analyze what I want to analyze using a parametric function so I'm going to use a permutation analysis
+
+# How does a permutation analysis work?
+
+A permutation analysis is a non-parametric test. Non-parametric tests are very useful because they have 0 assumptions about the data. There is no assumption of independence or normality or anything like that. They are very powerful tools. The one drawback is that they are more conservative than parametric tests because the assumptions you can make from normally distributed independent data are incredibly powerful.
+
+What I want to ask in this analysis is: are any clusters significantly stronger senders (columns) or receivers (rows) than if their score just arose randomly from the data. To answer this question using a permutation analysis, what we can do is scramble the data around and then sample a column and ask what a "random" sender or receiver would look like. We repeat this many times (here, I do it 100K times) to generate a null distribution. We then ask what proportion of randomly permuted senders or receivers have a higher score than our real data. This is the permuted p-value and is incredibly robust.
+
+Calculate the null distribution - this will take several minutes, it is 100k simulations
+
+```{r}
+sum_vals = sum(transposed_mat) #the sum of all values in the matrix
+distribution_data = c() # initialize a list to add stuff into 
+for(i in 1:100000){
+  sampled_values <-sample(matrix) #sample will select cells from the matrix in a random order
+  fake_matrix <- matrix(sampled_values, 30, 30) #we then put those cells back into a matrix of the same size
+  
+  prop_perm <- sum(fake_matrix[,1])/sum_vals #we then ask what proportion of sends come from the scrambled first column from the fake matrix 
+  distribution_data <- append(distribution_data, prop_perm) # and add that value to the list
+}
+```
+
+Visualize the null distribution
+
+```{r}
+hist(distribution_data)
+
+```
+
+Here, it looks incredibly close to a normal distribution which is pretty cool. The mean is more or less 0.033 which is what you would expect of a random sample of 1/30 columns.
+
+Calculate our real sends
+
+```{r}
+# calculate the actual mean percent from each cluster
+out_data <- data.frame() #initialize an empty data frame to add stuff into
+for(i in colnames(transposed_mat)){ #the names of senders 
+  cluster_index = which(colnames(transposed_mat)==i) #find the column that corresponds to the name i 
+  prop_real_send <- sum(transposed_mat[,cluster_index])/sum(transposed_mat)
+  #find the proportion of sends that come from that cluster
+  
+  newd = data.frame(cluster = i,
+                    prop_real_send = prop_real_send) #add that to a data frame
+  out_data <- rbind(newd, out_data) #and add to out data
+}
+out_data
+```
+
+Calculate p-values
+
+```{r}
+perm_p_sends<- c() #initialize a list to add stuff into
+for(i in out_data$cluster){ # for each cluster
+
+  #Calculate the proportion of permuted sends larger than real sends
+  perm_p <- sum(distribution_data>out_data$prop_real[out_data$cluster==i])/length(distribution_data)
+
+  perm_p_sends <- append(perm_p_sends, perm_p) #add that calculation to the list
+}
+out_data$perm_p_send <- perm_p_sends #add the list to out_data
+out_data
+```
+
+Calculate real receptions
+
+```{r}
+out_data_rec <- data.frame()
+for(i in rownames(transposed_mat)){
+  cluster_index = which(rownames(transposed_mat)==i)
+  
+    #Calculate the proportion of permuted receptions larger than real receptions
+  prop_real_rec <- sum(transposed_mat[cluster_index,])/sum(transposed_mat)
+  
+  newd = data.frame(cluster = i,
+                    prop_real_rec = prop_real_rec)
+  out_data_rec <- rbind(newd, out_data_rec)
+}
+
+out_data$prop_real_rec <- out_data_rec$prop_real_rec
+out_data
+```
+
+Compute reception p-values in the same way
+
+```{r}
+perm_p_recs<- c()
+for(i in out_data$cluster){
+  
+  perm_p <- sum(distribution_data>out_data$prop_real_rec[out_data$cluster==i])/length(distribution_data)
+  
+  perm_p_recs <- append(perm_p_recs, perm_p)
+}
+out_data$perm_p_rec <- perm_p_recs
+
+#label data if they are significant senders or receivers
+out_data$sig_rec <- ifelse(out_data$perm_p_rec<0.05, '*', NA)
+out_data$sig_send <- ifelse(out_data$perm_p_send<0.05, '*', NA)
+
+out_data
+
+```
+
+If you look closely at this data, clusters 0, 1, and 11 have permuted p values for reception of 0. This means that out of 100,000 shufflings of the data, the real data is still the strongest receivers, which is an incredibly powerful statement to make. Similarly, several clusters have sending p-values of 0. Using the 0.05 threshold, it's clear many of our clusters are not just random noise and this is incredibly interesting.
+
+# Visualize significant senders and receivers using a directed network graph
+
+```{r}
+### this code is really weird cause I copy and pased it from when I visualized only the strongest connections, so the names dont make a lot of sense
+matrix_subset <- matrix
+signif_interaction_value = max(matrix_subset)*0 #no subsetting
+
+matrix_subset_threshold <- ifelse(matrix_subset<signif_interaction_value, 0, matrix_subset)
+### transpose such that columns are now senders and rows are now receivers ## this is the format igraph wants
+
+#compute a graph
+g <- graph_from_adjacency_matrix((matrix_subset_threshold), mode = "directed", weighted = TRUE) 
+
+# Set edge width based on the number of interactions
+E(g)$width <- ((E(g)$weight)-min((E(g)$weight)))/((max(E(g)$weight))-min(E(g)$weight))*4
+
+#remove 0s
+Isolated = which(degree(g)==0)
+g2 = delete_vertices(g, Isolated)
+
+#doing this stuff for visualization 
+out_data$cluster <- as.character(out_data$cluster)
+cluster_colors <- rep("white", length(V(g2)))
+names(cluster_colors) <- V(g2)$name
+
+# Assign colors based on conditions
+red_clusters <- as.character(out_data$cluster[!is.na(out_data$sig_rec) & is.na(out_data$sig_send)]) #significant receievers
+
+blue_clusters <- as.character(out_data$cluster[is.na(out_data$sig_rec) & !is.na(out_data$sig_send)]) #significant senders
+
+green_clusters <- as.character(out_data$cluster[!is.na(out_data$sig_rec) & !is.na(out_data$sig_send)]) # significant both
+
+# Update colors for each group
+cluster_colors[names(cluster_colors) %in% red_clusters] <- "pink" #receive
+cluster_colors[names(cluster_colors) %in% blue_clusters] <- "lightblue" #send
+cluster_colors[names(cluster_colors) %in% green_clusters] <- "lightgreen" #both
+
+# Assign to vertex colors
+V(g2)$color <- cluster_colors
+
+# Plot the graph 
+set.seed(7)
+plot(g2, 
+     edge.color = adjustcolor("black", alpha.f = .25),
+     edge.arrow.size =.2,
+     edge.alpha = 0.95,
+     edge.curved = 0,
+     vertex.label.color='black')
+
+```
+
+This is super interesting (and part of my thesis). Cluster 19 - our sex receptive cluster is a significant sender. Further, POA clusters 0, 1, 27, and 17 are enriched as both senders and receivers. It's also fascinating to me that cluster 2 (radial glia) and 14 (microglia) are not a significant sender or receiver, I would've thought for sure they were talking to everyone, but I guess not above significance. Also, 18 (oligodendrocyte precursors) is a significant receiver, which makes sense as you would imagine sex change is associated with oligodendrocyte proliferation, but it's cool to see. [txt](https://github.com/ggraham4/multiome_poa/blob/main/Python/CellPhoneDb/Network/degs_analysis_relevant_interactions_03_03_2025_224407.txt){.uri}
