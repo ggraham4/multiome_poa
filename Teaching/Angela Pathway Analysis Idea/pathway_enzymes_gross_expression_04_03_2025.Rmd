@@ -1,0 +1,191 @@
+# Exploring genes regulating DHEA
+
+Libraries
+
+```{r}
+library(Seurat)
+library(tidyverse)
+library(lme4)
+library(car)
+library(emmeans)
+mean_expression_plot<- readRDS('Functions/mean_expression_plot.rds')
+
+```
+
+Read in obj
+
+```{r}
+obj <- readRDS("C:/Users/Gabe/Desktop/RNA Object.rds")
+
+```
+
+```{r}
+human_to_ocellaris <- read_csv("C:/Users/Gabe/Desktop/multiome_poa/Reference/hsapiens_to_aocellaris.csv")
+
+```
+
+Genes to investigate
+
+cyp11a1, cyp17a1, cyp11b, cyp11c1, cyp19a1b, hsd3b1, hsd17b1, hsd17b3, hsd11b2, SRD5a
+
+Cyp11a1
+
+```{r}
+mean_expression_plot(obj, 'LOC111587899' # cyp11a1
+                     )
+```
+
+Steadily increases; cyp11a1 catalyzes cholesterol to pregnenolone suggesting increased de novo steroid synthesis in females
+
+cyp17a1
+
+mean_expression_plot(obj, 'LOC111563640' \# cyp17a1
+
+)
+
+```{r}
+mean_expression_plot(obj, 'LOC111563640' # cyp17a1
+                     )
+
+```
+
+Cyp17a1 steadily decreases, with large variation in dominants.
+
+Cyp17a1 catalyzes:
+
+DHEA - Androstenedione
+
+Pregnenolone - 17a hydroxyprenenolone
+
+Progesterone - 17Oh progesterone
+
+17 oh progesterone - androstenedione
+
+The idea would be decreased androstenedione synthesis I guess?
+
+I cant find any evidence of cyp11c or b so...
+
+Brain aromatase
+
+```{r}
+mean_expression_plot(obj, 'LOC111577263'  # brain aromatase
+                     )
+
+```
+
+Decreased estrogen production in dominants
+
+hsd3b1
+
+```{r}
+mean_expression_plot(obj, 'hsd3b1'
+                     )
+
+```
+
+Progressive increase in hsd3b1:
+
+hsd3b1 catalyzes
+
+17a-OH pregnenolone - 17a-oh-progesterone
+
+Pregnenolone - Progesterone
+
+Androstenedione - Testosterone
+
+A bunch of other stuff but the androstenedione to testotsterone is the most important maybe?
+
+hsd17b1
+
+```{r}
+mean_expression_plot(obj, 'hsd17b1'
+                     )
+
+```
+
+Nonexistent... how?
+
+hsd17b2
+
+```{r}
+#mean_expression_plot(obj, 'hsd17b2'
+                    # )
+```
+
+Cant find any evidence it exists
+
+hsd17b3
+
+```{r}
+mean_expression_plot(obj, 'hsd17b3'
+                     )
+
+```
+
+Slight decrease in females
+
+hsd17b3 catalyzes:
+
+Androstenedione - Testosterone
+
+11ketoandrosterone - 11KT
+
+srd5a1
+
+```{r}
+mean_expression_plot(obj, 'srd5a1'
+                     )
+
+```
+
+Honestly same across sexes
+
+srd5a2
+
+```{r}
+mean_expression_plot(obj, 'LOC111564580'
+                     )
+
+```
+
+Ok fascinating; srd5a2 catalyzes Testosterone to DHT... why is it higher in females?
+
+The techincal name for this gene is
+
+"3-oxo-5-alpha-steroid 4-dehydrogenase 2 - like", but that is another name for srd5a so I am confused. BUT, it has way lower mean expression than srd5a2b so that one is probably more relevant
+
+```{r}
+mean_expression_plot(obj, 'srd5a2b'
+                     )
+```
+
+But this sr5a2b increases in dominants... what's the deal here?
+
+sts
+
+```{r}
+mean_expression_plot(obj, 'sts'
+                     )
+```
+
+hsd17b14
+
+```{r}
+mean_expression_plot(obj, 'hsd17b14'
+                     )
+```
+
+hsd11b2 makes 11-ketoandrosterone and 11-kt
+
+```{r}
+mean_expression_plot(obj, 'hsd11b2'
+                     )
+
+```
+
+cyp21a2
+
+```{r}
+mean_expression_plot(obj, 'LOC111588846'
+                     )
+```
