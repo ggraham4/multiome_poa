@@ -1,0 +1,96 @@
+To obtain pseudobulked data, gene counts were summed across all cells belonging to the same cell cluster and sample resulting in a matrix of 30,704 genes by 24 samples by 53 cell clusters. Differential expression analysis was then performed with edgeR
+
+```{r message=  FALSE}
+library(Seurat)
+library(tidyverse)
+library(edgeR)
+```
+
+read in object
+
+```{r}
+obj <- readRDS('~/Desktop/snRNA-seq R Files 122524/RNA Object.rds')
+```
+
+subset obj
+
+```{r}
+subset_obj <- subset(obj, Status %in% c('M','D','F'))
+subset_obj <- subset(subset_obj, harmony.wnn_res0.4_clusters != 15 & harmony.wnn_res0.4_clusters != 30)
+
+```
+
+```{r}
+DimPlot(subset_obj, reduction = 'harmony_wnn.umap', label = T)
+```
+
+So I think I want to do is: for each cluster, aggregate counts by individual, and include a column for sex and pool
+
+```{r}
+# Make a shorter cluster name so my life is easier
+subset_obj$cluster = subset_obj$harmony.wnn_res0.4_clusters
+# Initialize a list to store aggregated counts in 
+counts_cluster <- list()
+for(i in unique(subset_obj$cluster)){ # For all clusters
+
+  # Make a list that stores the indices of which cells belong to that cluster
+  cluster_cells = which(subset_obj$cluster == i)
+  
+  # Make a counts matrix for all genes in that cluster
+  counts <- subset_obj@assays$RNA$counts[, cluster_cells] 
+  
+  # Extract meta data corresponding to those cells
+  individual_ids <- subset_obj$individual[cluster_cells]
+  Status_ids <- subset_obj$Status[cluster_cells]
+  orig.ident_ids <- subset_obj$orig.ident[cluster_cells]
+  
+  # Initialize a genes list
+  genes <- rownames(counts)
+  
+  # Get unique individuals
+  unique_individuals <- unique(individual_ids)
+  
+  # Make an empty matrix where rows are genes and columns are UNIQUE individuals
+  agg_counts <- matrix(0, nrow=length(genes), ncol=length(unique_individuals))
+  
+  # Give row and column names
+  rownames(agg_counts) <- genes
+  colnames(agg_counts) <- unique_individuals
+  
+  # Create metadata dataframe with the same order as unique_individuals
+  meta_data <- data.frame(
+    individual = unique_individuals,
+    Status = character(length(unique_individuals)),
+    orig.ident = character(length(unique_individuals)),
+    stringsAsFactors = FALSE
+  )
+  
+  # Fill in metadata in the same order as columns
+  for(idx in 1:length(unique_individuals)){
+    j <- unique_individuals[idx]
+    # Find the indices that correspond to this specific individual
+    individual_cells <- which(individual_ids == j)
+    
+    # Sum the counts for each gene across all cells from this individual
+    agg_counts[, j] <- rowSums(counts[, individual_cells, drop=FALSE])
+    
+    # Store metadata for this individual (using first occurrence)
+    first_cell <- individual_cells[1]
+    meta_data$Status[idx] <- Status_ids[first_cell]
+    meta_data$orig.ident[idx] <- orig.ident_ids[first_cell]
+  }
+  
+  # Verify that the order matches
+  stopifnot(all(colnames(agg_counts) == meta_data$individual))
+  
+  # Store the aggregated counts and metadata
+  counts_cluster[[i]] <- list(
+    aggregated_counts = t(agg_counts), #transpose for later usability
+    meta.data = meta_data
+  )
+}
+```
+
+```{r}
+
+```
