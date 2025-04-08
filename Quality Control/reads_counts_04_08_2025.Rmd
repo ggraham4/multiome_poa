@@ -1,0 +1,56 @@
+```{r warning=FALSE,message=FALSE,error=FALSE}
+library(Seurat) 
+library(tidyverse) 
+library(pheatmap) 
+library(ggplot2) 
+set.seed(123)
+```
+
+```{r}
+obj <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
+```
+
+Counts and fragments
+
+```{r}
+counts_data <- obj@meta.data%>%
+  group_by(harmony.wnn_res0.4_clusters)%>%
+  summarize(umi = mean(genes_per_umi),
+            atac = mean(peaks_per_umi),
+            counts = mean(nCount_RNA),
+            atac_n = mean(nCount_ATAC))
+
+```
+
+Mean nCount_RNA by cluster
+
+```{r}
+ggplot(counts_data, aes(x = harmony.wnn_res0.4_clusters, y = counts))+
+  geom_bar(stat = 'identity')+
+  scale_x_discrete(breaks = c(0:31))
+
+```
+
+Mean nCount_ATAC by cluster
+
+```{r}
+ggplot(counts_data, aes(x = harmony.wnn_res0.4_clusters, y = atac_n))+
+  geom_bar(stat = 'identity')+
+  scale_x_discrete(breaks = c(0:31))
+```
+
+Mean median genes per UMI by cluster
+
+```{r}
+ggplot(counts_data, aes(x = harmony.wnn_res0.4_clusters, y = umi))+
+  geom_bar(stat = 'identity')+
+  scale_x_discrete(breaks = c(0:31))
+```
+
+Mean peaks per UMI by cluster
+
+```{r}
+ggplot(counts_data, aes(x = harmony.wnn_res0.4_clusters, y = umi))+
+  geom_bar(stat = 'identity')+
+  scale_x_discrete(breaks = c(0:31))
+```
