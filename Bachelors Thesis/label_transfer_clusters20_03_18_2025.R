@@ -31,6 +31,8 @@
 }
 multiome_object <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
 Idents(multiome_object) <- "harmony.wnn_res0.4_clusters"
+previous_object <- readRDS("C:/Users/Gabe/Desktop/Old object.rds")
+
 
 renamed_clusters <- c("0" = "9",
                       "1" = "1", 
@@ -75,7 +77,7 @@ Idents(multiome_object) <- 'predicted.id'
 
 arr <- list(x = -15, y = -15, x_len = 4, y_len = 4)
 
-label_transferred_object = DimPlot(multiome_object, label = T, reduction = 'harmony_wnn.umap')+
+label_transferred_object = DimPlot(multiome_object, label = T, reduction = 'harmony_wnn.umap', repel = T)+
   theme_void()+
   theme(legend.position = 'none')+
   annotate('text',
@@ -96,7 +98,7 @@ ggsave(plot = label_transferred_object,
        units = "in",
        width = 2.5,
        height = 2.5,
-       path = "Bachelors Thesis/Plots/Figure 2",
+       path = "Bachelors Thesis/Plots_dominants_renamed/Figure 2",
        dpi = 300)
 
 

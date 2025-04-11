@@ -546,7 +546,10 @@ sub_cells = cluster_19@meta.data%>%
    geom_boxplot(alpha = 0.25, outlier.shape = NA, aes(color = Sex, fill = Sex))+
    geom_jitter(  shape = 1, color = 'black', size =2)+
    theme_classic()+
-   theme(legend.position ='none',plot.title = element_text(hjust=0.5))+
+   theme(legend.position = 'none',
+         plot.title = element_text(hjust = 0.5),
+         axis.title = element_text(size =12),
+         axis.text = element_text(size = 10))+
    labs(title = '19_1', y = 'Mean hsd17b14')+
    geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(.17), annotation =c("***"), color = "black", tip_length = c(0,0), textsize=6)+
    ylim(-0.02,.2)
@@ -584,10 +587,13 @@ sub_cells = cluster_19@meta.data%>%
    geom_boxplot(alpha = 0.25, outlier.shape = NA, aes(color = Sex, fill = Sex))+
    geom_jitter(  shape = 1, color = 'black', size =2)+
    theme_classic()+
-   theme(legend.position ='none',plot.title = element_text(hjust=0.5))+
+   theme(legend.position = 'none',
+         plot.title = element_text(hjust = 0.5),
+         axis.title = element_text(size =12),
+         axis.text = element_text(size = 10))+
    labs(title = '19_2', y = 'Mean pgr')+
    geom_signif(xmin = c(2.1), xmax = c(5), y_position = c(1.8), annotation =c("*"), color = "black", tip_length = c(0,0), textsize=6)+
-   ylim(0,2)
+   ylim(0,2.2)
  pgr_data_plot
  
  ggsave(plot = pgr_data_plot,
@@ -680,7 +686,7 @@ ggsave(plot = prop_19_0,
        units = "in",
        width = 1.6,
        height = 2,
-       path = "Bachelors Thesis/Plots/Figure 4")
+       path = "Bachelors Thesis/Plots_dominants_renamed/Figure 4")
 
 prop_19_1 <- ggplot(subset(full_data, sub=='19_1'), aes(y = cluster_cells/total_cells, x = Status, fill = Status))+
   geom_boxplot(alpha = 0.25, outlier.shape = NA,aes(color = Status))+
@@ -703,7 +709,7 @@ ggsave(plot = prop_19_1,
        units = "in",
        width = 1.2,
        height = 2,
-       path = "Bachelors Thesis/Plots/Figure 4")
+       path = "Bachelors Thesis/Plots_dominants_renamed/Figure 4")
 
 windowsFonts(Arial=windowsFont("Arial"))
 windowsFonts(Calibri=windowsFont("Calibri"))
@@ -730,7 +736,7 @@ ggsave(plot = prop_19_2,
        units = "in",
        width = 1.2,
        height = 2,
-       path = "Bachelors Thesis/Plots/Figure 4")
+       path = "Bachelors Thesis/Plots_dominants_renamed/Figure 4")
 
 
 DimPlot(cluster_19, reduction = 'atacUMAP')
