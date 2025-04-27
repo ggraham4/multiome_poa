@@ -57,6 +57,12 @@ pcx_fold = base / "data"
 export_folder = base / "export"
 
 adata = sc.read(pcx_fold / "RNA_object_anndata.h5ad")
+adata.layers = {}
+adata.layers['log'] = adata.X
 
+#sc.pp.normalize_total(adata, target_sum=1e4, layer="log")
+#sc.pp.log1p(adata, layer="log") # already did this in seurat
+
+genes_use = (adata.layers["log"] > 0).mean(0).A.flatten() >= 0.005
 
 
