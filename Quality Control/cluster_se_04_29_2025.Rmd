@@ -1,0 +1,173 @@
+# How Do Clusters Covary with Eachother?
+
+Libraries
+
+```{r warning=FALSE,message=FALSE,error=FALSE}
+library(Seurat) 
+library(tidyverse) 
+library(pheatmap) 
+library(ggplot2) 
+set.seed(123)
+```
+
+Read in Object
+
+```{r}
+obj <- readRDS('C:/Users/Gabe/Desktop/RNA Object.rds')
+```
+
+## Proportion of each cluster within each individual, **which clusters may be dissection errors?**
+
+```{r}
+individuals <- unique(obj$individual)
+```
+
+```{r}
+proportion_of_each_cluster_within_each_individual <- matrix(0, length(individuals), 32)
+rownames(proportion_of_each_cluster_within_each_individual) <- individuals
+colnames(proportion_of_each_cluster_within_each_individual) <- 0:31
+
+for(c in 0:31){
+  #calculate total cells in cluster
+  total_cells <- nrow(obj@meta.data[obj$harmony.wnn_res0.4_clusters==c,])
+  
+  cluster_index <- which(colnames(proportion_of_each_cluster_within_each_individual)==c)
+  for(i in individuals){
+    #calculate total cells in individual in cluster
+    total_cells_individual <- nrow(obj@meta.data[obj$harmony.wnn_res0.4_clusters==c & obj$individual==i,])
+    
+    prop <- total_cells_individual/ total_cells
+    
+    individual_index <- which(rownames(proportion_of_each_cluster_within_each_individual)==i)
+    
+    proportion_of_each_cluster_within_each_individual[individual_index,cluster_index] = prop
+  }
+}
+
+```
+
+Plot heatmap
+
+```{r}
+pheatmap(log(proportion_of_each_cluster_within_each_individual+0.001),
+         main='Log Proportion of Each Cluster Within Each Individual')
+```
+
+Here, we can see a few things.
+
+1.  It seems like 15, 7, and 17 are likely near eachother in space, as it seems like they covary eachother in their absence / low proportion in several individuals. 15 We already considered a dissection error, I still think the other two are high enough quality to not exclude. It doesnt seem like this dissection difference is restrictricted to a specific sex. In my opinion, these are hypothalamus.
+2.  GH is indeed poorly dissected , T14D is also a bit strange.
+3.  30 Should definitely be exluded
+
+Plot with K Means clustering
+
+```{r}
+pheatmap(log(proportion_of_each_cluster_within_each_individual+0.001),
+         k  = 5,
+         main='Log Proportion of Each Cluster Within Each Individual K = 5')
+```
+
+Here, our clusters are individuals. It doesn't seem like there is any strong pattern (beyond cluster 3 which is T14D and GH) which is good and means there probably wasnt a big sex difference in dissections.
+
+Plot dendogram
+
+```{r}
+poecwei_hierarchical <- hclust(dist(proportion_of_each_cluster_within_each_individual))
+plot(poecwei_hierarchical, xlab ='Individual', sub = 'Complete Clustering')
+```
+
+Here, B23F is the most weird, in the first heatmap she has the most cells from garbage cluster 30 and is missing a few cells in some clusters. All others seem largely similar.
+
+## Proportion of each individual within each cluster, **which individuals are overrepresented in clusters?**
+
+```{r}
+proportion_of_each_individual_within_each_cluster <- matrix(0, length(individuals), 32)
+rownames(proportion_of_each_individual_within_each_cluster) <- individuals
+colnames(proportion_of_each_individual_within_each_cluster) <- 0:31
+
+for(i in individuals){
+  individual_index <- which(rownames(proportion_of_each_individual_within_each_cluster)==i)
+  
+  total_cells_in_fish <- nrow(obj@meta.data[obj$individual==i,])
+  for(c in 0:31){
+    cluster_index <- which(colnames(proportion_of_each_individual_within_each_cluster)==c)
+    
+    cells_in_fish_in_cluster <- nrow(obj@meta.data[obj$individual==i & obj$harmony.wnn_res0.4_clusters ==c,])
+    
+    prop = cells_in_fish_in_cluster / total_cells_in_fish
+    
+    proportion_of_each_individual_within_each_cluster[individual_index,cluster_index] = prop
+    
+  }
+  
+}
+```
+
+Plot heatmap
+
+```{r}
+pheatmap(t(proportion_of_each_individual_within_each_cluster),
+         main='Proportion of Each Individual Within Each Cluster',
+         fontsize_row = 7.5)
+
+```
+
+Here, we see that clusters 0 and covary with eachother beyond the levels of other clusters.
+
+Plot with k means clustering k = 5
+
+```{r}
+pheatmap(t(proportion_of_each_individual_within_each_cluster),k = 5,
+         main='Proportion of Each Individual Within Each Cluster K = 5')
+```
+
+Here, clusters are groups of clusters, we see that 0 and 1 cluster together (cluster 4) separately from the others.
+
+Plot dendogram
+
+```{r}
+poeiwec_hierarchical <- hclust(dist(t(proportion_of_each_individual_within_each_cluster)))
+plot(poeiwec_hierarchical, xlab ='Cluster', sub = 'Complete Clustering')
+```
+
+Again, we see clusters 0 and 1 cluster together. Also interesting, 6 and 5 cluster together and near 3. 6 is very likely Dm, so its likely 5 and 3 are also superior to the POA. None of these clusters aligned to POA in our alignment. 3 is our gal+ cluster.
+
+## Mean and SD of relative proportions of each individual within each cluster, **are any clusters particularly variable?**
+
+```{r}
+mean_and_sd = as.data.frame(t(proportion_of_each_individual_within_each_cluster))
+mean_and_sd$cluster = rownames(mean_and_sd)
+
+mean_and_sd_summarized <- mean_and_sd %>%
+  pivot_longer(cols = -cluster, names_to = "individual", values_to = "value") %>%
+  group_by(cluster) %>%
+  summarize(
+    mean_value = mean(value, na.rm = TRUE),
+    sd_value = sd(value, na.rm = TRUE)
+  )
+
+```
+
+```{r}
+cell_counts <- obj@meta.data%>%
+  group_by(harmony.wnn_res0.4_clusters)%>%
+  summarize(n_cells = n())
+
+```
+
+```{r}
+mean_se = mean_and_sd_summarized%>%
+  right_join(cell_counts, by = join_by('cluster' == 'harmony.wnn_res0.4_clusters'))
+mean_se$se = mean_se$sd_value/sqrt(mean_se$n_cells)
+```
+
+
+```{r}
+ggplot(mean_se, aes(x = fct_reorder(cluster,mean_value, .desc = T), y = se))+
+  geom_bar(stat = 'identity')+
+  labs(x = 'Cluster', y = 'SE')
+
+```
+
+Again, 0 and 1 have nearly identical standard deviations. Consistent with the idea that 3,5,and 6 were partially dissected out, they have higher standard deviation. Also interestingly, 17 and 15 covary with eachother supporting the idea they are near eachother in space.
+
