@@ -48,3 +48,4 @@ library(parallelsugar)
   print(end-start)
   
 }
+#1.00 mins - mac chips are so fast
