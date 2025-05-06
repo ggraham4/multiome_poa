@@ -152,6 +152,8 @@ for i, kind in enumerate(("observed", "shuffled")):
     # Calculate percentages
     df_pred_norm = df_pred_counts.divide(df_pred_counts.sum(1), axis=0) * 100
     
+    df_means = df_pred_norm.mean(axis=0)
+    
     # Save results (adjust path as needed)
     export_folder = Path('A:/support_vector_classifier_zeppilli_et_al_04_27_2025/results')
     export_folder.mkdir(exist_ok=True)
