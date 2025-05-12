@@ -208,10 +208,11 @@ for(i in 0:26){
   results$av_q.value <- ifelse(is.na(results$warning), p.adjust(p = results$av_p.value, 'fdr', nrow(results)),'NA')
   results$cluster = i
   data = rbind(data, results)
+    write.csv(results, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering/cluster_',i,'.csv'))
   
 }
 
-  write.csv(data, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering_all_clusters.csv'))
+  #write.csv(data, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering_all_clusters.csv'))
 
   data_defined <- define_degs(data)
   
