@@ -23,7 +23,7 @@
 
 }
 
-obj <- readRDS('~/Desktop/optimal_clustering_rna_only.rds')
+#obj <- readRDS('~/Desktop/optimal_clustering_rna_only.rds')
 
 markers <- unique(c(
   'elavl3',#neuron
@@ -71,17 +71,19 @@ markers <- unique(c(
   'p2ry12', #microglia marker
   'ptprc', #leukocyte marker
   'col15a1b',
-  'gdpd5a'
+  'gdpd5a',
+  'th2',
+  'cart2'
 
 ) )
 
 
 marker_gene_plot <- DotPlot(object = obj, 
                  features = markers,
+                 group.by = 'res0.8_50nn_40PC_45LSI',
         dot.min = 0.1
 ) + 
   coord_flip()+
-  scale_size(range = c(0,2))+
   theme(axis.text.x = element_text(angle = -90))
 marker_gene_plot
 

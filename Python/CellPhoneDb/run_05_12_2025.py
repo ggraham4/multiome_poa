@@ -97,12 +97,16 @@ print(cpdb_results.keys())
 
 ### ok so what I did here is run it based on ALL cells, so now what I need to do is run it for each individual
 for i in set(obj.obs.individual):
+    if i == 'GH':
+        continue
+
     print(i)
 
     subset_object = obj[obj.obs['individual']==i]
     subset_object.X =csr_matrix(subset_object.X)
-    os.mkdir(f"A:/cellphonedb_05_12_2025/{i}")
-
+    dir_path = f"A:/cellphonedb_05_12_2025/{i}"
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
     counts_path = f"{"A:/cellphonedb_05_12_2025/"}{i}{"/normalised_log_counts.h5ad"}"
     subset_object.write_h5ad(counts_path)
 
