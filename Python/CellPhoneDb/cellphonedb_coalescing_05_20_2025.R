@@ -1,0 +1,88 @@
+### cellphone db differential communication analysis
+
+library(lme4)
+library(tidyverse)
+library(Seurat)
+
+human_named = readRDS("A:/optimal_clustering_05_06_2025/RNA_object_human_names.rds")
+
+## first, figure out all pathways is analyzed
+example_data = read_tsv("A:/cellphonedb_05_12_2025/degs_analysis_means_05_12_2025_222054.txt")
+
+unique_interactions = unique(example_data$interacting_pair)
+unique_cell_cell_pairs = colnames(example_data[,14:ncol(example_data)])
+
+base_path = 'A:/cellphonedb_05_12_2025/'
+#read in all sample data
+individual_data = list()
+for(i in unique(human_named$individual)){
+  if(i =='GH'){next}
+  print(i)
+  
+  mean_data = read_tsv(paste0(base_path, i,'/degs_analysis_means_',i,'.txt'),show_col_types = FALSE)
+  individual_data[[i]]$means = mean_data
+  
+}
+
+#first, make a loop to coalesce all the data
+individuals = unique(human_named$individual)
+
+cluster_pair_list = list()  
+for(interacting_pair in unique_interactions){
+  print(interacting_pair)
+  
+  full_cluster_pair_data = data.frame()
+  
+  for(cluster_pair in unique_cell_cell_pairs){
+    
+    cluster_pair_data = data.frame()
+    for(i in individuals){
+      
+      data =  individual_data[[i]]$means
+      
+      columns = colnames(data)
+      
+      if(cluster_pair %notin% columns){next}
+      
+      mean = data[data$interacting_pair == interacting_pair, cluster_pair]
+      colnames(mean) = 'mean'
+      
+      if(nrow(mean)==0){next}
+      
+      newd = data.frame(individual =i,
+                        interacting_pair = interacting_pair,
+                        cluster_pair = cluster_pair,
+                        mean = mean)
+      cluster_pair_data = rbind(cluster_pair_data, newd)
+      
+      
+    }
+    full_cluster_pair_data =rbind(cluster_pair_data, full_cluster_pair_data)
+  }
+  cluster_pair_list[[interacting_pair]] =full_cluster_pair_data
+  
+  
+}
+### breakpoint ###
+
+saveRDS(cluster_pair_list, 'A:/cellphonedb_05_12_2025/coalesced_list_05_20_2025.RDS')
+test_pull = readRDS('A:/cellphonedb_05_12_2025/coalesced_list_05_20_2025.RDS')
+
+
+hist(cluster_pair_list[["Dihydrotestosterone_bySRD5A1_AR"]]$mean)
+#ok so these might actually be negative binomially distributed
+hist(cluster_pair_list[["CCK_CCKBR"]]$mean) #this is a neuropeptide so it should have high expression
+hist(cluster_pair_list[["CCK_CCKAR"]]$mean) #ok these seem to be gamma distributed
+hist(cluster_pair_list[["TAC1_TACR1"]]$mean) 
+hist(cluster_pair_list[["TAC1_TACR3"]]$mean) 
+#i wonder if model like glmer.nb(interacting_pair~Status*cluster_pair) might be better as a broad model and then 
+#each subsequent model only evaluates what is significnat in the first model
+
+## add sex into the df
+individual_by_sex_data = data.frame(human_named$individual, human_named$Status)%>%distinct()
+ccka_cckar_sex = cluster_pair_list[["CCK_CCKAR"]]%>%
+  right_join(individual_by_sex_data, by =join_by('individual'== 'human_named.individual'))%>%
+  na.omit()
+
+
+

@@ -140,6 +140,23 @@ predictions <- TransferData(anchorset = anchors, refdata = oldish_obj$harmony.wn
 obj <- AddMetaData(obj, metadata = predictions)
 
 DimPlot(obj, label = T, group.by = 'predicted.id')
-# its 15??
 
+
+##top markers
+Idents(obj) <- 'res0.8_50nn_40PC_45LSI'
+markers <- FindAllMarkers(obj)
+
+saveRDS(obj, 'A:/optimal_clustering_05_06_2025/nemo.orig_harmony.integration_all_testd_clusters.rds')
+saveRDS(obj, 'C:/seurat_objects/optimal_clustering_05_06_2025.rds')
+
+markers_26 = subset(markers, cluster ==26)
+markers_25 = subset(markers, cluster ==25)
+markers_24 = subset(markers, cluster ==24)
+markers_23 = subset(markers, cluster ==23)
+markers_19 = subset(markers, cluster ==19)
+markers_18 = subset(markers, cluster ==18)
+markers_12 = subset(markers, cluster ==12)
+markers_8 = subset(markers, cluster ==8) ## ccka is a marker
+markers_7 = subset(markers, cluster ==7) 
+markers_4 = subset(markers, cluster ==4) 
 

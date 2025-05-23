@@ -5,9 +5,9 @@ library(Seurat)
 human_named = readRDS("A:/optimal_clustering_05_06_2025/RNA_object_human_names.rds")
 
 ## read in reference data
-example_data = read_tsv("A:/CellPhoneDB 030225/degs_analysis_means_03_03_2025_224407.txt")
-coalesced_data = readRDS('A:/CellPhoneDB 030225/coalesced_list_030525.RDS')
-base_path = 'A:/CellPhoneDB 030225/'
+example_data = read_tsv("A:/cellphonedb_05_12_2025/degs_analysis_means_05_12_2025_222054.txt")
+coalesced_data = readRDS('A:/cellphonedb_05_12_2025/coalesced_list_05_20_2025.RDS')
+base_path = 'A:/cellphonedb_05_12_2025/'
 
 unique_interactions = unique(example_data$interacting_pair)
 unique_cell_cell_pairs = colnames(example_data[,14:ncol(example_data)])
@@ -16,7 +16,7 @@ individuals = unique(human_named$individual)
 individuals = individuals[individuals!= 'GH']
 
 ## read in significance data
-significant_interactions_reference = read_tsv("A:/CellPhoneDB 030225/degs_analysis_relevant_interactions_03_03_2025_224407.txt")
+significant_interactions_reference = read_tsv("A:/cellphonedb_05_12_2025/degs_analysis_relevant_interactions_05_12_2025_222054.txt")
 
 significant_interactions_reference_filtered = significant_interactions_reference[,-c(1,3:13)]
 
@@ -57,8 +57,7 @@ for(interacting_pair in unique(names(coalesced_data_subset))){
   
 }
 
-#saveRDS(new_list, 'A:/CellPhoneDB 030225/signif_only_list_030525.RDS')
-
+saveRDS(new_list, 'A:/cellphonedb_05_12_2025/signif_only_list_05_21_2025.RDS')
 
 
 
