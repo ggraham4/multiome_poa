@@ -49,4 +49,3 @@ ggplot(subset(obj@meta.data,res0.8_50nn_40PC_45LSI %in% c(1)& !is.na(Status)) , 
 
 #saveRDS(obj, 'C:/seurat_objects/optimal_clustering_05_06_2025.rds')
 
-

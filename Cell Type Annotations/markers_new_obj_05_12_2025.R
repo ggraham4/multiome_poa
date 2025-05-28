@@ -23,7 +23,7 @@
 
 }
 
-#obj <- readRDS('~/Desktop/optimal_clustering_rna_only.rds')
+obj <- readRDS("C:/seurat_objects/optimal_clustering_05_06_2025.rds")
 
 markers <- unique(c(
   'elavl3',#neuron
@@ -72,6 +72,7 @@ markers <- unique(c(
   'ptprc', #leukocyte marker
   'col15a1b',
   'gdpd5a',
+  'th',
   'th2',
   'cart2'
 
@@ -92,6 +93,31 @@ marker_gene_plot
 DimPlot(obj, label = T)
 
 markers_24 = FindMarkers(obj, 24)
+
+markers_26 = FindMarkers(obj, 26)
+
+markers_3 = FindMarkers(obj, 3)
+
+clown_go <- readRDS('Functions/clown_go')
+
+clown_go(rownames(markers_3))%>%dotplot()
+
+clown_go(rownames(markers_26))%>%dotplot()
+
+ggplot(obj@meta.data, aes(x = res0.8_50nn_40PC_45LSI, y = S.Score))+
+  geom_boxplot()
+
+ggplot(obj@meta.data, aes(x = res0.8_50nn_40PC_45LSI, y = G2M.Score))+
+  geom_boxplot()
+
+phase <- as.data.frame.matrix(table(obj$res0.8_50nn_40PC_45LSI, obj$Phase))
+phase$sum = rowSums(phase)
+phase$pct_s = phase$S/phase$sum
+#fundamentally the same as radial glia, maybe I look at markers between RGC and 26
+
+markers_26_1 = FindMarkers(obj, ident.1 =26, ident.2  = 1)
+clown_go(rownames(markers_26_1))%>%dotplot()
+
 
 table_data = as.data.frame.matrix(table(obj$res0.8_50nn_40PC_45LSI, obj$individual))
 
@@ -146,8 +172,9 @@ DimPlot(obj, label = T, group.by = 'predicted.id')
 Idents(obj) <- 'res0.8_50nn_40PC_45LSI'
 markers <- FindAllMarkers(obj)
 
-saveRDS(obj, 'A:/optimal_clustering_05_06_2025/nemo.orig_harmony.integration_all_testd_clusters.rds')
-saveRDS(obj, 'C:/seurat_objects/optimal_clustering_05_06_2025.rds')
+#saveRDS(obj, 'A:/optimal_clustering_05_06_2025/nemo.orig_harmony.integration_all_testd_clusters.rds')
+#saveRDS(obj, 'C:/seurat_objects/optimal_clustering_05_06_2025.rds')
+
 
 markers_26 = subset(markers, cluster ==26)
 markers_25 = subset(markers, cluster ==25)
