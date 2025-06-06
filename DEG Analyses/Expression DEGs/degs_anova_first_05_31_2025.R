@@ -176,7 +176,8 @@ neg.bin.mult <- function(obj,
   
   #define pairwise function to apply to a dataframe
   pairwise_function <- function(results_1){
-    significant_genes <- results_1$gene[as.numeric(results_1$av_q.value) < alpha & !is.na(as.numeric(results_1$av_q.value))]
+    significant_genes <- results_1$gene[(as.numeric(results_1$av_q.value) < alpha) 
+                                        & (!is.na(as.numeric(results_1$av_q.value)))]
           
            data = results_1
             data$f_m_p.value = NA
@@ -189,22 +190,37 @@ neg.bin.mult <- function(obj,
               
              message('Gene ', which(significant_genes ==j), ' of ', length(significant_genes))
 
+              glmer_model <<- NULL
+              
               i = which(valid_genes == j)
               
              #refit models
               dispersion <- dispersions.RAW[i]
               outcome <- df_counts_no_0_all_subjects[, i]
               
-                  glmer_model <- glmer(outcome ~ Status + (1 | subject),
+                  tryCatch({suppressMessages(
+    glmer_model <- glmer(outcome ~ Status + (1 | subject),
                          offset = offset,
-                         family = MASS::negative.binomial(theta = 1 / dispersion))
+                         family = MASS::negative.binomial(theta = 1 / dispersion)))
+     }, error = function(e) {
+      return(NULL)
+    })
+    if(!exists('glmer_model')){
+      glmer_model = NULL
+    }
+    
+    if(!is.null(glmer_model)){
                   
                   pairs <- as.data.frame(pairs(emmeans(glmer_model, 'Status')))
                   
+                  if(is.na(pairs$p.value[pairs$contrast == 'F - M'])){print(j)
+                    break}
+
                   data$f_m_p.value[data$gene == j] = pairs$p.value[pairs$contrast == 'F - M']
                   data$d_m_p.value[data$gene == j] = pairs$p.value[pairs$contrast == 'D - M']
                   data$d_f_p.value[data$gene == j] = pairs$p.value[pairs$contrast == 'D - F']
-          }
+    }
+            }
             return(data)
           }
   
@@ -217,7 +233,7 @@ neg.bin.mult <- function(obj,
   return(full_results)
 }
 
-for (i in 1:26) { ### already did 0
+for (i in 0:26) { ### already did 0
   print(i)
   output <- neg.bin.mult(obj,
                          cluster =i,
@@ -226,29 +242,7 @@ for (i in 1:26) { ### already did 0
     write.csv(output, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_31_2025 Neg Bin Anova First/cluster_',i,'.csv'))
 
 }
-
-
-for (i in 0:26) {
-  print(i)
-  output <- neg.bin.mult(obj,
-                         cluster =i,
-                         clustering = 'res0.8_50nn_40PC_45LSI')
-  output$cluster = i
-    write.csv(output, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_31_2025 Neg Bin Anova First/cluster_',i,'.csv'))
-
-  }
-
 # for some reason it stopped doing pairwise comparisons after 21?
-
-for (i in c(22,23,26)) {
-  print(i)
-  output <- neg.bin.mult(obj,
-                         cluster =i,
-                         clustering = 'res0.8_50nn_40PC_45LSI')
-  output$cluster = i
-    write.csv(output, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_31_2025 Neg Bin Anova First/cluster_',i,'.csv'))
-
-}
 
 ### coalesce DEG list
 final_data <- data.frame()
@@ -262,8 +256,8 @@ for (i in 0:26) { ### already did 0
 
 #im still getting weird NAs in my pairwise comparisons so I rewrote the function
 na_clusters <- unique(final_data$cluster[is.na(final_data$d_m_p.value)])
-
-for (i in na_clusters) {
+### even after I change the function I still get the problem here
+for (i in na_clusters[2:length(na_clusters)]) {
   print(i)
   output <- neg.bin.mult(obj,
                          cluster =i,
@@ -271,18 +265,10 @@ for (i in na_clusters) {
   output$cluster = i
     write.csv(output, paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_31_2025 Neg Bin Anova First/cluster_',i,'.csv'))
 
-}
+} ## and this doesnt fix it
 
-final_data_fr <- data.frame()
-for (i in 0:26) {
-  print(i)
-    data = read.csv(paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_31_2025 Neg Bin Anova First/cluster_',i,'.csv'))
-    subset_data = subset(data, av_q.value<0.05)
-        if(nrow(subset_data)<1){next}
-    final_data_fr = rbind(final_data_fr,subset_data )
-}
 
-#write.csv(final_data_fr, 'Collaboration/Type III DEGs.csv')
+
 
 
 
