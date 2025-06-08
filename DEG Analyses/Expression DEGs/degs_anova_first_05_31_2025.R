@@ -217,8 +217,14 @@ neg.bin.mult <- function(obj,
                     break}
 
                   data$f_m_p.value[data$gene == j] = pairs$p.value[pairs$contrast == 'F - M']
+                  data$f_m_estimate[data$gene == j] = pairs$estimate[pairs$contrast == 'F - M']
+
                   data$d_m_p.value[data$gene == j] = pairs$p.value[pairs$contrast == 'D - M']
+                  data$d_m_estimate[data$gene == j] = pairs$estimate[pairs$contrast == 'D - M']
+
                   data$d_f_p.value[data$gene == j] = pairs$p.value[pairs$contrast == 'D - F']
+                  data$d_f_estimate[data$gene == j] = pairs$estimate[pairs$contrast == 'D - F']
+                  
     }
             }
             return(data)
