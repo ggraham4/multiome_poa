@@ -31,16 +31,16 @@ clown_go2(all_degs_subset$gene[all_degs_subset$cluster==6& all_degs_subset$singu
 
 ### cluster 1
 #singular and non singular
-clown_go2(all_degs_subset$gene[all_degs_subset$cluster==1])%>%dotplot()
+#clown_go2(all_degs_subset$gene[all_degs_subset$cluster==1])%>%dotplot()
 #NA
 
 #non-singular
-clown_go2(all_degs_subset$gene[all_degs_subset$cluster==1& all_degs_subset$singular==F])%>%dotplot()
+#clown_go2(all_degs_subset$gene[all_degs_subset$cluster==1& all_degs_subset$singular==F])%>%dotplot()
 #still NA
 
 ### cluster 11
 #singular and non singular
-clown_go2(all_degs_subset$gene[all_degs_subset$cluster==11])%>%dotplot()
+#clown_go2(all_degs_subset$gene[all_degs_subset$cluster==11])%>%dotplot()
 #NA
 
 #non-singular
@@ -52,7 +52,7 @@ clown_go2(all_degs_subset$gene)%>%dotplot()
 clown_go2(all_degs_subset$gene[all_degs_subset$singular==F])%>%dotplot()
 
 #what are the genes
-clown_go2(all_degs_subset$gene[all_degs_subset$singular==F])
+#clown_go2(all_degs_subset$gene[all_degs_subset$singular==F])
 # the LOC is another PGR
 
 clown_go2(all_degs_subset$gene[all_degs_subset$cluster==6& all_degs_subset$singular==F])
