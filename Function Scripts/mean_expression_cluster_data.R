@@ -1,5 +1,6 @@
-mean_expression_cluster_data <- function(object, gene, cluster, clustering = 'harmony.wnn_res0.4_clusters'){
-      options(dplyr.summarise.inform = FALSE)
+mean_expression_cluster_data <- function(object, gene, cluster, clustering = 'final_clusters'){
+  library(stringr)    
+  options(dplyr.summarise.inform = FALSE)
 
     counts <- t(object@assays$RNA$data[,object@meta.data[[clustering]] == cluster])
   Counts_of_interest <- as.data.frame(counts[,gene])
