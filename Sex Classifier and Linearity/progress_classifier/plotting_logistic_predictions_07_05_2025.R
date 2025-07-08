@@ -52,3 +52,31 @@ ggplot(data_grouped_subset, aes(x = fct_reorder(as.factor(cluster), mean_dominan
     theme_minimal()+
     labs(x = 'Cluster', y = 'Mean Prediction +/- SE', title = 'Groups - Clusters with many DEGs', shape = 'Status', color = 'Status')
 
+
+mf_data = read.csv('/Users/ggraham/Desktop/multiome_poa/Sex Classifier and Linearity/progress_classifier/logistic_mf_validation_07_07_2025.csv')
+
+
+mf_data_grouped = mf_data%>%
+  group_by(cluster, status)%>%
+  summarize(mean_proba = mean(proba),
+            se = sd(proba)/sqrt(n()))
+
+ggplot(mf_data_grouped, aes(x = as.factor(cluster), y = mean_proba,shape = status, color = status))+
+  geom_point()+
+  geom_errorbar(aes(x = as.factor(cluster), y = mean_proba, ymin = mean_proba-se, ymax = mean_proba+se))+
+  labs(x = 'Cluster', y = 'Mean +/- SE Probability', shape = 'Sex', color = "Sex")+
+  theme_minimal()
+
+
+ggplot(subset(mf_data_grouped, cluster %in% c(1,6,11,0)), aes(x = as.factor(cluster), y = mean_proba,shape = status, color = status))+
+  geom_point()+
+  geom_errorbar(aes(x = as.factor(cluster), y = mean_proba, ymin = mean_proba-se, ymax = mean_proba+se))+
+  labs(x = 'Cluster', y = 'Mean +/- SE Probability', shape = 'Sex', color = "Sex")+
+  theme_minimal()
+
+ggplot(subset(mf_data, cluster %in% c(1,6,11,0)), aes(x = as.factor(cluster), y = proba,shape = status, color = status))+
+  geom_point()+
+  labs(x = 'Cluster', y = 'Mean +/- SE Probability', shape = 'Sex', color = "Sex")+
+  theme_minimal()
+
+
