@@ -7,6 +7,7 @@
 
 #libraries
 {
+  library(ggridges)
   library(ggplot2)
   library(Seurat)
   library(dplyr)
@@ -215,6 +216,36 @@ data_6_1 = subset(obj_6_only@meta.data, sub.cluster == '6_1')
 model_6_1 = lmer(cyto~Status +(1|individual), data= data_6_1)
 car::Anova(model_6_1, type = 3) #nope, surprising though
 
+#I wonder what the distribution of cytotrace scores looks like between subclusters
+obj_6_only@meta.data$Status =factor(obj_6_only@meta.data$Status, levels = c('NRM','M','D','E','NF','F'))
+ggplot(obj_6_only@meta.data, aes(x = cyto, y = Status, fill = Status))+
+  geom_density_ridges()+
+  theme_ridges()+
+  theme(legend.position = "none")
+
+obj_6_only@meta.data$Status =factor(obj_6_only@meta.data$Status, levels = c('NRM','M','D','NF','E','F'))
+ggplot(obj_6_only@meta.data, aes(x = cyto, y = Status, fill = Status))+
+  geom_density_ridges()+
+  theme_ridges()+
+  theme(legend.position = "none")
+
+#put it back
+obj_6_only@meta.data$Status =factor(obj_6_only@meta.data$Status, levels = c('NRM','M','D','E','NF','F'))
+
+# what does a test ignoring subcluster look like
+model_6 = lmer(cyto~Status +(1|individual), data= obj_6_only@meta.data)
+car::Anova(model_6, 3)
+pairs(emmeans(model_6, 'Status'))
+
+#because it is bounded between 0 and 1, is it better to use a non parametric
+#have to take the mean per individual because of pseudoreplication
+krusk_data = obj_6_only@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(mean_cyto = mean(cyto))
+
+krusk_cyto = kruskal.test(mean_cyto~Status, data = krusk_data)
+# wait it has the exact same p value as the anova of the
+#lmer with random effect ? wow
 
 #> conclusions:
 #> across clusters, dominants have the most immature cells, though that is only
@@ -502,5 +533,33 @@ ggplot(ieg_data_individual_level2, aes(x = as.factor(sub.cluster), y = prop_pos,
   scale_shape_manual(values = c(1,2,3))
 
 
+#How is IEG correlated to cyto?
 
+### 6) DEGs ####
+#> I did the deg analysis in another file in this folder, this is just the interesting part
+deg_data <- read.csv("Subclustering/degs_6_defined_08_09_2025.csv")
 
+#clown_go(deg_data$gene[deg_data$cluster=='6_0'])%>%dotplot()
+#none somehow
+
+clown_go(deg_data$gene[deg_data$cluster=='6_1'])%>%dotplot()
+
+clown_go(deg_data$gene[deg_data$cluster=='6_2'])%>%dotplot()
+
+clown_go(deg_data$gene[deg_data$cluster=='6_3'])%>%dotplot()
+
+#im not convinced by most of these, I think just plot expression 
+
+## plotting
+plot_mean_expression(individual_mean_expression(obj_6_only, 'tacr3a'))+
+  labs(title = 'tacr3a')
+# holy jebus its upregulated in dominants, shocking its not significantly diff
+#between males and dominants probably due to small cluster size
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'pgr'))+
+  labs(title = 'pgr')
+# way upreguated in females, probaby not different between dominants and males
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'LOC111562889'))+
+  labs(title = 'rbfox1-homolog, LOC111562889')
+  

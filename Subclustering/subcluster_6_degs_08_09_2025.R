@@ -267,14 +267,14 @@ final_data <- data.frame()
 for (i in 0:3) {
     cluster = paste0('6_',i)
   print(i)
-    data = read.csv(paste0('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/08_09_2025 6 Subclusters Neg Bin Anova First/cluster_',cluster,'.csv'))
+    data = read.csv(paste0('DEG Outputs/08_09_2025 6 Subclusters Neg Bin Anova First/cluster_',cluster,'.csv'))
      subset_data = subset(data, av_q.value<0.05 & singular == F)
         if(nrow(subset_data)<1){next}
      subset_data_defined = define_degs(subset_data)
     final_data = rbind(final_data,subset_data_defined )
 }
 
-#write.csv(final_data, '/Users/ggraham/Desktop/multiome_poa/Subclustering/degs_6_defined_08_09_2025.csv')
+#write.csv(final_data, 'Subclustering/degs_6_defined_08_09_2025.csv')
 
 
 
