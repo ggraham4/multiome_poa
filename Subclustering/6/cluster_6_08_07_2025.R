@@ -317,6 +317,8 @@ i = 3
 
   pairs(emmeans(glmer_model, 'Status.x')) # male female 
 
+  #what fold increase is it by sex
+  full_data%>%group_by(sub.cluster, Status.y)%>% summarize(sum_total = sum(total_cells),sum_cells = sum(cells))%>% mutate(prop = sum_cells/sum_total)
 ### 4) NT Expression ####
   
 #split cells into glut, gaba , and mixed
@@ -563,3 +565,203 @@ plot_mean_expression(individual_mean_expression(obj_6_only, 'pgr'))+
 plot_mean_expression(individual_mean_expression(obj_6_only, 'LOC111562889'))+
   labs(title = 'rbfox1-homolog, LOC111562889')
   
+plot_mean_expression(individual_mean_expression(obj_6_only, 'LOC111568069'))+
+  labs(title = 'pgr like LOC111568069')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'avp'))+
+  labs(title = 'avp')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'avpr2aa'))+
+  labs(title = 'avpr2aa')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'oxt'))+
+  labs(title = 'oxt')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'oxtrb'))+
+  labs(title = 'oxtrb')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'gal'))+
+  labs(title = 'gal')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'galr1a'))+
+  labs(title = 'galr1a')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'npy'))+
+  labs(title = 'npy')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'tac3a'))+
+  labs(title = 'tac3a')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'mtnr1bb'))+
+  labs(title = 'mtnr1bb')
+
+plot_mean_expression(individual_mean_expression(obj_6_only, 'mtnr1al'))+
+  labs(title = 'mtnr1al')
+
+### is there a difference in the comopsition of neurons by primary nT? ####
+### NT Expression ####
+
+#split cells into glut, gaba , and mixed
+obj_6_only$primary_neurotransmitter <- ifelse(((obj_6_only@assays$RNA$data['LOC111588076',]>0 
+                                                | obj_6_only@assays$RNA$data['gad2',]>0) &
+                                                 (obj_6_only@assays$RNA$data['LOC111584103',]==0 & 
+                                                    obj_6_only@assays$RNA$data['slc17a6b',]==0 &  
+                                                    obj_6_only@assays$RNA$data['slc17a7a',]==0)), 'GABA',NA)
+
+obj_6_only$primary_neurotransmitter <- ifelse(((obj_6_only@assays$RNA$data['LOC111588076',]==0 
+                                                & obj_6_only@assays$RNA$data['gad2',]==0) &
+                                                 (obj_6_only@assays$RNA$data['LOC111584103',]>0 | 
+                                                    obj_6_only@assays$RNA$data['slc17a6b',]>0 |  
+                                                    obj_6_only@assays$RNA$data['slc17a7a',]>0)), 'GLUT',obj_6_only$primary_neurotransmitter)
+
+obj_6_only$primary_neurotransmitter <- ifelse(((obj_6_only@assays$RNA$data['LOC111588076',]>0 
+                                                | obj_6_only@assays$RNA$data['gad2',]>0) &
+                                                 (obj_6_only@assays$RNA$data['LOC111584103',]>0 | 
+                                                    obj_6_only@assays$RNA$data['slc17a6b',]>0 |  
+                                                    obj_6_only@assays$RNA$data['slc17a7a',]>0)), 'Mixed',obj_6_only$primary_neurotransmitter)
+
+obj_6_only$primary_neurotransmitter <- ifelse(is.na(obj_6_only$primary_neurotransmitter), 'Neither', obj_6_only$primary_neurotransmitter)
+
+table(obj_6_only$primary_neurotransmitter)
+
+DimPlot(obj_6_only, label = F, reduction = 'harmony_wnn.umap', group.by ='primary_neurotransmitter')
+DimPlot(obj_6_only, label = T, reduction = 'harmony_wnn.umap', group.by ='sub.cluster')
+
+#plot
+cluster_prim_type <- table(obj_6_only$primary_neurotransmitter, obj_6_only$sub.cluster)%>%as.data.frame()
+cluster_prim_type$prop[cluster_prim_type$Var2 == '6_0'] = cluster_prim_type$Freq[cluster_prim_type$Var2 == '6_0']/ nrow(obj_6_only@meta.data[obj_6_only@meta.data$sub == '6_0',])
+cluster_prim_type$prop[cluster_prim_type$Var2 == '6_1'] = cluster_prim_type$Freq[cluster_prim_type$Var2 == '6_1']/ nrow(obj_6_only@meta.data[obj_6_only@meta.data$sub == '6_1',])
+cluster_prim_type$prop[cluster_prim_type$Var2 == '6_2'] = cluster_prim_type$Freq[cluster_prim_type$Var2 == '6_2']/ nrow(obj_6_only@meta.data[obj_6_only@meta.data$sub == '6_2',])
+cluster_prim_type$prop[cluster_prim_type$Var2 == '6_3'] = cluster_prim_type$Freq[cluster_prim_type$Var2 == '6_3']/ nrow(obj_6_only@meta.data[obj_6_only@meta.data$sub == '6_3',])
+
+ggplot(cluster_prim_type, aes(x = Var2, y = prop, group = interaction(Var2, Var1), fill = Var1))+
+  geom_bar(stat='identity')+
+  labs(x = 'Subcluster', y = 'Proportion')+
+  theme_classic()
+
+
+#compare it to cluster 0
+obj_subclustered_6$primary_neurotransmitter <- ifelse(((obj_subclustered_6@assays$RNA$data['LOC111588076',]>0 
+                                                        | obj_subclustered_6@assays$RNA$data['gad2',]>0) &
+                                                         (obj_subclustered_6@assays$RNA$data['LOC111584103',]==0 & 
+                                                            obj_subclustered_6@assays$RNA$data['slc17a6b',]==0 &  
+                                                            obj_subclustered_6@assays$RNA$data['slc17a7a',]==0)), 'GABA',NA)
+
+obj_subclustered_6$primary_neurotransmitter <- ifelse(((obj_subclustered_6@assays$RNA$data['LOC111588076',]==0 
+                                                        & obj_subclustered_6@assays$RNA$data['gad2',]==0) &
+                                                         (obj_subclustered_6@assays$RNA$data['LOC111584103',]>0 | 
+                                                            obj_subclustered_6@assays$RNA$data['slc17a6b',]>0 |  
+                                                            obj_subclustered_6@assays$RNA$data['slc17a7a',]>0)), 'GLUT',obj_subclustered_6$primary_neurotransmitter)
+
+obj_subclustered_6$primary_neurotransmitter <- ifelse(((obj_subclustered_6@assays$RNA$data['LOC111588076',]>0 
+                                                        | obj_subclustered_6@assays$RNA$data['gad2',]>0) &
+                                                         (obj_subclustered_6@assays$RNA$data['LOC111584103',]>0 | 
+                                                            obj_subclustered_6@assays$RNA$data['slc17a6b',]>0 |  
+                                                            obj_subclustered_6@assays$RNA$data['slc17a7a',]>0)), 'Mixed',obj_subclustered_6$primary_neurotransmitter)
+
+cluster_prim_type_o <- table(obj_subclustered_6$primary_neurotransmitter, obj_subclustered_6$sub.cluster)%>%as.data.frame()
+cluster_prim_type_o$prop = cluster_prim_type_o$Freq/ nrow(obj_subclustered_6@meta.data)
+
+ggplot(cluster_prim_type_o, aes(x = Var2, y = prop, group = interaction(Var2, Var1), fill = Var1))+
+  geom_bar(stat='identity', position = 'fill')+
+  labs(x = 'Subcluster', y = 'Proportion')+
+  theme_classic()
+
+#Not sure if this is a really interesting finding or not, it seems like its not 
+#super common to have both characteristics but not some exceptional finding either
+
+# i want to compare the proportion of mixed cells in these subclusters 
+# to other clusters, so I think fishers exact test for [mixed, unmixed]
+
+cells_in_clusters <- obj_subclustered_6@meta.data%>%
+  subset(sub.cluster %notin% c('11', # mg,
+                               '1', #rg
+                               '2', #og
+                               '26',#dg
+                               '13', #opc
+                               '15', #epe
+                               '20' #leuko
+  ))%>%
+  group_by(sub.cluster)%>%
+  summarize(mixed_cells = sum(primary_neurotransmitter=='Mixed', na.rm = T),
+            n_cells = n())%>%
+  mutate(non_mixed = n_cells-mixed_cells)
+
+mixed_test <- data.frame()
+for(i in 0:3){
+  cluster = paste0('6_',i)
+  fisher_mixed_matrix <- matrix(c(
+    sum(cells_in_clusters$mixed_cells[cells_in_clusters$sub.cluster ==cluster]),
+    sum(cells_in_clusters$non_mixed[cells_in_clusters$sub.cluster ==cluster]),
+    sum(cells_in_clusters$mixed_cells[cells_in_clusters$sub.cluster !=cluster]),
+    sum(cells_in_clusters$non_mixed[cells_in_clusters$sub.cluster !=cluster])),
+    2,
+    2,
+    byrow = T)
+  
+  fish = fisher.test(fisher_mixed_matrix)
+  newd = data.frame(cluster = cluster,
+                    p = fish$p.value)
+  mixed_test = rbind(mixed_test, newd)
+  
+}
+mixed_test$p_adj = p.adjust(mixed_test$p, 'fdr',4)
+mixed_test$p_adj = round(mixed_test$p_adj, 10)
+# 60, 61,  and 63 are enriched for mixed cells
+
+# do the sexes differ ? ####
+
+
+sex_data = table(obj_subclustered_6$primary_neurotransmitter[obj_subclustered_6$sub.cluster=='6_3'], obj_subclustered_6$Status[obj_subclustered_6$sub.cluster=='6_3'])%>%
+  as.data.frame.matrix()%>%t()%>%
+  as.data.frame()
+
+sex_data$total = rowSums(sex_data)
+sex_data$prop_gaba = sex_data$GABA/sex_data$total
+#no way this is a difference 
+
+sex_data2 = table(obj_subclustered_6$primary_neurotransmitter[obj_subclustered_6$sub.cluster=='6_1'], obj_subclustered_6$Status[obj_subclustered_6$sub.cluster=='6_1'])%>%
+  as.data.frame.matrix()%>%t()%>%
+  as.data.frame()
+
+sex_data2$total = rowSums(sex_data2)
+sex_data2$prop_gaba = sex_data$GABA/sex_data2$total
+#potentially a difference
+
+
+#its loop time baby
+glmer_out = data.frame()
+for(i in c('6_0','6_1','6_2','6_3')){
+  prim_neuro_data = obj_subclustered_6@meta.data%>%
+    subset(sub.cluster == i)%>%
+    group_by(individual, Status)%>%
+    summarize(n_GABA = sum(primary_neurotransmitter== 'GABA', na.rm = T),
+              n_GLUT = sum(primary_neurotransmitter== 'GLUT', na.rm = T),
+              n_Mixed =sum(primary_neurotransmitter== 'Mixed', na.rm = T),
+              total = n())
+  
+  GABA_matrix = cbind(prim_neuro_data$n_GABA, prim_neuro_data$total - prim_neuro_data$n_GABA)
+  GLUT_matrix = cbind(prim_neuro_data$n_GLUT, prim_neuro_data$total - prim_neuro_data$n_GLUT)
+  Mixed_matrix = cbind(prim_neuro_data$n_Mixed, prim_neuro_data$total - prim_neuro_data$n_Mixed)
+  
+  GABA_model = glmer(GABA_matrix ~ Status + (1|individual), data = prim_neuro_data, family = binomial('logit'))
+  GLUT_model = glmer(GLUT_matrix ~ Status + (1|individual), data = prim_neuro_data, family = binomial('logit'))
+  Mixed_model = glmer(Mixed_matrix ~ Status + (1|individual), data = prim_neuro_data, family = binomial('logit'))
+  
+  GABA_p = car::Anova(GABA_model, type = 3)$`Pr(>Chisq)`[2]
+  Mixed_p = car::Anova(Mixed_model, type = 3)$`Pr(>Chisq)`[2]
+  GLUT_p = car::Anova(GLUT_model, type = 3)$`Pr(>Chisq)`[2]
+  
+  newd = data.frame(cluster = i,
+                    GABA_p= GABA_p,
+                    GABA_singular = isSingular(GABA_model),
+                    GLUT_p= GLUT_p,
+                    GLUT_singular = isSingular(GLUT_model),
+                    Mixed_p= Mixed_p,
+                    Mixed_singular = isSingular(Mixed_model))
+  glmer_out = rbind(glmer_out, newd)
+  
+  
+}
+#no
+

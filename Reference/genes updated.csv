@@ -2333,7 +2333,7 @@ si:ch1073-82l19.1,LOC111587191,protein zyg-11 homolog,
 kcnq5b,LOC111569979,potassium voltage-gated channel subfamily KQT member 5-like,
 eef1a1a,LOC111583465,elongation factor 1-alpha 1-like,
 CD163,LOC111586583,scavenger receptor cysteine-rich type 1 protein M130-like,membrane
-sept3,LOC111570949,"NACHT, LRR and PYD domains-containing protein 12-like",cytoplasm
+3-Sep,LOC111570949,"NACHT, LRR and PYD domains-containing protein 12-like",cytoplasm
 SUCNR1,,,membrane
 ece2b,ece2b,endothelin converting enzyme 2b,
 ZNF276,znf276,zinc finger protein 276,metal ion binding
@@ -4429,7 +4429,7 @@ CNOT1,cnot1,"CCR4-NOT transcription complex, subunit 1",negative regulation of t
 det1,det1,DET1 partner of COP1 E3 ubiquitin ligase,
 VANGL1,LOC111566541,vang-like protein 1,
 CASQ2,LOC111566542,calsequestrin-2-like,
-sept15,LOC111566761,septin-7-like,nucleotide binding
+15-Sep,LOC111566761,septin-7-like,nucleotide binding
 zgc:158564,,,
 S100P,LOC111582705,protein S100-P,
 IL13RA1,il13ra1,"interleukin 13 receptor, alpha 1",
@@ -4980,7 +4980,7 @@ grid2ipa,grid2ipa,"glutamate receptor, ionotropic, delta 2 (Grid2) interacting p
 ZNF598,znf598,zinc finger protein 598,
 MPG,mpg,N-methylpurine DNA glycosylase,
 NPRL3,nprl3,"NPR3-like, GATOR1 complex subunit",membrane
-sept2,septin2,septin 2,
+2-Sep,septin2,septin 2,
 cacng5b,cacng5b,"calcium channel, voltage-dependent, gamma subunit 5b",membrane
 CDC37,LOC111574826,"cell division cycle 37, HSP90 cochaperone",
 WDR70,LOC111574922,WD repeat-containing protein 70,
@@ -4989,7 +4989,7 @@ METTL22,mettl22,"methyltransferase 22, Kin17 lysine",hematopoietic stem cell dif
 ABAT,abat,4-aminobutyrate aminotransferase,
 AFMID,afmid,arylformamidase,
 TMA16,tma16,translation machinery associated 16 homolog,
-march1,marchf1,membrane-associated ring finger (C3HC4) 1,
+1-Mar,marchf1,membrane-associated ring finger (C3HC4) 1,
 RHEB,,,membrane
 cxcl12b,cxcl12b,chemokine (C-X-C motif) ligand 12b (stromal cell-derived factor 1),
 capn2b,LOC111568895,calpain-2 catalytic subunit-like,
@@ -6372,7 +6372,7 @@ ADAM11,LOC111581241,protein jagged-1b,
 zgc:153372,zgc:153372,uncharacterized LOC111585643,
 MCFD2,mcfd2,"multiple coagulation factor deficiency 2, ER cargo receptor complex subunit",
 TTC7A,ttc7a,tetratricopeptide repeat domain 7A,
-Sept4,,,nucleotide binding
+4-Sep,,,nucleotide binding
 SEMA4C,sema4c,"sema domain, immunoglobulin domain (Ig), transmembrane domain (TM) and short cytoplasmic domain, (semaphorin) 4C",membrane
 URB2,urb2,URB2 ribosome biogenesis homolog,regulation of signal transduction by p53 class mediator
 BOLA3,bola3,bolA family member 3,
@@ -7455,7 +7455,7 @@ DISC1,disc1,DISC1 scaffold protein,
 alox5a,,,iron ion binding
 AP3S2,,,
 ANPEP,LOC111587407,aminopeptidase N-like,metal ion binding
-march8,marchf8,membrane-associated ring finger (C3HC4) 8,
+8-Mar,marchf8,membrane-associated ring finger (C3HC4) 8,
 lzts2a,lzts2a,"leucine zipper, putative tumor suppressor 2a",cytoplasm
 PRDM8,znf488,zinc finger protein 488,transferase activity
 lbx1a,lbx1a,ladybird homeobox 1a,
@@ -9040,7 +9040,7 @@ rbpms2b,,,
 lzts2b,sync,"syncoilin, intermediate filament protein",
 si:ch211-194e15.5,nhsl3,NHS like 3,
 YARS1,yars1,tyrosyl-tRNA synthetase 1,
-march4,marchf4b,membrane associated ring-CH-type finger 4b,
+4-Mar,marchf4b,membrane associated ring-CH-type finger 4b,
 cx43.4,gjc4b,gap junction protein gamma 4b,
 VGLL3,vgll3,vestigial-like family member 3,regulation of DNA-templated transcription
 GLB1L,glb1l,"galactosidase, beta 1-like",carbohydrate metabolic process
@@ -10706,7 +10706,7 @@ Ttll13,,,
 MAP3K10,map3k10,mitogen-activated protein kinase kinase kinase 10,
 POLR3E,,,
 kcnab2b,LOC111588286,voltage-gated potassium channel subunit beta-2-like,oxidoreductase activity
-march9,marchf9,membrane-associated ring finger (C3HC4) 9,
+9-Mar,marchf9,membrane-associated ring finger (C3HC4) 9,
 si:rp71-17i16.5,si:rp71-17i16.5,"phosphatidylinositol 4,5-bisphosphate 3-kinase catalytic subunit",
 NEK8,nek8,NIMA-related kinase 8,
 DLG2,dlg2,"discs, large homolog 2 (Drosophila)",
@@ -11257,7 +11257,7 @@ ATPSCKMT,atpsckmt,fATP synthase c subunit lysine N-methyltransferase,
 Paox,LOC111577441,peroxisomal N(1)-acetyl-spermine/spermidine oxidase,oxidoreductase activity
 POLR2I,polr2i,RNA polymerase II subunit I,
 TIPARP,tiparp,TCDD-inducible poly(ADP-ribose) polymerase,
-march6,LOC111562861,E3 ubiquitin-protein ligase MARCHF6-like,
+6-Mar,LOC111562861,E3 ubiquitin-protein ligase MARCHF6-like,
 si:ch1073-228b5.2,dmac2,distal membrane arm assembly component 2,
 capn2l,LOC111585240,calpain-2 catalytic subunit-like,metal ion binding
 capn2l,LOC111585239,calpain-2 catalytic subunit-like,metal ion binding
@@ -11433,7 +11433,7 @@ GTF3C6,,,
 calub,calub,calumenin b,
 zgc:173742,zgc:173742,"DNA topoisomerase I, mitochondrial",
 SUDS3,,,
-march7,rinl,Ras and Rab interactor-like,
+7-Mar,rinl,Ras and Rab interactor-like,
 HSPA13,hspa13,"heat shock protein 70 family, member 13",nucleotide binding
 gdpd5b,gdpd5b,glycerophosphodiester phosphodiesterase domain containing 5b,membrane
 FBP2,fbp2,"fructose-1,6-bisphosphatase 2",
@@ -11836,7 +11836,7 @@ DMXL1,LOC111564720,dmX-like protein 1,
 TIMP3,LOC111583098,metalloproteinase inhibitor 3,
 GAS2L3,gas2l3,growth arrest-specific 2 like 3,
 ARID2,arid2,"AT rich interactive domain 2 (ARID, RFX-like)",
-sept10,,,
+10-Sep,,,
 MKLN1,mkln1,"muskelin 1, intracellular mediator containing kelch motifs",
 rasgrf2b,rasgrf2b,Ras protein-specific guanine nucleotide-releasing factor 2b,guanyl-nucleotide exchange factor activity
 COL21A1,col21a1,"collagen, type XXI, alpha 1",
@@ -12001,7 +12001,7 @@ SLC38A7,,,membrane
 olfml2ba,olfml2ba,olfactomedin-like 2Ba,
 ,LOC111562406,torsin-1A-interacting protein 2-like,
 ,LOC111562405,torsin-1A-interacting protein 2-like,
-march7,,,
+7-Mar,,,
 mibp,mibp,muscle-specific beta 1 integrin binding protein,
 DBT,,,
 DNTTIP2,dnttip2,"deoxynucleotidyltransferase, terminal, interacting protein 2",nucleus
@@ -12700,7 +12700,7 @@ CRYBG1,si:dkey-92i15.4,uncharacterized si:dkey-92i15.4,cytoplasm
 aqp10a,aqp10a,aquaporin 10a,
 ,atp8b2,ATPase phospholipid transporting 8B2,
 CRMP1,,,
-march4,,,glutathione biosynthetic process
+4-Mar,,,glutathione biosynthetic process
 ccl25b,ccl25b,chemokine (C-C motif) ligand 25b,chemokine activity
 ,LOC111570624,serine/threonine-protein kinase NIM1,membrane
 POLE4,pole4,"polymerase (DNA-directed), epsilon 4, accessory subunit",
@@ -15275,7 +15275,7 @@ MRPL32,mrpl32,mitochondrial ribosomal protein L32,
 MTBP,mtbp,MDM2 binding protein,
 cyp4t8,LOC111563375,cytochrome P450 4B1,
 kcnk3b,kcnk3b,"potassium channel, subfamily K, member 3b",
-marc1,marc1,mitochondrial amidoxime reducing component 1,membrane
+1-Mar,1-Mar,mitochondrial amidoxime reducing component 1,membrane
 HHIPL2,,,extracellular region
 wdr32,wdr32,WD repeat domain 32,
 PAK1,pak1,p21 protein (Cdc42/Rac)-activated kinase 1,
@@ -15755,7 +15755,7 @@ NMD3,nmd3,NMD3 ribosome export adaptor,
 marcksb,,,
 GREM1,grem1b,gremlin 1b,
 EXOC5,,,
-march5,marchf5,membrane-associated ring finger (C3HC4) 5,membrane
+5-Mar,marchf5,membrane-associated ring finger (C3HC4) 5,membrane
 AP5M1,ap5m1,adaptor related protein complex 5 subunit mu 1,membrane
 SLC35F4,slc35f4,solute carrier family 35 member F4,membrane
 zpld1a,zpld1a,zona pellucida-like domain containing 1a,membrane
@@ -18143,7 +18143,7 @@ cyp3a65,LOC111574386,cytochrome P450 3A27-like,
 GYS1,gys1,glycogen synthase 1 (muscle),
 ,LOC111586871,synaptonemal complex protein 2-like,
 ,LOC111578618,uncharacterized LOC111578618,
-oct2,slc22a3,solute carrier family 22 member 3,membrane
+2-Oct,slc22a3,solute carrier family 22 member 3,membrane
 dusp23a,dusp23b,dual specificity phosphatase 23b,
 nusap1,nusap1,nucleolar and spindle associated protein 1,
 OIP5,oip5,opa interacting protein 5,
@@ -18499,7 +18499,7 @@ GABRR1,LOC111577950,gamma-aminobutyric acid receptor subunit rho-1,membrane
 tbx16,tbx16,T-box transcription factor 16,
 KLHL22,klhl22,kelch-like family member 22,cytoplasm
 npy8br,npy8br,neuropeptide Y receptor Y8b,
-,LOC111571064,progonadoliberin-1,extracellular region
+,LOC111571064,progonadoliberin-1 (GNRH2),extracellular region
 kctd9a,kctd9a,potassium channel tetramerization domain containing 9a,
 SEC23IP,sec23ip,SEC23 interacting protein,
 fam20cl,LOC111581327,extracellular serine/threonine protein kinase FAM20C-like,
@@ -19930,7 +19930,7 @@ clockb,clockb,clock circadian regulator b,
 REM2,LOC111569623,GTP-binding protein REM 2-like,
 USP24,usp24,ubiquitin specific peptidase 24,
 ZSWIM2,,,metal ion binding
-march7,fam171b,family with sequence similarity 171 member B,membrane
+7-Mar,fam171b,family with sequence similarity 171 member B,membrane
 SLAIN1,LOC111573326,SLAIN motif-containing protein 1-like,
 als2b,,,guanyl-nucleotide exchange factor activity
 kdm4aa,LOC111588723,lysine-specific demethylase 4A,
