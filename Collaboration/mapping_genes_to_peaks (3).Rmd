@@ -1,0 +1,524 @@
+```{r setup, include=FALSE, tidy = 'formatR'}
+# Required R package installation:
+# These will install packages if they are not already installed
+# Set the correct default repository
+r = getOption("repos")
+r["CRAN"] = "http://cran.rstudio.com"
+options(repos = r)
+if (!require("Seurat")) {
+    install.packages("Seurat")
+    library(Seurat)
+}
+if (!require("tidyverse")) {
+    install.packages("tidyverse")
+    library(tidyverse)
+}
+if (!require("plotly")) {
+    install.packages("plotly")
+    library(plotly)
+}
+if (!require("patchwork")) {
+  install.packages("patchwork")
+  library(patchwork)
+}
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)
+}
+if (!require("knitr")) {
+  install.packages("knitr")
+  library(knitr)
+}
+if (!require("tibble")) {
+    install.packages("tibble")
+    library(tibble)
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")
+    library(dplyr)
+}
+if (!require("tidyr")) {
+  install.packages("tidyr")
+  library(tidyr)
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")
+    library(ggridges)
+}
+if (!require('gprofiler2')) {
+    install.packages("gprofiler2")
+    library(gprofiler2)
+}
+if (!require('rrvgo')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("rrvgo")
+    library(rrvgo)
+ }
+if (!require('viridis')) {
+    install.packages("viridis")
+    library(viridis)
+}
+if (!require('scran')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("scran")
+    library(scran)
+ }
+if (!require('stringr')) {
+    install.packages("stringr")
+    library(stringr)
+}
+if (!require('sctransform')) {
+    install.packages("sctransform")
+    library(sctransform)
+}
+if (!require('glmGamPoi')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("glmGamPoi")
+    library(glmGamPoi)
+ }
+if (!require('GenomicFeatures')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("GenomicFeatures")
+    library(GenomicFeatures)
+ }
+if (!require('GenomicRanges')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("GenomicRanges")
+    library(GenomicRanges)
+ }
+if (!require('rtracklayer')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("rtracklayer")
+    library(rtracklayer)
+ }
+if (!require('HDF5Array')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("HDF5Array")
+    library(HDF5Array)
+ }
+if (!require('Signac')) {
+    install.packages("Signac")
+    library(Signac)
+}
+if (!require('multtest')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("multtest")
+    library(multtest)
+}
+if (!require('mutoss')) {
+  install.packages("mutoss")
+  library(mutoss)
+}
+if (!require('metap')) {
+  install.packages("metap")
+  library(metap)
+}
+if (!require('MuData')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("MuData")
+    library(MuData)
+ }
+if (!require('qlcMatrix')) {
+  install.packages("qlcMatrix")
+  library(qlcMatrix)
+}
+if (!require('ggExtra')) {
+  install.packages("ggExtra")
+  library(ggExtra)
+}
+if (!require('biomartr')) {
+    install.packages("biomartr")
+    library(biomartr)
+}
+if (!require('Biostrings')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("Biostrings")
+    library(Biostrings)
+ }
+if (!require("igraph")) {
+    install.packages("igraph")
+    library(igraph)
+}
+if (!require("MAST")) {
+    if (!requireNamespace("BiocManager", quietly=TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("MAST")
+    library(MAST)
+}
+if (!require('BiocNeighbors')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("BiocNeighbors")
+   library(BiocNeighbors)
+}
+if (!require("circlize")) {
+    install.packages("circlize")
+    library(circlize)
+}
+if (!require("ggrepel")) {
+    install.packages("ggrepel")
+    library(ggrepel)
+}
+if (!require("mosaic")) {
+    install.packages("mosaic")
+    library(mosaic)
+}
+if (!require("plotly")) {
+    install.packages("plotly")
+    library(plotly)
+}
+if (!require("SeuratWrappers")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github('satijalab/seurat-wrappers')
+    library(SeuratWrappers)
+}
+if (!require("speckle")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github("Oshlack/speckle")
+    library(speckle)
+}
+if (!require("wesanderson")) {
+    install.packages("wesanderson")
+    library(wesanderson)
+}
+if (!require("kableExtra")) {
+    install.packages("kableExtra")
+    library(kableExtra)
+}
+if (!require("RColorBrewer")) {
+    install.packages("RColorBrewer")
+    library(RColorBrewer)
+}
+if (!require("scCustomize")) {
+    install.packages("scCustomize")
+    library(scCustomize)
+}
+if (!require("presto")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github("immunogenomics/presto")
+    library(presto)
+}
+if (!require('DropletUtils')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletUtils")
+   library(DropletUtils)
+}
+if (!require('DropletTestFiles')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletTestFiles")
+   library(DropletTestFiles)
+}
+if (!require("scclusteval")) {
+     if (!require(devtools)) {
+         install.packages("devtools")}
+    devtools::install_github("crazyhottommy/scclusteval")
+    library(scclusteval)
+}
+if (!require("DropletUtils")) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletUtils")
+   library(DropletUtils)
+}
+if (!require("EmptyDropsMultiome")) {
+     if (!require(devtools)) {
+         install.packages("devtools")}
+    devtools::install_github("MarioniLab/emptyDrops_multiome", ref="main")
+    library(EmptyDropsMultiome)
+}
+if (!require('hdf5r')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("hdf5r")
+    library(hdf5r)
+}
+if (!require("future")) {
+    install.packages("future")
+    library(future)
+}
+if (!require("parallel")) {
+    install.packages("parallel")
+    library(parallel)
+}
+if (!require("parallelly")) {
+    install.packages("parallelly")
+    library(parallelly)
+}
+if (!require("formatR")) {
+    install.packages("formatR")
+    library(formatR)
+}
+
+options(future.globals.maxSize = 20000 * 1024^2)
+mem.maxVSize(250000000)
+
+library(knitr)
+knitr::opts_chunk$set(root.dir = "/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/BgrB_multiome/NEW_nemo_DATA/")
+
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r ImportData}
+# load in the genome annotation file for your organism
+annotations <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/clownfish_genome_files/main_files/clownfish_genome_annotations.rds')
+nemo_gene.table <- as.data.frame(annotations)
+
+nemo_fasta <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/clownfish_genome_files/main_files/clownfish_fasta.rds')
+
+# nemo_id_info <- read_csv('Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/clownfish_genome_files/clownfish_experiment_id_info.csv')
+
+nemo_gene_info <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/clownfish_genome_files/main_files/clownfish_gene_annotation_homologs_v2.rds')
+
+gc()
+gc()
+
+nemo <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/Seurat_Data/new_nemo_POAonly_clusters_5.4.25.rds')
+
+gc()
+gc()
+
+
+nemo@assays[["ATAC"]]@fragments[[1]]@path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/cellranger_outs/s1_clownfish/atac_fragments.tsv.gz'
+nemo@assays[["ATAC"]]@fragments[[2]]@path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/cellranger_outs/s2_clownfish/atac_fragments.tsv.gz'
+nemo@assays[["ATAC"]]@fragments[[3]]@path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/cellranger_outs/s3_clownfish/atac_fragments.tsv.gz'
+nemo@assays[["ATAC"]]@fragments[[4]]@path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/cellranger_outs/s4_clownfish/atac_fragments.tsv.gz'
+nemo@assays[["ATAC"]]@fragments[[5]]@path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/cellranger_outs/s5_clownfish/atac_fragments.tsv.gz'
+nemo@assays[["ATAC"]]@fragments[[6]]@path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/cellranger_outs/s6_clownfish/atac_fragments.tsv.gz'
+
+
+head(rownames(nemo@assays$ATAC@data))
+head(rownames(nemo@assays$ATAC@counts))
+head(rownames(nemo@assays$ATAC@meta.features))
+head(nemo[['ATAC']]@var.features)
+
+rownames(nemo@assays$ATAC@data)   = stringr::str_replace(rownames(nemo@assays$ATAC@data),   "-", "_")
+rownames(nemo@assays$ATAC@counts) = stringr::str_replace(rownames(nemo@assays$ATAC@counts), "-", "_")
+rownames(nemo@assays$ATAC@meta.features) = stringr::str_replace(rownames(nemo@assays$ATAC@meta.features), "-", "_")
+nemo[['ATAC']]@var.features = stringr::str_replace(nemo[['ATAC']]@var.features, "-", "_")
+
+head(rownames(nemo@assays$ATAC@data))
+head(rownames(nemo@assays$ATAC@counts))
+head(rownames(nemo@assays$ATAC@meta.features))
+head(nemo[['ATAC']]@var.features)
+
+DefaultAssay(nemo) <- 'ATAC'
+Idents(nemo) <- 'harmony.new_wnn_res0.4_clusters'
+
+```
+
+
+```{r Function1}
+
+MappingPeakFragments_to_DEGs <- function(
+    testing_variable_name, # cluster/cell-type name or name of differential testing variable (example: testing_variable_name = "neuroendocrine_clust6")
+    deg_output, 
+    seurat_object,
+    gene_homolog_df,
+    genome_annotation_df, 
+    range_extensions = c(1000, 5000, 10000, 25000, 50000)  # Customizable range extensions
+) {
+  
+  # if (! all(c('gene', 'gene_id') %in% colnames(deg_output))) {
+  #   rownames(deg_output) <- gsub('\\.', '-', rownames(deg_output))
+  #   deg_output$gene_id <- rownames(deg_output)
+  # } else if ('gene' %in% colnames(deg_output)) {
+  #   colnames(deg_output)[colnames(deg_output) == 'gene'] = 'gene_id'
+  # } else {
+  #   deg_output <- deg_output
+  # }
+colnames(deg_output)[colnames(deg_output) == 'gene'] = 'gene_id'
+  # Load the GLMMSeq DEG outputs
+  gene_coordinates <- genome_annotation_df %>% dplyr::filter(type =="gene")
+  
+  deg_output$seqnames <- gene_coordinates$seqnames[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  deg_output$gene_start <- gene_coordinates$start[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  deg_output$gene_end <- gene_coordinates$end[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  deg_output$gene_width <- gene_coordinates$width[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  deg_output$gene_strand <- gene_coordinates$strand[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  deg_output$gene_biotype <- gene_coordinates$gene_biotype[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  deg_output$LinkageGroup <- gene_coordinates$standard_name[match(deg_output$gene_id, gene_coordinates$gene_id)]
+  
+  deg_output$gene_coordinates <- paste(deg_output$seqnames, deg_output$gene_start, deg_output$gene_end, sep = c("-", "-"))
+  
+  deg_output$gene <- deg_output$gene_id
+  deg_output$m.zebra_description <- gene_homolog_df$mzebra_description[match(deg_output$gene_id, gene_homolog_df$seurat_name)]
+  deg_output$greatest_human_homolog <- gene_homolog_df$human[match(deg_output$gene_id, gene_homolog_df$seurat_name)]
+  deg_output$one_to_one_homologs <- gene_homolog_df$human_agree[match(deg_output$gene_id, gene_homolog_df$seurat_name)]
+  
+  
+  gc()
+  gc()
+  
+  
+  # Extract ATAC peak coordinates
+  max_splits <- 3
+  peak_coordinates <- unique(rownames(seurat_object[['ATAC']]))
+  peak_coordinates <- strsplit(as.character(peak_coordinates), "-", fixed = TRUE)
+  peak_coordinates <- do.call(rbind, lapply(peak_coordinates, function(x) c(x, rep(NA, max_splits - length(x)))))
+  peak_coordinates <- as.data.frame(peak_coordinates)
+  colnames(peak_coordinates)[1] <- 'seqnames'
+  colnames(peak_coordinates)[2] <- 'start'
+  colnames(peak_coordinates)[3] <- 'end'
+  peak_coordinates2 <- unique(as.data.frame(rownames(seurat_object[['ATAC']])))
+  peak_coordinates <- cbind(peak_coordinates2, peak_coordinates)
+  colnames(peak_coordinates)[1] <- 'fragment'
+  
+  
+  # Apply function for peaks within DEG coordinates (ie. when range extension = 0)
+  add_peak_overlap_columns <- function(deg_output) {
+    # Helper function to find matching peaks within a given distance
+    find_matching_peaks <- function(gene_row, start, end, range_extension) {
+      start <- as.numeric(gene_row[["gene_start"]]) - range_extension
+      end <- as.numeric(gene_row[["gene_end"]]) + range_extension
+      
+      matching_peaks <- peak_coordinates$fragment[
+        (peak_coordinates$seqnames == gene_row["seqnames"] & peak_coordinates$start >= start & peak_coordinates$start <= end) |
+          (peak_coordinates$seqnames == gene_row["seqnames"] & peak_coordinates$end >= start & peak_coordinates$end <= end) |
+          (peak_coordinates$seqnames == gene_row["seqnames"] & peak_coordinates$start <= start & peak_coordinates$end >= end)
+      ]
+      
+      gc()  # Perform garbage collection
+      paste(matching_peaks, collapse = ",")
+    }
+    
+    # Apply the function to each row and add two new columns
+    deg_output$peaks_within_DEG_coordinates <- apply(deg_output, 1, find_matching_peaks, start = 'gene_start', end = 'gene_end', range_extension = 0)
+    
+    deg_output$peakCount_within_DEG_coordinates <- sapply(strsplit(as.character(deg_output$peaks_within_DEG_coordinates), ","), function(x) ifelse(all(x == ""), 0, length(x)))
+    
+    gc()
+    gc()
+    
+    return(deg_output)
+  }
+  
+  deg_output <- add_peak_overlap_columns(deg_output)
+  
+  peaks_within_DEG_coordinates <- as.data.frame(unique(unlist(strsplit(deg_output$peaks_within_DEG_coordinates, ","))))
+  colnames(peaks_within_DEG_coordinates)[[1]] <- 'fragment'
+  
+  find_matching_peaks <- function(gene_row, range_extension) {
+    start <- as.numeric(gene_row[["gene_start"]]) - range_extension
+    end <- as.numeric(gene_row[["gene_end"]]) + range_extension
+    
+    matching_peaks <- peak_coordinates$fragment[
+      (peak_coordinates$seqnames == gene_row["seqnames"] & peak_coordinates$start >= start & peak_coordinates$start <= end) |
+        (peak_coordinates$seqnames == gene_row["seqnames"] & peak_coordinates$end >= start & peak_coordinates$end <= end) |
+        (peak_coordinates$seqnames == gene_row["seqnames"] & peak_coordinates$start <= start & peak_coordinates$end >= end)
+    ]
+    
+    gc()  # Perform garbage collection
+    paste(matching_peaks, collapse = ",")
+  }
+  
+  # Apply function for each range extension
+  for (range_extension in range_extensions) {
+    column_name <- paste0("peaks_within_", range_extension, "bp")
+    count_column_name <- paste0("peakCount_within_", range_extension, "bp")
+    
+    # Apply function to find matching peaks
+    deg_output[[column_name]] <- apply(deg_output, 1, find_matching_peaks, range_extension = range_extension)
+    deg_output[[count_column_name]] <- sapply(strsplit(as.character(deg_output[[column_name]]), ","), function(x) ifelse(all(x == ""), 0, length(x)))
+  }
+  
+  # Organize output
+  peak_results <- lapply(range_extensions, function(ext) {
+    peaks <- unique(unlist(strsplit(deg_output[[paste0("peaks_within_", ext, "bp")]], ",")))
+    peaks <- peaks[peaks != "NA"]
+    data.frame(fragment = peaks)
+  })
+  
+  names(peak_results) <- paste0('ALL_', testing_variable_name,  "_peaks_within_", range_extensions, "bp")
+  
+  result_list <- c(list(Fragments_Mapped_to_DEGs = deg_output, peaks_within_DEG_coordinates = peaks_within_DEG_coordinates), peak_results)
+  
+  names(result_list)[1] <- paste0(testing_variable_name, '_', names(result_list)[1])
+  
+  names(result_list)[2] <- paste0('ALL_', testing_variable_name, '_peaks_in_DEG_coordinates')
+
+  return(result_list)
+  
+}
+
+gc()
+gc()
+
+
+
+```
+
+```{r Example}
+
+######### EXAMPLE for "MappingPeakFragments_to_DEGs()" FUNCTION ###############
+
+
+# read in DEG output(s)
+glmmseq_degs_out <- read_csv('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Katie/Clownfish/Seurat_Data/deg_analyses/sex_degs_05_30_2025.csv')
+glmmseq_degs <- as.data.frame(glmmseq_degs_out@stats)
+
+seurat_degs <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/Siddhi/nemoPit/FindConservedMarkers_cluster6_DEGs_byGroup.rds')
+seurat_degs$mzebra_description <- NULL
+seurat_degs$human <- NULL
+seurat_degs$human_agree <- NULL
+
+test_seurat_degs <- head(seurat_degs)
+View(test_seurat_degs)
+#or
+test_glmmseq_degs <- head(glmmseq_degs)
+View(test_glmmseq_degs)
+
+######################
+
+
+# EXAMPLE
+test_peaks_in_DEGs_glmmseq_degs <- MappingPeakFragments_to_DEGs(
+  testing_variable_name = "test_glmmseq_degs",
+  deg_output = test_glmmseq_degs,
+  seurat_object = nemo,
+  gene_homolog_df = gene_homolog_df,
+  genome_annotation_df = mz_gene.table, 
+  range_extensions = c(500) 
+)
+View(test_peaks_in_DEGs_glmmseq_degs)
+
+test_glmmseq_DEGs_mapped_to_peaks <- test_peaks_in_DEGs_glmmseq_degs[["test_glmmseq_degs_Fragments_Mapped_to_DEGs"]]
+View(test_glmmseq_DEGs_mapped_to_peaks)
+
+gc()
+gc()
+
+test_peaks_in_DEGs_seurat_degs <- MappingPeakFragments_to_DEGs(
+  testing_variable_name = "test_seurat_degs",
+  deg_output = test_seurat_degs,
+  seurat_object = nemo,
+  gene_homolog_df = gene_homolog_df,
+  genome_annotation_df = mz_gene.table, 
+  range_extensions = c(500) 
+)
+View(test_peaks_in_DEGs_seurat_degs)
+
+test_peaks_in_DEGs_seurat_degs <- test_peaks_in_DEGs_sex_seurat_degs[["DEGs_mapped_to_peaks"]]
+View(test_seurat_sex_degs_mapped_to_peaks)
+
+gc()
+gc()
+
+```
+
