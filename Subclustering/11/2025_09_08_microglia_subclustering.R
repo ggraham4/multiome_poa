@@ -676,3 +676,69 @@ DotPlot(deg_module, 'positive')+
 DotPlot(microglia, mg_degs$gene)+
   coord_flip() 
 
+### meghan stress module ----
+meghan_stress_genes = read.xlsx('/Users/ggraham/downloads/media-3.xlsx',3)
+sig_stress_genes = meghan_stress_genes$gene[meghan_stress_genes$q.value_stress<0.05]
+
+ensembl_ocellaris <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+att = listAttributes(ensembl_ocellaris)
+biomart_names = 
+  getBM(
+    mart = ensembl_ocellaris, 
+    attributes = c('external_gene_name', 
+                   'entrezgene_accession'))
+
+  biomart_homologs <-
+  getBM(
+    mart = ensembl_ocellaris, 
+    attributes = c('external_gene_name', 
+                   'mmusculus_homolog_associated_gene_name'))
+  
+  biomart_joined = biomart_names%>%
+    subset(external_gene_name != '' & entrezgene_accession != '')%>%
+    right_join(biomart_homologs, by = 'external_gene_name')
+
+
+
+clown_sig_stress_genes = unique(
+  biomart_joined$entrezgene_accession[biomart_joined$mmusculus_homolog_associated_gene_name %in% sig_stress_genes]) 
+
+good_stress_genes = clown_sig_stress_genes[clown_sig_stress_genes %in% rownames(microglia@assays$RNA$data)]
+
+microglia = AddModuleScore(microglia, 
+                           features = list(good_stress_genes),
+                           name ='Stress')
+DotPlot(microglia, 'Stress1')+
+  coord_flip()
+
+sex_diff_stress =lmer(Stress1~Status +(1|individual), microglia@meta.data)
+summary(sex_diff_stress)
+car::Anova(sex_diff_stress, 3) #fuck
+
+ggplot(microglia@meta.data, aes(x = Status, y = Stress1, color = sub.cluster))+
+  geom_boxplot()
+
+ggplot(microglia@meta.data, aes(x = sub.cluster, y = Stress1))+
+  geom_violin()
+
+# I wonder if the clustering needs to be different
+Idents(microglia) <- 'final_clusters'
+
+microglia = FindSubCluster(microglia, 11, 
+                           'harmony.wsnn', 
+                           'sub_2',
+                           resolution = .8)
+Idents(microglia) = 'sub_2'
+DimPlot(microglia)
+
+ggplot(microglia@meta.data, aes(x = sub_2, y = Stress1))+
+  geom_violin()
+
+Idents(microglia) = 'sub.cluster'
+
+# I dont really think so 
+
+table(microglia$sub.cluster, microglia$Stress1 > mean(microglia$Stress1))
+
+
