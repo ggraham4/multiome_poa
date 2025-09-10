@@ -504,7 +504,7 @@ legend_data <- data.frame(
 legend_plot <- ggplot(legend_data, aes(x = x, y = y, fill = cell_type)) +
   geom_point(size = 5, shape = 21) +
   scale_fill_manual(values = cell_type_colors) +
-  geom_text(aes(x = 1.3, label = cell_type), hjust = 0, size = 4) +  # Fixed x position
+  geom_text(aes(x = 1.3, label = cell_type), hjust = 0, size = 3) +  # Fixed x position
   theme_void() +
   theme(legend.position = "none") +
   xlim(0.8, 2.5) +
@@ -519,7 +519,7 @@ combined_plot
      ggsave(paste0('/Users/ggraham/Desktop/multiome_poa/Reference/2025_08_25_plots_for_justin/dimplot_major_cells_2.jpeg'),
        combined_plot, 
        device = 'jpeg',
-       width = 10,
+       width = 15,
        height = 10,
        units = 'cm',
        dpi =600
