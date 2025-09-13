@@ -38,7 +38,7 @@
   library(biomaRt)
   library(hdWGCNA)
   
-  clown_go = readRDS("Functions/clown_go2")  
+  clown_go = readRDS("Functions/clown_go")  
   mecd = readRDS("Functions/mean_expression_cluster_data.rds")
     mecp = readRDS("Functions/mean_expression_cluster_plot.rds")
 
@@ -230,17 +230,16 @@ FeaturePlot(obj,'p2ry12', reduction = 'harmony_wnn.umap')
 microglia_markers = FindAllMarkers(microglia, group.by = 'sub.cluster', test.use = 'LR')
 
 # what are they enriched for
-clown_go(microglia_markers$gene[microglia_markers$cluster=='11_0' & microglia_markers$p_val_adj <0.001])%>%dotplot()
+clown_go(microglia_markers$gene[microglia_markers$cluster=='11_0' & microglia_markers$p_val_adj <0.05])%>%dotplot()
 # what
-clown_go(microglia_markers$gene[microglia_markers$cluster=='11_1' & microglia_markers$p_val_adj <0.001])%>%dotplot()
+clown_go(microglia_markers$gene[microglia_markers$cluster=='11_1' & microglia_markers$p_val_adj <0.05])%>%dotplot()
 
-clown_go(microglia_markers$gene[microglia_markers$cluster=='11_2' & microglia_markers$p_val_adj <0.001])%>%dotplot()
-#this dendrite shit is stupid
+clown_go(microglia_markers$gene[microglia_markers$cluster=='11_2' & microglia_markers$p_val_adj <0.05])%>%dotplot()
 
 # ok moving on because what
-markers_11_0 = microglia_markers$gene[microglia_markers$cluster=='11_0']
-markers_11_1 = microglia_markers$gene[microglia_markers$cluster=='11_1']
-markers_11_2 = microglia_markers$gene[microglia_markers$cluster=='11_2']
+markers_11_0 = microglia_markers$gene[microglia_markers$cluster=='11_0' & microglia_markers$p_val_adj <0.05]
+markers_11_1 = microglia_markers$gene[microglia_markers$cluster=='11_1'&microglia_markers$p_val_adj <0.05]
+markers_11_2 = microglia_markers$gene[microglia_markers$cluster=='11_2' &microglia_markers$p_val_adj <0.05]
 #too much overlap, I am going to have to intersect them
 
 good_markers_11_0 = markers_11_0[markers_11_0 %notin% c(markers_11_1, markers_11_2)]
@@ -248,10 +247,30 @@ good_markers_11_1 = markers_11_1[markers_11_1 %notin% c(markers_11_0, markers_11
 good_markers_11_2 = markers_11_2[markers_11_2 %notin% c(markers_11_1, markers_11_0)]
 
 #clown_go(good_markers_11_0)%>%dotplot()
-#clown_go(good_markers_11_1)%>%dotplot()
+clown_go(good_markers_11_1)%>%dotplot()
 #clown_go(good_markers_11_2)%>%dotplot()
 #still confused 
 
+##lets name the markers
+markers_named = data.frame(gene = c(good_markers_11_0, good_markers_11_1, good_markers_11_2),
+                           sub.cluster = c(
+                             rep('11_0', length(good_markers_11_0)),
+                             rep('11_1',length(good_markers_11_1)),
+                             rep('11_2',length(good_markers_11_2)))
+)
+ensembl_ocellaris <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+att = listAttributes(ensembl_ocellaris)
+biomart_names = 
+  getBM(
+    mart = ensembl_ocellaris, 
+    attributes = c('entrezgene_accession', 
+                   'description'))
+markers_named_2 = markers_named%>%
+  right_join(biomart_names, by = join_by(gene ==entrezgene_accession))%>%
+  subset(gene != '' & !is.na(gene)& !is.na(sub.cluster))
+
+### ok my annnotations are 11_0 - homeostatic, 11_1 - activated?, 11_2 - immature----
 
 #### CytoTRACE ----
 cyto = CytoTRACE(microglia@assays$RNA$data%>%as.matrix())
@@ -268,8 +287,13 @@ ggplot(microglia@meta.data, aes(x = sub.cluster,y = cyto, fill = Status))+
 #like you could maybe argue there is a difference between males and females in 11_2
 # but i think that is a reach
 
-t.test(microglia@meta.data$cyto[microglia@meta.data$Status=='M'], microglia@meta.data$cyto[microglia@meta.data$Status=='F'])
+cyto_11_1 = lmer(cyto~Status+(1|individual), data = subset(microglia@meta.data, sub.cluster =='11_1'))
+car::Anova(cyto_11_1, 3)
 #nope
+
+cyto_11_0 = lmer(cyto~Status+(1|individual), data = subset(microglia@meta.data, sub.cluster =='11_0'))
+car::Anova(cyto_11_0, 3)
+#also no I thought maybe females
 
 ### proportion ----
 props = microglia@meta.data%>%
@@ -298,6 +322,24 @@ ggplot(props_ind_joined, aes(x = sub.cluster, y = prop, color = Status))+
   geom_point(position =position_jitterdodge(1))+
   geom_boxplot(alpha = 0)
 #reallly loooks like nothing here
+
+for(i in 0:2){
+  cluster = paste0('11_',i)
+  print(cluster)
+  temp_data = subset(props_ind_joined, sub.cluster == cluster)
+  model_mat = cbind(temp_data$n_cells, temp_data$n - temp_data$n_cells)
+  mod = glmer(model_mat~Status + (1|individual), data =temp_data, family = 'binomial')
+  av = car::Anova(mod, 3)   
+  p = av$`Pr(>Chisq)`[2]
+  print(p)
+} #ok wait there is something in 0???
+  data_11_0 = subset(props_ind_joined, sub.cluster == '11_0')
+  model_mat = cbind(data_11_0$n_cells, data_11_0$n - data_11_0$n_cells)
+
+prop_11_2_model = glmer(model_mat~Status + (1|individual), data =data_11_0, family = 'binomial')
+car::Anova(prop_11_2_model, 3)   
+pairs(emmeans(prop_11_2_model, 'Status'), adjust = 'none')
+#its cause of this fuck ass NRM
 
 ### WGCNA ----
 clusters_list <- c('11_0',
@@ -436,8 +478,8 @@ plot_module_cluster('brown')  # 1
 
 
 clown_go(modules$gene_name[modules$color=='turquoise'])%>%dotplot() # turquoise seems like binding to neurons maybe
-clown_go(modules$gene_name[modules$color=='blue'])%>%dotplot() # so blue seems like activated module
-clown_go(modules$gene_name[modules$color=='brown'])%>%dotplot() # brown seems like homeostatic or proliferating
+clown_go(modules$gene_name[modules$color=='blue'])%>%dotplot() 
+#clown_go(modules$gene_name[modules$color=='brown'])%>%dotplot()
 
 ### so, it seems like 11_1 (brown) does not change by sex, whie blue could increase transiently though the stats dont support
 ##also, my guess is that turqoise is a marker of immature/ division though that is not supported by enrichment
@@ -487,9 +529,9 @@ clown_go(modules$gene_name[modules$module=='turquoise'])%>%dotplot()
 #neurotransmission
 clown_go(modules$gene_name[hub_df$module=='turquoise'])%>%dotplot()
 
-clown_go(modules$gene_name[modules$module=='brown'])%>%dotplot()
+#clown_go(modules$gene_name[modules$module=='brown'])%>%dotplot()
 # dna and rna txn, and also response to steroids?, and cell cycle is interesting
-clown_go(modules$gene_name[hub_df$module=='brown'])%>%dotplot()
+#clown_go(modules$gene_name[hub_df$module=='brown'])%>%dotplot()
 
 brown_go_df = data.frame(
 gene_id= clown_go(modules$gene_name[modules$module=='brown'])$geneID,
@@ -653,7 +695,7 @@ DotPlot(microglia, 'grik4')+
 
 ## mbpl-----
 mbplCoex = calculateCoexpressedGenes(microglia, c('LOC111580029')) 
-clown_go(markersCoex)%>%dotplot()
+#clown_go(markersCoex)%>%dotplot()
 
 mecp(microglia, 'LOC111580029', '11', 'final_clusters')
 mecp(microglia, 'LOC111580029', '11_0', 'sub.cluster') 
@@ -742,3 +784,131 @@ Idents(microglia) = 'sub.cluster'
 table(microglia$sub.cluster, microglia$Stress1 > mean(microglia$Stress1))
 
 
+### what about just pro inflammatory of my degs----
+
+pro_module = calculateCoexpressedGenes(microglia, c('grik4',
+                                                  'asic2'
+                                                  )) 
+
+DotPlot(pro_module, 'coexModule1')+
+  coord_flip()
+
+anti_module = calculateCoexpressedGenes(microglia, c('LOC111584452' #cd59                                             
+                                                     )) 
+DotPlot(anti_module, 'coexModule1')+
+  coord_flip()
+
+
+
+#### I wonder what pairwise correlations of genes look like -----
+
+corr_df = data.frame()
+for(i in mg_degs$gene){
+  for(j in mg_degs$gene){
+if(i == j){next}
+    i_df = mecd(microglia, i, 11)
+    j_df = mecd(microglia, j, 11)
+    
+    corre = cor(i_df$mean, j_df$mean)
+    newd = data.frame(i_gene = i,
+                      j_gene = j,
+                      coef = corre[1,1])
+    
+  corr_df = rbind(corr_df, newd)
+    }  
+}
+
+module_.7 =calculateCoexpressedGenes(microglia, corr_df$i_gene[corr_df$coef>0.5]) 
+DotPlot(module_.7, 'coexModule1')+
+  coord_flip() #Cluster 2 strongly enriched
+
+
+module_neg.4 =calculateCoexpressedGenes(microglia, corr_df$i_gene[corr_df$coef<(-0.5)]) 
+DotPlot(module_neg.4, 'coexModule1')+
+  coord_flip() #anticorrelated genes associated with 0
+
+#> so cluster 0 undergoes divergent DEG changes, while 2 undergoes changes in a consistent direction
+corr_df$i_gene[corr_df$coef>0.5]
+
+
+### are any of these correlations significant
+
+corr_df2 = data.frame()
+for(i in mg_degs$gene){
+  for(j in mg_degs$gene){
+if(i == j){next}
+    i_df = mecd(microglia, i, 11)
+    j_df = mecd(microglia, j, 11)
+    
+    corre = cor.test(i_df$mean, j_df$mean)
+    newd = data.frame(i_gene = i,
+                      j_gene = j,
+                      coef = corre$estimate,
+                      p = corre$p.value)
+    
+  corr_df2 = rbind(corr_df2, newd)
+    }  
+}
+
+corr_df2_filtered <- corr_df2 %>%
+  mutate(pair1 = pmin(i_gene,j_gene),
+         pair2 = pmax(i_gene, j_gene)) %>%
+  distinct(pair1, pair2, .keep_all = TRUE) %>%
+  select(-pair1, -pair2)
+
+corr_df2_filtered$fdr = p.adjust(corr_df2_filtered$p, 'fdr', 120)
+corr_df2_filtered$fdr  = round(corr_df2_filtered$fdr , 4)
+
+
+sig_cor_genes = corr_df2_filtered[corr_df2_filtered$fdr<0.05,c('i_gene', 'j_gene')]%>%
+  c()%>%
+  unlist()%>%
+  unname()%>%
+  unique()
+
+microglia = AddModuleScore(microglia, 
+                           list(sig_cor_genes),
+                           name ='SigCor')
+DotPlot(microglia, 'SigCor1')+
+  coord_flip()
+
+sigcor = calculateCoexpressedGenes(microglia,sig_cor_genes)
+
+FeaturePlot(microglia, 'SigCor1')
+
+ggplot(subset(microglia@meta.data, sub.cluster =='11_0'), aes(x = Status, y = SigCor1))+
+  geom_boxplot()
+
+sigCorMod = lmer(SigCor1 ~ Status +(1|individual), subset(microglia@meta.data, sub.cluster =='11_0'))
+car::Anova(sigCorMod, 3)
+pairs(emmeans(sigCorMod, 'Status'), adjust = 'none')
+
+
+#### DEGs ----
+sub_degs = read.csv( 'Subclustering/degs_11_defined_09_12_2025.csv')
+
+  #clown_go = readRDS("Functions/clown_go")  
+  clown_go = readRDS("Functions/clown_go2")  
+
+clown_go(sub_degs$gene[sub_degs$cluster=='11_0'])%>%dotplot()
+clown_go(sub_degs$gene[sub_degs$cluster=='11_1'])%>%dotplot()
+clown_go(sub_degs$gene[sub_degs$cluster=='11_2'])%>%dotplot()
+go_11_2 = clown_go(sub_degs$gene[sub_degs$cluster=='11_2'])[,c('geneID', 'Description')]
+#LOC111587406 = SNAP25
+#LOC111567042 = asic1a
+
+concise_degs = sub_degs[,c('gene', 'short_label', 'cluster')]
+
+plot_degs = sub_degs%>%
+  group_by(cluster, short_label, second_word)%>%
+  summarize(n_degs = n())
+ggplot(plot_degs, aes(x = cluster, y=n_degs, fill = short_label))+
+  geom_bar(stat ='identity', position ='stack')
+
+ggplot(plot_degs, aes(x = cluster, y=n_degs, fill = second_word))+
+  geom_bar(stat ='identity', position ='stack')
+
+clown_go(sub_degs$gene[sub_degs$cluster=='11_0' & sub_degs$short_label=='Early Downregulated'])%>%dotplot()
+
+
+#### so confused -----

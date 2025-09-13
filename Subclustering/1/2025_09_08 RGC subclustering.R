@@ -88,9 +88,70 @@ plot_module_cluster <-  function(module){
   
 }
 
+prop_cluster_plot=
+function(object, gene, cluster, clustering = 'final_clusters'){
+    library(stringr)
+    library(forcats)
+      options(dplyr.summarise.inform = FALSE)
+
+    counts <- t(as.matrix(object@assays$RNA$data[,object@meta.data[[clustering]] == cluster]))
+  Counts_of_interest <- as.data.frame(counts[,gene]>0) #binarize
+    Counts_of_interest$expression <- Counts_of_interest[,1]
+  Counts_of_interest$individual <- object@meta.data$individual[object@meta.data[[clustering]] == cluster]
+    Counts_of_interest$Status <- object@meta.data$individual[object@meta.data[[clustering]] == cluster]
+
+  results <-Counts_of_interest%>%
+    group_by(individual, Status)%>%
+    summarize(mean = mean(expression),
+              se = sd(expression)/sqrt(n()))
+  results$Sex <- results$Status
+  
+  
+  results$Sex <- str_sub(results$individual, -1)
+  results$Sex[results$individual == 'T17D'] = 'NF'
+  results$Sex[results$individual == 'A12D'] = 'E'
+  results$Sex[results$individual == 'T11D'] = 'E'
+  results$Sex[results$individual == 'GH'] = 'NRM'
+  
+  results$factor <- ifelse(results$Sex == "NRM", 0, NA)
+  results$factor <- ifelse(results$Sex == "M", 1, results$factor)
+  results$factor <- ifelse(results$Sex == "D", 2, results$factor)
+  results$factor <- ifelse(results$Sex == "E", 3, results$factor)
+  results$factor <- ifelse(results$Sex == "NF", 4, results$factor)
+  results$factor <- ifelse(results$Sex == "F", 5, results$factor)
+  results$individual <- fct_reorder(results$individual, results$factor)
+  
+  results$Sex <- factor(results$Sex, levels = c('NRM','M','D','E','NF','F'))
+  plot <- ggplot(results, aes(x = individual, y = mean, color = Sex))+
+    geom_boxplot(aes(group = Sex, fill = Sex), alpha = 0.25, outlier.shape = NA)+
+    geom_point()+
+    geom_pointrange(aes(x = individual, y = mean, ymin = mean - se, ymax = mean+se))+
+    theme_classic()+
+    labs(x  ='FishID', y = '% Expressing', title = paste0(gene,'_cluster_',cluster))+
+    theme(axis.text.x = element_text(angle = -45, vjust = 1, hjust=0))
+  return(plot)
+}
+
+
 }
 #read in data
 obj = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
+
+### first of all, are DEGs enriched for anything ----
+deg_data = read_csv("DEG Outputs/FINAL_degs_classified_08_11_2025.csv")
+deg_data_1 = subset(deg_data, cluster == 1)
+clown_go(deg_data_1$gene[deg_data_1$second_word =='Downregulated'])%>%
+  dotplot()
+clown_go(deg_data_1$gene[deg_data_1$second_word =='Upregulated'])%>%
+  dotplot()
+clown_go(deg_data_1$gene[deg_data_1$first_word =='Early'])%>%
+  dotplot()
+clown_go(deg_data_1$gene[deg_data_1$first_word =='Late'])%>%
+  dotplot()
+clown_go(deg_data_1$gene[deg_data_1$first_word =='Transiently'])%>%
+  dotplot()
+clown_go(deg_data_1$gene[deg_data_1$first_word =='Progressively'])%>%
+  dotplot()
 
 ####  subcluster and subset ----
 Idents(obj) = 'final_clusters'
@@ -129,7 +190,6 @@ ggplot(subset(cells_total, sub.cluster =='1_3'), aes(x = sub.cluster, y = prop, 
   geom_point(position = position_jitterdodge(1))
 #def something with dominants here
 
-
 ### my only two hypotheses for these are there are fewer female cells in 1_0, and
 ## fewer dominant cells in 1_3
 cells_1_0 = subset(cells_total, sub.cluster == '1_0' & Status %in% c('M','D','F'))
@@ -150,7 +210,7 @@ pairs(emmeans(model_1_3, 'Status'), adjust ='none') # dominants both
 
 ### What markers differentiate the subclusters ----
 rgc_markers = FindAllMarkers(rgc)
-rgc_markers_good = subset(rgc_markers, pct.1>pct.2 & p_val_adj < 0.0001)
+rgc_markers_good = subset(rgc_markers, pct.1>pct.2 & p_val_adj < 0.05)
 
 clown_go(rgc_markers_good$gene[rgc_markers_good$cluster=='1_0'])%>%dotplot()
 clown_go(rgc_markers_good$gene[rgc_markers_good$cluster=='1_1'])%>%dotplot()
@@ -160,6 +220,16 @@ clown_go(rgc_markers_good$gene[rgc_markers_good$cluster=='1_4'])%>%dotplot() ###
 clown_go(rgc_markers_good$gene[rgc_markers_good$cluster=='1_5'])%>%dotplot()
 
 DotPlot(rgc, 'LOC111577263')+coord_flip()#### strongly in 1_3, 1_2, and 1_0
+
+### difference between 3 and 1 ----
+  clown_go = readRDS("Functions/clown_go2")  
+
+markers_1_3 <- FindMarkers(rgc, '1_3', '1_1')
+clown_go(rownames(markers_1_3[markers_1_3$p_val_adj<0.001 & markers_1_3$pct.1>markers_1_3$pct.2 ,]))%>%
+  dotplot()
+
+clown_go(rownames(markers_1_3[markers_1_3$p_val_adj<0.001 & markers_1_3$pct.1<markers_1_3$pct.2 ,]))%>%
+  dotplot()
 
 #### CytoTRACE, I bet 4 is the highest ----
 cyto = CytoTRACE(rgc@assays$RNA$data%>%as.matrix())
@@ -314,6 +384,8 @@ clown_go(modules$gene_name[modules$color=='yellow'])%>%dotplot()
 
 clown_go(modules$gene_name[modules$color=='brown'])%>%dotplot()
 
+clown_go(modules$gene_name[modules$color=='green'])%>%dotplot()
+
 # 3 expresses everything so its enriched in all modules basically with strongest
 # expression of turquoise along with 1
 MEs$Status = rgc$Status
@@ -326,10 +398,13 @@ plot_module('yellow')
 plot_module_cluster('turquoise')
 ### def immature 
 
+plot_module('blue')
+
+
 dmes = data.frame()
 for(i in unique(modules$color)){
   formula_string <- paste0(i, " ~ Status +(1|individual)")%>%as.formula()
-  model = lmer(formula_string, data = MEs)
+  model = lmer(formula_string, data = subset(MEs, Status %in% c('M','D','F')))
   p =car::Anova(model, 3)
   newd = data.frame(module = i,
                     pval = p$`Pr(>Chisq)`[2])
@@ -338,129 +413,31 @@ for(i in unique(modules$color)){
 }
 #nope
 
-### Brain aromatase ----
-mecp(rgc, 'LOC111577263', '1_3', 'sub.cluster')
-### OHHH YEAH BABEY LFG
+### 3 and 2 (and maybe 0) seem to be related in the same lineage, can I prove? ----
+ModuleRadarPlot(
+  rgc,
+  group.by = 'sub.cluster',
+  axis.label.size=4,
+  grid.label.size=4
+)
 
-mecp(rgc, 'LOC111577263', '1_1', 'sub.cluster')
+clown_go(modules$gene_name[modules$color=='red'])%>%
+  dotplot() # neurogenesis
+clown_go(modules$gene_name[modules$color=='yellow'])%>%
+  dotplot() # cell diff
+clown_go(modules$gene_name[modules$color=='blue'])%>%
+  dotplot() # transcription
 
-mecp(rgc, 'LOC111577263', '1_0', 'sub.cluster')
+#1_3 and 1_1
+clown_go(modules$gene_name[modules$color=='turquoise'])%>%
+  dotplot()
+clown_go(modules$gene_name[modules$color=='brown'])%>%
+  dotplot()
 
-mecp(rgc, 'LOC111577263', '1_2', 'sub.cluster')
+clown_go(modules$gene_name[modules$color=='green'])%>%
+  dotplot()
 
-mecp(rgc, 'LOC111577263', '1_4', 'sub.cluster')
-mecp(rgc, 'LOC111577263', '1_5', 'sub.cluster')
-
-
-
-### how does brain aromatase expression and cyto score correlate
-arom_cyt = data.frame(cyto = rgc$cyto,
-                      arom = rgc@assays$RNA$data['LOC111577263',],
-                      Status = rgc$Status,
-                      individual = rgc$individual,
-                      transcripts = rgc$nCount_RNA,
-                      sub.cluster = rgc$sub.cluster)%>%
-  subset(arom >0)
-
-ggplot(arom_cyt, aes(x = cyto, y = arom))+
-  geom_point()+
-  geom_smooth(method = 'lm', aes(color = 'All'), color ='black')+
-  geom_smooth(method = 'lm',aes(group =Status , color = Status))
-### in aromatase + cells, 
-
-arom_cyto = lmer(arom~cyto+(1|individual), data = arom_cyt)
-car::Anova(arom_cyto, 3)
-
-hist(residuals(arom_cyto)) # pretty good I think
-
-arom_cyto_sex = lmer(arom~cyto*Status+(1|individual), data = arom_cyt)
-car::Anova(arom_cyto_sex, 3) #this makes sense there is a sex difference
-# but no interaction
-
-ggplot(arom_cyt, aes(x = cyto, y = arom))+
-  geom_point()+
-  geom_smooth(method = 'loess', aes(color = 'All'), color ='black')+
-  geom_smooth(method = 'loess',aes(group =Status , color = Status))
-# I wonder if linear regression is the right strategy to analyze this it seems 
-# polynomial
-
-### are these different types of stem cells? e.g., proliferative vs quiescent
-ggplot(subset(arom_cyt, sub.cluster %in% c('1_1', '1_3')), aes(x = cyto, y = transcripts))+
-  geom_point()+
-  geom_smooth(method = 'lm',aes(color =sub.cluster ))
-
-ggplot(subset(arom_cyt, sub.cluster %in% c('1_1', '1_3')), aes(x = sub.cluster, y = transcripts))+
-  geom_violin()+
-  stat_summary(geom = 'crossbar', fun = 'median')+
-  ylim(min(arom_cyt$transcripts), max(arom_cyt$transcripts))
-### probably no difference?
-
-t.test(arom_cyt$transcripts[arom_cyt$sub.cluster=='1_1'], arom_cyt$transcripts[arom_cyt$sub.cluster=='1_3'])
-#no difference
-
-ggplot(arom_cyt, aes(x = cyto, y = arom))+
-  geom_point(color = 'gray')+
-  geom_smooth(method = 'lm', aes(color = 'All'), color ='black')+
-  geom_smooth(method = 'lm',aes(group =sub.cluster , color = sub.cluster))
-#much more steep in 1_3 and 1_1
-
-ggplot(arom_cyt, aes(x = cyto, y = arom, color = sub.cluster))+
-  geom_point()
-
-ggplot(arom_cyt, aes(x = sub.cluster, y = arom, color = sub.cluster))+
-  geom_boxplot()
-
-ggplot(subset(arom_cyt, Status %in% c('M','D','F')), aes(x = sub.cluster, y = arom, color= Status))+
-  geom_boxplot()+
-  geom_hline(yintercept = mean(arom_cyt$arom))
-
-#### correlating genes w cyto ----
-
-cyto_cor_plot = function(gene){
-  plot_dat = data.frame(cyto = rgc$cyto,
-                      gene = rgc@assays$RNA$data[gene,],
-                      Status = rgc$Status,
-                      individual = rgc$individual,
-                      transcripts = rgc$nCount_RNA,
-                      sub.cluster = rgc$sub.cluster)%>%
-  subset(gene >0)
-
-  
-  plot = ggplot(plot_dat, aes(x = cyto, y = gene))+
-  geom_point(aes(color = sub.cluster), alpha =0.4)+
-  geom_smooth(method = 'lm', aes(color = 'All'), color ='black')+
-  geom_smooth(method = 'lm',aes(group =sub.cluster , color = sub.cluster), se = F)+
-    labs(title =gene)
-  
-  plot2 = ggplot(plot_dat, aes(x = sub.cluster, y = gene))+
-  geom_point(aes(color = sub.cluster), alpha = 0.5)+
-  geom_boxplot(aes(color = sub.cluster), alpha =0)+
-  geom_hline(yintercept = mean(plot_dat$gene))
-  
-  return(plot+plot2)
-
-}
-cyto_cor_plot('ar')
-cyto_cor_plot('esr2b') ### interesting 1_1 and 1_3 make aromatase ad are dowregulated for the receptor
-cyto_cor_plot('esr2a')
-cyto_cor_plot('pgr')
-cyto_cor_plot('sema5a')
-
-cyto_cor_plot('LOC111577263')
-cyto_cor_plot('sox2')
-cyto_cor_plot('six6a')
-
-for(i in clusters_list){
-  print(i)
-  print(head(rgc_markers_good$gene[rgc_markers_good$cluster==i]))
-}
-
-cyto_cor_plot('pax6b')
-
-
-
-####proportion of cells expressing aromatase in a cluster----
-
+### do the sexes differ in red or yellow 
 
 #### I want to make a radial glial index ---
 
@@ -589,3 +566,98 @@ DotPlot(radial, 'coexModule1')+
 
 # no idea 
 
+
+### pseudotime ----
+  library(monocle3)
+gene_meta_data <- data.frame(row.names = rownames(rgc@assays$RNA$data),
+                                                  gene_short_name=
+                                                    rownames(rgc@assays$RNA$data)
+)
+                                                  
+cds <- new_cell_data_set(rgc@assays$RNA$data,
+                         cell_metadata = rgc@meta.data,
+                         gene_metadata =gene_meta_data)
+## Step 1: Normalize and pre-process the data
+cds <- preprocess_cds(cds, num_dim = 60)
+
+## Step 3: Reduce the dimensions using UMAP
+cds <- reduce_dimension(cds)
+
+## Step 4: Cluster the cells
+cds <- cluster_cells(cds)
+                    
+## Step 5: Learn a graph
+cds <- learn_graph(cds)
+
+plot_cells(cds,
+           color_cells_by='sub.cluster',
+              group_label_size = 4)+
+  theme(legend.position = 'top')
+
+cds <- order_cells(cds) # choose the bottom one of the big island that is 1_1
+
+plot_cells(cds,
+           #color_cells_by='pseudotime',
+           color_cells_by  = 'sub.cluster',
+             group_label_size = 4
+)+
+  theme(legend.position = 'top')
+#suggests 1-1 is basal to 1_3 which is basal to 1_2 and 1_0, though I would like to know best
+# practices for monocle
+
+rgc$pseudotime = pseudotime(cds)
+rgc$pseudotime  = ifelse(rgc$pseudotime == Inf, max(rgc$pseudotime[is.finite(rgc$pseudotime)]), rgc$pseudotime )
+
+FeaturePlot(rgc, 'pseudotime', label =T)
+DotPlot(rgc,'pseudotime')+
+  coord_flip()
+
+ggplot(rgc@meta.data, aes(x = sub.cluster, y = pseudotime, color = Status) )+
+  geom_boxplot()
+
+ggplot(rgc@meta.data, aes(x = Status, y = pseudotime, color = Status) )+
+  geom_violin()
+
+#IDK pseudotime is sketchy tbh I'm not gonna read too much into this
+
+####proportion of cells expressing aromatase in a cluster----
+
+DotPlot(radial, "LOC111577263")+
+  coord_flip()
+#1_3 is stem cell
+#does aromatase expression associate with IEG expression?
+
+radial$ieg = ieg$coexModule1
+ggplot(radial@meta.data,aes(x = ieg, y = radial@assays$RNA$data['LOC111577263',], color =sub.cluster))+
+  geom_point()
+#i think nothing
+
+dat = data.frame(x = radial$ieg, y = radial@assays$RNA$data['LOC111577263',])%>%
+  subset(y>0)
+ggplot(dat,aes(x = x, y = y))+
+  geom_point()+
+  coord_flip()
+
+### what do aromatase+ cells also express ----
+radial$arom = ifelse(radial@assays$RNA$data['LOC111577263',]>0, T, F)
+arom_markers = FindAllMarkers(radial, group.by = 'arom')
+#notable that serotoninr receptor 2a is a marker
+  clown_go = readRDS("Functions/clown_go")  
+
+clown_go(arom_markers$gene[arom_markers$cluster==TRUE &
+                             arom_markers$p_val_adj<0.05&
+                            arom_markers$pct.1>arom_markers$pct.2])%>%dotplot()
+
+clown_go(arom_markers$gene[arom_markers$cluster==F &
+                             arom_markers$p_val_adj<0.05&
+                            arom_markers$pct.1>arom_markers$pct.2])%>%dotplot()
+
+FeaturePlot(radial, 'cyto')+
+  facet_wrap(~radial@meta.data$arom)
+
+DimPlot(radial)+
+  facet_wrap(~radial@meta.data$arom)
+#so maybe youd argue 1_1 is the basal and 1_3 is a step down
+
+ggplot(radial@meta.data, aes(x = sub.cluster, y= cyto, color = arom))+
+  geom_boxplot()

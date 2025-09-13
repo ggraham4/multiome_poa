@@ -1,7 +1,7 @@
 ### making clown_go_2 based on clown go
 
 library(biomaRt)
-human_to_ocellaris <- read.csv("C:/Users/Gabe/Desktop/multiome_poa/Reference/hsapiens_to_aocellaris.csv")
+human_to_ocellaris <- read.csv("Reference/hsapiens_to_aocellaris.csv")
 
 human_mart <- useEnsembl(biomart = 'genes',
                          dataset = 'hsapiens_gene_ensembl')
