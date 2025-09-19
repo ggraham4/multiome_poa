@@ -176,7 +176,7 @@ cells_total = cells_ind%>%
   right_join(cells_sub_ind, by = 'individual')
 cells_total$prop = cells_total$n_cells_in/cells_total$n_cells
 
-ggplot(cells_total, aes(x = sub.cluster, y = prop, color = Status))+
+ggplot(subset(cells_total, Status %in% c('M','D',"F")), aes(x = sub.cluster, y = prop, color = Status))+
   geom_boxplot(alpha = 0)+
   geom_point(position = position_jitterdodge(1))
 
@@ -221,6 +221,47 @@ clown_go(rgc_markers_good$gene[rgc_markers_good$cluster=='1_5'])%>%dotplot()
 
 DotPlot(rgc, 'LOC111577263')+coord_flip()#### strongly in 1_3, 1_2, and 1_0
 
+  clown_go = readRDS("Functions/clown_go2")  
+
+go_1_0 = FindMarkers(rgc, '1_0')%>%
+  subset(p_val_adj<0.05)%>%
+  rownames()%>%
+  clown_go%>%
+  dotplot()
+go_1_0
+go_1_1 = FindMarkers(rgc, '1_1')%>%
+  subset(p_val_adj<0.05)%>%
+  rownames()%>%
+  clown_go%>%
+  dotplot()
+go_1_1
+go_1_2 = FindMarkers(rgc, '1_2')%>%
+  subset(p_val_adj<0.05)%>%
+  rownames()%>%
+  clown_go%>%
+  dotplot()
+go_1_2
+
+go_1_3 = FindMarkers(rgc, '1_3')%>%
+  subset(p_val_adj<0.05)%>%
+  rownames()%>%
+  clown_go%>%
+  dotplot()
+go_1_3
+
+go_1_4 = FindMarkers(rgc, '1_4')%>%
+  subset(p_val_adj<0.05)%>%
+  rownames()%>%
+  clown_go%>%
+  dotplot()
+go_1_4
+
+go_1_5 = FindMarkers(rgc, '1_5')%>%
+  subset(p_val_adj<0.05)%>%
+  rownames()%>%
+  clown_go%>%
+  dotplot()
+go_1_5
 ### difference between 3 and 1 ----
   clown_go = readRDS("Functions/clown_go2")  
 
@@ -230,6 +271,10 @@ clown_go(rownames(markers_1_3[markers_1_3$p_val_adj<0.001 & markers_1_3$pct.1>ma
 
 clown_go(rownames(markers_1_3[markers_1_3$p_val_adj<0.001 & markers_1_3$pct.1<markers_1_3$pct.2 ,]))%>%
   dotplot()
+
+
+## can I ID the ependymal lineage
+ep_markers <- FindMarkers(obj, '15', '1')
 
 #### CytoTRACE, I bet 4 is the highest ----
 cyto = CytoTRACE(rgc@assays$RNA$data%>%as.matrix())
@@ -252,10 +297,9 @@ car::Anova(cyto_1_3, 3)
 
 cyto_1_5 = lmer(cyto~Status+(1|individual), data = subset(rgc@meta.data, sub.cluster =='1_5'))
 car::Anova(cyto_1_5, 3)
-#YUP
-pairs(emmeans(cyto_1_5, 'Status'), adjust ='none')
-# but no intereting diffs
 
+ggplot(cyto_plot, aes(x = Status,y = mean_cyto, color = Status))+
+  geom_boxplot()
 ### WGCNA ----
 clusters_list <- c('1_0',
                    '1_1',
@@ -379,6 +423,10 @@ ModuleRadarPlot(
 clown_go(modules$gene_name[modules$color=='turquoise'])%>%dotplot()
 # i swear to god if I get the dendrite GO term one more time
 
+clown_go(modules$gene_name[modules$color=='red'])%>%dotplot()
+clown_go(hub_df$gene_name[hub_df$module=='red'])%>%dotplot() # yeah I mean cmom
+
+
 clown_go(modules$gene_name[modules$color=='yellow'])%>%dotplot()
 # seems like yellow is more proliferating cells?
 
@@ -398,6 +446,11 @@ plot_module('yellow')
 plot_module_cluster('turquoise')
 ### def immature 
 
+plot_module_cluster('red') # sure enough this looks like my neuronal? lineage
+plot_module('red') #something there perhaps, it shows the opposite pattern of arom
+#a hub df of red
+
+
 plot_module('blue')
 
 
@@ -412,6 +465,8 @@ for(i in unique(modules$color)){
   
 }
 #nope
+
+#arom is part of the red module
 
 ### 3 and 2 (and maybe 0) seem to be related in the same lineage, can I prove? ----
 ModuleRadarPlot(
@@ -620,10 +675,50 @@ ggplot(rgc@meta.data, aes(x = Status, y = pseudotime, color = Status) )+
 
 #IDK pseudotime is sketchy tbh I'm not gonna read too much into this
 
+# does pseudotime correlate with cytotrace
+ggplot(subset(rgc@meta.data, pseudotime != max(rgc$pseudotime)), aes(x = cyto, y = pseudotime))+
+    geom_point(aes(color = sub.cluster))+
+  geom_smooth(method = 'lm')
+
+coef = lmer(pseudotime~cyto+(1|individual), data =subset(rgc@meta.data, pseudotime != max(rgc$pseudotime)))
+summary(coef)
+car::Anova(coef)
+
+
+
+
 ####proportion of cells expressing aromatase in a cluster----
 
-DotPlot(radial, "LOC111577263")+
-  coord_flip()
+arom_data = ifelse(rgc@assays$RNA$data['LOC111577263',]>0, T, F)
+rgc$arom_ex = arom_data
+
+prop_arompos = rgc@meta.data%>%
+  group_by(individual, Status, sub.cluster)%>%
+  summarize(n_pos = sum(arom_ex ==T),
+            n_cells = n())%>%
+  mutate(diff = n_cells - n_pos)
+
+ggplot(prop_arompos, aes(x = Status, y = (n_pos/n_cells), color = Status))+
+  geom_point()+
+  geom_boxplot(alpha = 0)+
+  facet_wrap(~sub.cluster)
+
+arom_prop_data = data.frame()
+for(i in 0:5){
+  cluster = paste0('1_',i)
+  temp_data = subset(prop_arompos, sub.cluster==cluster)
+  matrix = cbind(temp_data$n_pos, temp_data$diff)
+  model = glmer(matrix~Status+(1|individual), data = temp_data, family = 'binomial') # 4 throws an error
+  av_ = car::Anova(model, 3)
+  av_p = av_$`Pr(>Chisq)`[2]
+  newd = data.frame(cluster =cluster, 
+                    p = av_p,
+                    singular = isSingular(model))
+  arom_prop_data = rbind(newd, arom_prop_data)
+  print(cluster)
+  print(pairs(emmeans(model, 'Status'), adjust = 'none'))
+}
+
 #1_3 is stem cell
 #does aromatase expression associate with IEG expression?
 
@@ -661,3 +756,266 @@ DimPlot(radial)+
 
 ggplot(radial@meta.data, aes(x = sub.cluster, y= cyto, color = arom))+
   geom_boxplot()
+
+#### ok what is the difference between 1_2 and 1_3
+marks_1_2_3 <- FindMarkers(rgc, '1_2','1_3',latent.vars =  "nuc_prep_batch", test.use = 'LR')
+clown_go(rownames(marks_1_2_3[marks_1_2_3$p_val_adj<0.05 & marks_1_2_3$avg_log2FC<(-2),]))%>%dotplot()
+# ok so all of these processes are turned down, are they migrating or somehting 
+
+marks_1_2_5 <- FindMarkers(rgc, '1_2','1_5',latent.vars =  "nuc_prep_batch", test.use = 'LR')
+#sorcs1 may suggest neural progenitor
+AverageExpression(rgc, features = 'LOC111562803') ### strongest in 1_2
+# also lhx2, six6
+
+marks_1_0_5 <- FindMarkers(rgc, '1_0','1_5',latent.vars =  "nuc_prep_batch", test.use = 'LR')
+clown_go(rownames(marks_1_2_3[marks_1_0_5$p_val_adj<0.05 & marks_1_0_5$avg_log2FC>(1),]))%>%dotplot()
+#so I guess not neurogenic?
+clown_go(rownames(marks_1_2_3[marks_1_0_5$p_val_adj<0.05 & marks_1_0_5$avg_log2FC>(1.5),]))%>%dotplot()
+clown_go(rownames(marks_1_2_3[marks_1_0_5$p_val_adj<0.05 & marks_1_0_5$avg_log2FC<(-2),]))%>%dotplot()
+
+###DEGs ----
+fake_degs = FindMarkers(subset(rgc, sub.cluster=='1_3'), ident.1 = 'F', group.by = 'Status')
+fake_degs2 = FindMarkers(subset(rgc, sub.cluster=='1_3'), ident.1 = 'D', group.by = 'Status')
+fake_degs3 = FindMarkers(subset(rgc, sub.cluster=='1_3'), ident.1 = 'M', group.by = 'Status')
+
+fake_degs4 = FindMarkers(rgc[,rgc@meta.data$sub.cluster=='1_3' & rgc@assays$RNA$data['LOC111577263',]>0], ident.1 = 'D', group.by = 'Status')
+fake_degs5 = FindMarkers(rgc[,rgc@meta.data$sub.cluster=='1_3' & rgc@assays$RNA$data['LOC111577263',]>0], ident.1 = 'F', group.by = 'Status')
+fake_degs6 = FindMarkers(rgc[,rgc@meta.data$sub.cluster=='1_3' & rgc@assays$RNA$data['LOC111577263',]>0], ident.1 = 'M', group.by = 'Status')
+
+#real degs
+real_degs = read.csv( 'Subclustering/degs_1_defined_09_12_2025.csv')
+
+# are they enriched for anything
+clown_go(real_degs$gene)%>%dotplot()
+clown_go(real_degs$gene[real_degs$second_word =='Upregulated'])%>%dotplot()
+clown_go(real_degs$gene[real_degs$second_word =='Downregulated'])%>%dotplot()
+
+
+plot_real = real_degs%>%
+  group_by(cluster, short_label)%>%
+  summarize(n_degs = n())
+
+ggplot(plot_real, aes(x = cluster, y=n_degs, fill = short_label))+
+  geom_bar(stat= 'identity', position ='stack')
+
+plot_real2 = real_degs%>%
+  group_by(cluster, first_word)%>%
+  summarize(n_degs = n())
+
+ggplot(plot_real2, aes(x = cluster, y=n_degs, fill = first_word))+
+  geom_bar(stat= 'identity', position ='stack')
+
+  real_degs$arom = ifelse(real_degs$gene == 'LOC111577263', 'arom', 'other')
+
+  plot_real3 = real_degs%>%
+  group_by(cluster, short_label, arom)%>%
+  summarize(n_degs = n())
+
+ggplot(plot_real3, aes(x = cluster, y=n_degs, fill = short_label, color = arom))+
+  geom_bar(stat= 'identity', position ='stack', linewidth = 2)+
+  scale_color_manual(values = c('black', 'gray'))
+#I wonder if arom has organizing effects on 1_3 or it is a module with the other gees
+
+mecp(rgc, 'LOC111577263', '1_0', 'sub.cluster')
+mecp(rgc, 'LOC111577263', '1_1', 'sub.cluster')
+mecp(rgc, 'LOC111577263', '1_3', 'sub.cluster')
+mecp(rgc, 'LOC111577263', '1_4', 'sub.cluster') ### 1_4 gains aromatase basically absent prior to sex change
+
+AverageExpression(rgc, feature = 'LOC111577263')
+ #               g1-1     g1-0     g1-2     g1-5     g1-3     g1-4
+#LOC111577263 2.114407 17.19239 28.98238 3.073186 22.02101 2.830006
+### highest expression in 1_2 and 1_3
+
+mecp(rgc, 'LOC111577263', '1_2', 'sub.cluster') # interesting that the primary cluster it's expressed in is not a degs
+
+
+### is aromatase DEG due to a global reduction in mRNA txn ----
+rgc$arom = (rgc@assays$RNA$data['LOC111577263',])
+
+arom_means = rgc@meta.data%>%
+  subset(sub.cluster=='1_3')%>%
+  group_by(Status)%>%
+    summarize(mean_mean = mean(colMeans))
+
+  rgc$colMeans = colMeans(rgc@assays$RNA$data[1:1000,])
+ggplot(subset(rgc@meta.data,sub.cluster == '1_3'), aes(x = Status, y = colMeans))+
+  geom_boxplot()+
+  geom_point(data = arom_means, aes(x = Status, y = mean_mean))
+#ok no its normal
+
+### is there an empirical p-value for the fold change in arom vs every other gene -----
+Idents(rgc)<- 'sub.cluster'
+fold_dom_v_mf <- function(gene, cluster){
+  # Create data frame with gene expression values
+  rgc_data = data.frame(Status = rgc@meta.data$Status, 
+                        sub.cluster = rgc@meta.data$sub.cluster,
+                        gene_expression = as.numeric(rgc@assays$RNA$data[gene,]))
+  
+  # Filter for specific cluster and calculate means by Status
+  av <- rgc_data %>%
+    subset(sub.cluster == cluster) %>%
+    group_by(Status) %>%
+    summarize(mean_ex = mean(gene_expression, na.rm = TRUE), .groups = 'drop')
+  
+  # Calculate fold change: D vs mean of M and F
+  fold <- av$mean_ex[av$Status == 'D'] / mean(av$mean_ex[av$Status %in% c('M','F')], na.rm = TRUE)
+  
+  return(fold)
+}
+empirical_p = data.frame()
+for(marker in unique(rgc_markers$gene)){
+  print(marker)
+    fold =fold_dom_v_mf(marker, '1_3')
+    newd =data.frame(fold = fold, 
+                     gene = marker)
+    empirical_p = rbind(empirical_p, newd)
+}
+hist(empirical_p$fold, 100)
+ggplot(empirical_p, aes(x = fold))+
+  geom_histogram()+
+  geom_vline(xintercept =empirical_p$fold[empirical_p$gene== 'LOC111577263'] ,color ='red')
+
+empirical_p2 <- subset(empirical_p,!is.na(empirical_p$fold) & empirical_p$fold!=Inf & empirical_p$fold!=0)
+
+sum(na.omit(empirical_p2$fold<empirical_p2$fold[empirical_p2$gene== 'LOC111577263']))/nrow(empirical_p2)
+#p.value = 0.09
+
+#clown_go(empirical_p2$gene[empirical_p2$fold<0.6066228])%>%dotplot()
+clown_go(empirical_p2$gene[empirical_p2$fold<1])%>%dotplot()
+clown_go(empirical_p2$gene[empirical_p2$fold>1])%>%dotplot()
+
+### jaccard index -----
+
+all_markers = FindAllMarkers(obj)
+good_markers = subset(all_markers, p_val_adj < 0.05)
+
+bored = data.frame()
+for(j in 0:5){
+  print(j)
+for(i in 0:25){
+rgc_mat = as.matrix((rgc@assays$RNA$data[,rgc$sub.cluster == paste0('1_',j)]>0))[which(rownames(rgc@assays$RNA$data)%in%good_markers$gene),1:200]  
+mat_6 =as.matrix((obj@assays$RNA$data[,obj$final_clusters ==i]>0))[which(rownames(rgc@assays$RNA$data)%in%good_markers$gene),1:200] 
+rgc_mat = ifelse(rgc_mat==T, 1, 0)
+mat_6 = ifelse(mat_6==T, 1, 0)
+
+d <-Jaccard(rgc_mat, mat_6 )
+
+score =  mean(d[!is.nan(d)])
+bored = rbind(data.frame(background = j, 
+                         cluster = i, 
+                         score = score), bored)
+}
+}
+
+#1_2 is closest to 22 which is ependymal but so is everything I think, next best is 24 which seems right to me
+
+### which subclusters are most similar
+
+sub_bored = data.frame()
+for(j in 0:5){
+  print(j)
+for(i in 0:5){
+  if(i ==j){next}
+rgc_mat = as.matrix((rgc@assays$RNA$data[,rgc$sub.cluster == paste0('1_',j)]>0))[which(rownames(rgc@assays$RNA$data)%in%rgc_markers$gene),1:200]  
+rgc_mat2 = as.matrix((rgc@assays$RNA$data[,rgc$sub.cluster == paste0('1_',i)]>0))[which(rownames(rgc@assays$RNA$data)%in%rgc_markers$gene),1:200]  
+rgc_mat = ifelse(rgc_mat==T, 1, 0)
+rgc_mat2 = ifelse(rgc_mat2==T, 1, 0)
+
+d <-Jaccard(rgc_mat, rgc_mat2 )
+
+score =  mean(d[!is.nan(d)])
+sub_bored = rbind(data.frame(background = j, 
+                         cluster = i, 
+                         score = score), sub_bored)
+}
+}
+
+### markers 24
+
+DotPlot(rgc, c(
+                'sox2',
+                'pax6b',
+               'dclk1a',
+               'dclk2a',
+               'stmn2a',
+               'LOC111585510', #hes1
+               'elavl3',
+               'gap43',
+               'LOC111575074', #fabp7b
+               'pax7a',
+               'efnb1',
+               'gfap',
+               'pcna',
+               's100b',
+               'slc1a3a',
+               'LOC111570141', #glutamine synthetase 
+               'crocc2',
+               'shha',
+               'wnt8b',
+               'sfrp1a',
+               'LOC111582800', #cdnk1c
+               'mki67',
+               'LOC111574306', #msi1
+               'LOC111562473', #bcl2
+               'bcl2l1',
+               'LOC111581681', #baxa
+               'LOC111562459', #bax like
+               'LOC111577263',#arom
+               'LOC111579695' #cyp17a1
+               ))+
+  coord_flip()
+
+DotPlot(obj, c('LOC111563640',
+               'LOC111579695'), group.by = 'final_clusters') #strongly expressed in
+#> ependymal cells, ach+ kiss+ cells, 6, 19 (also POA)
+mecp(obj,'LOC111579695',22 )
+marks_22 = FindMarkers(obj, 22, only.pos = T) #interesting I need to look more at this cluster
+
+DimPlot(obj, label = T)
+
+DotPlot(obj, c('gper1',
+        'LOC111578888'))
+### is there obvious evidence for neurogenesis?? -----
+DotPlot(obj, 'dclk2a')+
+  coord_flip()
+
+DotPlot(obj, c('jun',
+        'fosb',
+        'egr1',
+        'npas4a'))
+
+cyto_whole <- CytoTRACE(obj@assays$RNA$data%>%as.matrix())
+obj$cyto= cyto_whole$CytoTRACE
+
+ggplot(obj@meta.data, aes(x = final_clusters ,y = cyto))+
+  geom_boxplot()
+# converging evidence suggests 0 might be the immature population? The jaccard + cyto
+#potentially also 8 and 5. I wonder if thats why 0 is mixed?, 19?
+
+# Cellular process modules ----
+### there was an interesting stategy wei et al had to come up with different 
+#modules for processes and then see enrichment
+
+BiocManager::install('biomaRt', force = T)
+library(biomaRt)
+
+human_mart <- useEnsembl(biomart = 'genes',
+                         dataset = 'hsapiens_gene_ensembl')
+att = listAttributes(human_mart)
+
+#human_go <- getBM(mart = human_mart, 
+#                  attributes = c('entrezgene_accession', 
+#                                 'go_id',
+#                                 'name_1006' 
+               #   ))
+#human_to_ocellaris <- read.csv("Reference/hsapiens_to_aocellaris.csv")
+"
+right_join(human_go, by =join_by('hsapiens_name' == 'entrezgene_accession'))%>% 
+  subset(!is.na(hsapiens_name)& 
+           hsapiens_name != ''&
+           !is.na(aocellaris_name)&
+           aocellaris_name != '')
+
+
+cell_cycle
+"

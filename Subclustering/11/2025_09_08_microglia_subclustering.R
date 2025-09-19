@@ -226,15 +226,37 @@ FeaturePlot(obj,'ptprc', reduction = 'harmony_wnn.umap')
 FeaturePlot(obj,'p2ry12', reduction = 'harmony_wnn.umap')
 #they are definitely microglia so why tf are my GO results so weird below??
 
+FeaturePlot(microglia,'rbfox3a', reduction = 'harmony_wnn.umap')
+
+DotPlot(microglia, c(
+  'elavl3',
+  'p2ry12',
+  'lcp1',
+  'rgs18',
+  'fxr2',
+  'marcksl1a',
+  'marcksa',
+  'marcksb',
+  'pxylp1',
+  'cebpb',
+  'irf1b',
+  'gpnmb',
+  'LOC111562889', #rbfox3
+  'LOC111587406', #snap25
+  'LOC111580029' #mbp
+  
+                     ), group.by = 'sub.cluster')+
+  coord_flip()
+
 ####  markers ----
-microglia_markers = FindAllMarkers(microglia, group.by = 'sub.cluster', test.use = 'LR')
+microglia_markers = FindAllMarkers(microglia, group.by = 'sub.cluster')
 
 # what are they enriched for
 clown_go(microglia_markers$gene[microglia_markers$cluster=='11_0' & microglia_markers$p_val_adj <0.05])%>%dotplot()
 # what
 clown_go(microglia_markers$gene[microglia_markers$cluster=='11_1' & microglia_markers$p_val_adj <0.05])%>%dotplot()
 
-clown_go(microglia_markers$gene[microglia_markers$cluster=='11_2' & microglia_markers$p_val_adj <0.05])%>%dotplot()
+clown_go(microglia_markers$gene[microglia_markers$cluster=='11_2' & microglia_markers$p_val_adj <0.05 & microglia_markers$pct.1>microglia_markers$pct.2])%>%dotplot()
 
 # ok moving on because what
 markers_11_0 = microglia_markers$gene[microglia_markers$cluster=='11_0' & microglia_markers$p_val_adj <0.05]
