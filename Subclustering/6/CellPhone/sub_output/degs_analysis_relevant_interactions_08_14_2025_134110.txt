@@ -1,0 +1,260 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_0|6_0	6_0|6_1	6_0|6_2	6_0|6_3	6_1|6_0	6_1|6_1	6_1|6_2	6_1|6_3	6_2|6_0	6_2|6_1	6_2|6_2	6_2|6_3	6_3|6_0	6_3|6_1	6_3|6_2	6_3|6_3
+CPI-SS0889E281D	CADM1_CADM1	simple:Q9BY67	simple:Q9BY67	CADM1	CADM1	False	False	False	curated	False	Adhesion-Adhesion	Adhesion by CADM	0	1	0	0	1	1	1	1	0	1	0	0	0	1	0	0
+CPI-SS09C06644C	CADM3_CADM1	simple:Q8N126	simple:Q9BY67	CADM3	CADM1	False	False	False	curated	False	Adhesion-Adhesion	Adhesion by CADM	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0
+CPI-SS02D18D12B	CADM3_CADM4	simple:Q8N126	simple:Q8NFZ8	CADM3	CADM4	False	False	False	curated	False	Adhesion-Adhesion	Adhesion by CADM	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0
+CPI-SC030C83222	L1CAM_pL1:Ezrin	simple:P32004	complex:pL1:Ezrin	L1CAM		False	False	True	curated	False	Ligand-Receptor	Adhesion by L1CAM	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS00661A3A4	NECTIN1_CADM3	simple:Q15223	simple:Q8N126	NECTIN1	CADM3	True	True	False	curated	False	Adhesion-Adhesion	Adhesion by Nectin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS0BE6DBE1A	POMC_MC5R	simple:P01189	simple:P33032	POMC	MC5R	True	False	True	curated	False	Ligand-Receptor	Signaling by Proopiomelanocortin	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0593F278B	AGRN_PTPRS	simple:O00468	simple:Q13332	AGRN	PTPRS	True	False	True	curated	False	Ligand-Receptor	Signaling by Agrin	1	1	1	1	1	0	0	1	1	0	0	1	1	0	0	1
+CPI-SS023656B4B	LRRC4B_PTPRS	simple:Q9NT99	simple:Q13332	LRRC4B	PTPRS	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	1	0	0	1	1	0	0	1	1	0	0	1	1	0	0	1
+CPI-SS0DCD351AD	LRFN5_PTPRS	simple:Q96NI6	simple:Q13332	LRFN5	PTPRS	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	1	1	1	1	1	1	1	1	1	0	0	1	1	0	0	1
+CPI-SS08968FFAE	LRRTM4_PTPRS	simple:Q86VH4	simple:Q13332	LRRTM4	PTPRS	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	0	0	1	1	1	1	1	1	0	0	1	1	0	0	1
+CPI-SS000DBE90D	SLITRK1_PTPRS	simple:Q96PX8	simple:Q13332	SLITRK1	PTPRS	False	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	1	1	1	1	1	0	0	1	1	0	0	1	1	0	0	1
+CPI-SS0EEF491E3	SLITRK4_PTPRS	simple:Q8IW52	simple:Q13332	SLITRK4	PTPRS	False	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	1	1	1	1	1	0	0	1	1	0	0	1	1	0	0	1
+CPI-SS05F136AA2	SLITRK5_PTPRS	simple:O94991	simple:Q13332	SLITRK5	PTPRS	False	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	1	1	1	1	1	0	0	1	1	0	0	1	1	0	0	1
+CPI-SS07ACDDCD6	APP_SORL1	simple:P05067	simple:Q92673	APP	SORL1	True	False	True	curated	False	Ligand-Receptor	Signaling by Amyloid-beta precursor protein	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS097A84265	APP_TNFRSF21	simple:P05067	simple:O75509	APP	TNFRSF21	False	False	True	curated	False	Ligand-Receptor	Signaling by Amyloid-beta precursor protein	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS0BE6576AD	Testosterone_byHSD17B12_AR	complex:Testosterone_byHSD17B12	simple:P10275		AR	True	False	True	curated	False	Ligand-Receptor	Signaling by Steroids	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-CS03629A52A	2arachidonoylglycerol_byDAGLA_CNR1	complex:2arachidonoylglycerol_byDAGLA	simple:P21554		CNR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Arachidonoylglycerol	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-CS007D418BE	2arachidonoylglycerol_byDAGLB_CNR1	complex:2arachidonoylglycerol_byDAGLB	simple:P21554		CNR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Arachidonoylglycerol	1	0	0	0	0	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0BA601DC4	BDNF_NTRK2	simple:P23560	simple:Q16620	BDNF	NTRK2	True	False	True	curated	False	Ligand-Receptor	Signaling by Brain-derived neurotrophic factor	0	1	1	0	0	1	1	0	0	1	1	0	0	0	0	0
+CPI-SS084EA55C0	CLSTN1_NRXN1	simple:O94985	simple:Q9ULB1	CLSTN1	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Calsyntenin	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS09A6C048C	CLSTN2_NRXN1	simple:Q9H4D0	simple:Q9ULB1	CLSTN2	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Calsyntenin	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS043D3630C	LRRTM1_NRXN1	simple:Q86UE6	simple:Q9ULB1	LRRTM1	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0E5F8A5F7	LRRTM2_NRXN1	simple:O43300	simple:Q9ULB1	LRRTM2	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS03466C597	LRRTM4_NRXN1	simple:Q86VH4	simple:Q9ULB1	LRRTM4	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0D2DF7881	NLGN1_NRXN1	simple:Q8N2Q7	simple:Q9ULB1	NLGN1	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0B360C289	NLGN2_NRXN1	simple:Q8NFZ4	simple:Q9ULB1	NLGN2	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0613D0B62	NLGN3_NRXN1	simple:Q9NZ94	simple:Q9ULB1	NLGN3	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0CCB5F46B	NLGN4Y_NRXN1	simple:Q8NFZ3	simple:Q9ULB1	NLGN4Y	NRXN1	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0BF9265F0	CLSTN1_NRXN2	simple:O94985	simple:P58401	CLSTN1	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Calsyntenin	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS093707FE0	CLSTN2_NRXN2	simple:Q9H4D0	simple:P58401	CLSTN2	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Calsyntenin	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0888FD8F7	LRRTM1_NRXN2	simple:Q86UE6	simple:P58401	LRRTM1	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS023A16921	LRRTM2_NRXN2	simple:O43300	simple:P58401	LRRTM2	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS06157E5AF	LRRTM4_NRXN2	simple:Q86VH4	simple:P58401	LRRTM4	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0CF0A8519	NLGN1_NRXN2	simple:Q8N2Q7	simple:P58401	NLGN1	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0934535FF	NLGN2_NRXN2	simple:Q8NFZ4	simple:P58401	NLGN2	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS074EA7741	NLGN3_NRXN2	simple:Q9NZ94	simple:P58401	NLGN3	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS07C26C799	NLGN4Y_NRXN2	simple:Q8NFZ3	simple:P58401	NLGN4Y	NRXN2	False	False	False	curated	False	Ligand-Receptor	Signaling by Neuroligin	1	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS00AD71822	CCK_CCKBR	simple:P06307	simple:P32239	CCK	CCKBR	True	False	True	curated	False	Ligand-Receptor	Signaling by Cholecystokinin	1	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0
+CPI-SS06B1216BE	CRH_CRHR1	simple:P06850	simple:P34998	CRH	CRHR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Corticotropin-releasing factor	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-SS0A05319F5	CRH_CRHR2	simple:P06850	simple:Q13324	CRH	CRHR2	True	False	True	curated	False	Ligand-Receptor	Signaling by Corticotropin-releasing factor	0	0	0	0	0	0	0	0	0	0	0	0	1	1	0	0
+CPI-SS0E63AB61E	EFNA2_EPHA4	simple:O43921	simple:P54764	EFNA2	EPHA4	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	1	1	1	0	0	1	0	0	0	1	0	0	0	0	0	0
+CPI-SS05B4EB419	EFNA3_EPHA4	simple:P52797	simple:P54764	EFNA3	EPHA4	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	1	1	1	0	0	1	0	0	0	1	0	0	0	1	0	0
+CPI-SS0FC01B947	EFNA5_EPHA4	simple:P52803	simple:P54764	EFNA5	EPHA4	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0
+CPI-SS03446CB39	EFNB1_EPHA4	simple:P98172	simple:P54764	EFNB1	EPHA4	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0
+CPI-SS087E0E3FB	EFNB2_EPHA4	simple:P52799	simple:P54764	EFNB2	EPHA4	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0
+CPI-SS084B1ED25	EFNB3_EPHA4	simple:Q15768	simple:P54764	EFNB3	EPHA4	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	1	0	0	1	1	1	0	0	1	0	0	0	1	0	0
+CPI-SS0D81D9F5E	EFNA2_EPHA5	simple:O43921	simple:P54756	EFNA2	EPHA5	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS079EF5D9C	EFNA3_EPHA5	simple:P52797	simple:P54756	EFNA3	EPHA5	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS068ACD209	EFNA5_EPHB2	simple:P52803	simple:P29323	EFNA5	EPHB2	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS06E797E50	EFNB1_EPHB2	simple:P98172	simple:P29323	EFNB1	EPHB2	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-SS0ECC9DF3E	EFNB2_EPHB2	simple:P52799	simple:P29323	EFNB2	EPHB2	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS0ECCB4382	EFNB3_EPHB2	simple:Q15768	simple:P29323	EFNB3	EPHB2	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	1	0	1	1	1	1	0	0	1	0	0	0	1	0
+CPI-SS03C7D1520	EFNB1_EPHB1	simple:P98172	simple:P54762	EFNB1	EPHB1	False	False	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0
+CPI-SS0BFD8E056	EFNB2_EPHB1	simple:P52799	simple:P54762	EFNB2	EPHB1	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1
+CPI-SS0CE96B837	EFNB3_EPHB1	simple:Q15768	simple:P54762	EFNB3	EPHB1	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	0	1	1	1	1	1	0	0	0	1	0	0	0	1
+CPI-SS01BBAD475	EFNB3_EPHB3	simple:Q15768	simple:P54753	EFNB3	EPHB3	False	True	True	curated	False	Ligand-Receptor	Signaling by Ephrin	0	0	0	0	1	1	1	0	0	0	0	0	0	0	0	0
+CPI-SS0E063192D	NRG2_ERBB4	simple:O14511	simple:Q15303	NRG2	ERBB4	True	False	True	curated	False	Ligand-Receptor	Signaling by Neuregulin	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0D5E30C6C	NRG3_ERBB4	simple:P56975	simple:Q15303	NRG3	ERBB4	True	False	True	curated	False	Ligand-Receptor	Signaling by Neuregulin	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0C21302BC	NCAM1_AGRN	simple:P13591	simple:O00468	NCAM1	AGRN	True	True	False	curated	False	Ligand-Receptor	Signaling by Leucine-Rich Repeat Transmembrane Neuronal Protein	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS008E98D3E	FLRT2_ADGRL1	simple:O43155	simple:O94910	FLRT2	ADGRL1	False	False	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS04534E61E	TENM2_FLRT3_complex_ADGRL1	complex:TENM2_FLRT3_complex	simple:O94910		ADGRL1	False	True	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS0B24464AF	TENM4_FLRT3_complex_ADGRL1	complex:TENM4_FLRT3_complex	simple:O94910		ADGRL1	False	True	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS019D9440E	NRXN1_ADGRL1	simple:Q9ULB1	simple:O94910	NRXN1	ADGRL1	False	False	True	curated	False	Receptor-Receptor	Signaling by Neurexin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS0B0B67CA2	NRXN2_ADGRL1	simple:P58401	simple:O94910	NRXN2	ADGRL1	False	False	True	curated	False	Receptor-Receptor	Signaling by Neurexin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS085E3E37F	TENM1_ADGRL1	simple:Q9UKZ4	simple:O94910	TENM1	ADGRL1	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS04FD52559	TENM3_ADGRL1	simple:Q9P273	simple:O94910	TENM3	ADGRL1	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-SS0430C8A78	FLRT1_ADGRL3	simple:Q9NZU1	simple:Q9HAR2	FLRT1	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-CS059C42E4B	TENM3_FLRT1_complex_ADGRL3	complex:TENM3_FLRT1_complex	simple:Q9HAR2		ADGRL3	False	True	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	0	0	1	0	0	0	1	0	0	0	1	0	1	1	1	1
+CPI-SS0474E1C15	FLRT2_ADGRL3	simple:O43155	simple:Q9HAR2	FLRT2	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-SS052641D5A	FLRT3_ADGRL3	simple:Q9NZU0	simple:Q9HAR2	FLRT3	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CS0D62B1695	TENM3_FLRT3_complex_ADGRL3	complex:TENM3_FLRT3_complex	simple:Q9HAR2		ADGRL3	False	True	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-SS038A612D7	TENM1_ADGRL3	simple:Q9UKZ4	simple:Q9HAR2	TENM1	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS0BCB3D402	TENM2_ADGRL3	simple:Q9NT68	simple:Q9HAR2	TENM2	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS0EA023E51	TENM3_ADGRL3	simple:Q9P273	simple:Q9HAR2	TENM3	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	1	0	0	0	1	0	0	0	1	0	1	1	1	1
+CPI-SS01F00A48A	TENM4_ADGRL3	simple:Q6N022	simple:Q9HAR2	TENM4	ADGRL3	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS0F6BE4D47	UNC5A_ADGRL3	simple:Q6ZN44	simple:Q9HAR2	UNC5A	ADGRL3	False	True	True	curated	False	Receptor-Receptor		0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS08BFFB96E	FLRT3_ADGRL2	simple:Q9NZU0	simple:O95490	FLRT3	ADGRL2	False	False	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CS049AAD8F5	TENM2_FLRT3_complex_ADGRL2	complex:TENM2_FLRT3_complex	simple:O95490		ADGRL2	False	True	True	curated	False	Ligand-Receptor	Signaling by Fibronectin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-SS083BB1EB3	TENM1_ADGRL2	simple:Q9UKZ4	simple:O95490	TENM1	ADGRL2	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	1	1	1	1	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS021718DBF	TENM2_ADGRL2	simple:Q9NT68	simple:O95490	TENM2	ADGRL2	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS075F456AF	TENM3_ADGRL2	simple:Q9P273	simple:O95490	TENM3	ADGRL2	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	1	0	0	0	1	0	0	0	1	0	1	1	1	1
+CPI-SS0FD44484F	TENM4_ADGRL2	simple:Q6N022	simple:O95490	TENM4	ADGRL2	False	False	True	curated	False	Ligand-Receptor	Signaling by Teneurin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-CS0CE0C5AF0	GABA_byGAD1_and_SLC32A1_GABBR1	complex:GABA_byGAD1_and_SLC32A1	simple:Q9UBS5		GABBR1	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	1	1	1	1	0	0	0	0	1	1	1	1
+CPI-CS06B116BC0	GABA_byGAD1_and_SLC6A1_GABBR1	complex:GABA_byGAD1_and_SLC6A1	simple:Q9UBS5		GABBR1	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	1	1	1	1	0	0	0	0	1	1	1	1
+CPI-CS03CCCE0E4	GABA_byGAD1_and_SLC6A6_GABBR1	complex:GABA_byGAD1_and_SLC6A6	simple:Q9UBS5		GABBR1	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-CS0F3055E82	GABA_byGAD2_and_SLC32A1_GABBR1	complex:GABA_byGAD2_and_SLC32A1	simple:Q9UBS5		GABBR1	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	1	1	1	1	0	0	0	0	1	1	1	1
+CPI-CS0E648EBFA	GABA_byGAD2_and_SLC6A1_GABBR1	complex:GABA_byGAD2_and_SLC6A1	simple:Q9UBS5		GABBR1	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	1	1	1	1	0	0	0	0	1	1	1	1
+CPI-CS02CC3D29A	GABA_byGAD2_and_SLC6A6_GABBR1	complex:GABA_byGAD2_and_SLC6A6	simple:Q9UBS5		GABBR1	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-CS0FA38E530	GABA_byGAD1_and_SLC32A1_GABBR2	complex:GABA_byGAD1_and_SLC32A1	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CS04C0A3C19	GABA_byGAD1_and_SLC6A1_GABBR2	complex:GABA_byGAD1_and_SLC6A1	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CS0A7EA055F	GABA_byGAD1_and_SLC6A11_GABBR2	complex:GABA_byGAD1_and_SLC6A11	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS0AD67AADC	GABA_byGAD1_and_SLC6A6_GABBR2	complex:GABA_byGAD1_and_SLC6A6	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CS0AA35FDCE	GABA_byGAD2_and_SLC32A1_GABBR2	complex:GABA_byGAD2_and_SLC32A1	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CS0B096A78D	GABA_byGAD2_and_SLC6A1_GABBR2	complex:GABA_byGAD2_and_SLC6A1	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CS02F1A072B	GABA_byGAD2_and_SLC6A11_GABBR2	complex:GABA_byGAD2_and_SLC6A11	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS0DC38225F	GABA_byGAD2_and_SLC6A6_GABBR2	complex:GABA_byGAD2_and_SLC6A6	simple:O75899		GABBR2	True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC09C521706	GABA_byGAD1_and_SLC32A1_GABA-A_a1b2_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0200FD25E	GABA_byGAD1_and_SLC6A1_GABA-A_a1b2_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0CBCCF256	GABA_byGAD1_and_SLC6A11_GABA-A_a1b2_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0946F123A	GABA_byGAD1_and_SLC6A6_GABA-A_a1b2_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC05D186539	GABA_byGAD2_and_SLC32A1_GABA-A_a1b2_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC03EB01F42	GABA_byGAD2_and_SLC6A1_GABA-A_a1b2_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC076D3C70C	GABA_byGAD2_and_SLC6A11_GABA-A_a1b2_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC06878B267	GABA_byGAD2_and_SLC6A6_GABA-A_a1b2_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a1b2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0990A372B	GABA_byGAD1_and_SLC32A1_GABA-A_a1b2d_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a1b2d_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	1	1	1	0	0	0	0	0	1	1	1
+CPI-CC07921E343	GABA_byGAD1_and_SLC6A1_GABA-A_a1b2d_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a1b2d_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	1	1	1	0	0	0	0	0	1	1	1
+CPI-CC05D2522F1	GABA_byGAD1_and_SLC6A6_GABA-A_a1b2d_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a1b2d_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1
+CPI-CC009DEE9FC	GABA_byGAD2_and_SLC32A1_GABA-A_a1b2d_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a1b2d_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	1	1	1	0	0	0	0	0	1	1	1
+CPI-CC001A2A34F	GABA_byGAD2_and_SLC6A1_GABA-A_a1b2d_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a1b2d_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	1	1	1	0	0	0	0	0	1	1	1
+CPI-CC0F913B188	GABA_byGAD2_and_SLC6A6_GABA-A_a1b2d_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a1b2d_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	0	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1
+CPI-CC0392C7337	GABA_byGAD1_and_SLC32A1_GABA-A_a1b2g2S_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC03C18523A	GABA_byGAD1_and_SLC6A1_GABA-A_a1b2g2S_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC004185A70	GABA_byGAD1_and_SLC6A11_GABA-A_a1b2g2S_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC089C08005	GABA_byGAD1_and_SLC6A6_GABA-A_a1b2g2S_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0B5A2E9A4	GABA_byGAD2_and_SLC32A1_GABA-A_a1b2g2S_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0F110BCE5	GABA_byGAD2_and_SLC6A1_GABA-A_a1b2g2S_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC01E8115FE	GABA_byGAD2_and_SLC6A11_GABA-A_a1b2g2S_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0CD7157B7	GABA_byGAD2_and_SLC6A6_GABA-A_a1b2g2S_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a1b2g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0CAFBA656	GABA_byGAD1_and_SLC32A1_GABA-A_a1b3_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0DF227F32	GABA_byGAD1_and_SLC6A1_GABA-A_a1b3_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0E8A76CD6	GABA_byGAD1_and_SLC6A11_GABA-A_a1b3_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC03AA4B30D	GABA_byGAD1_and_SLC6A6_GABA-A_a1b3_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC08151EFC9	GABA_byGAD2_and_SLC32A1_GABA-A_a1b3_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0B6E51683	GABA_byGAD2_and_SLC6A1_GABA-A_a1b3_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0F935E8FA	GABA_byGAD2_and_SLC6A11_GABA-A_a1b3_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0229CFC13	GABA_byGAD2_and_SLC6A6_GABA-A_a1b3_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a1b3_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0608D4CA8	GABA_byGAD1_and_SLC32A1_GABA-A_a1b3g2S_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0C3E95213	GABA_byGAD1_and_SLC6A1_GABA-A_a1b3g2S_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC09E9DF123	GABA_byGAD1_and_SLC6A11_GABA-A_a1b3g2S_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC026E0AF6E	GABA_byGAD1_and_SLC6A6_GABA-A_a1b3g2S_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0F3C27C9B	GABA_byGAD2_and_SLC32A1_GABA-A_a1b3g2S_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC04EC40D20	GABA_byGAD2_and_SLC6A1_GABA-A_a1b3g2S_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC06080894C	GABA_byGAD2_and_SLC6A11_GABA-A_a1b3g2S_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC05DBBAD9A	GABA_byGAD2_and_SLC6A6_GABA-A_a1b3g2S_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a1b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0F8CB8104	GABA_byGAD1_and_SLC32A1_GABA-A_a2b3g2S_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC01B9552BA	GABA_byGAD1_and_SLC6A1_GABA-A_a2b3g2S_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC08A636173	GABA_byGAD1_and_SLC6A11_GABA-A_a2b3g2S_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC06B7CC089	GABA_byGAD1_and_SLC6A6_GABA-A_a2b3g2S_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC03764C8A9	GABA_byGAD2_and_SLC32A1_GABA-A_a2b3g2S_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC06C7F820C	GABA_byGAD2_and_SLC6A1_GABA-A_a2b3g2S_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC08E2CA1DE	GABA_byGAD2_and_SLC6A11_GABA-A_a2b3g2S_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0BB611F3F	GABA_byGAD2_and_SLC6A6_GABA-A_a2b3g2S_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a2b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC035C82A9B	GABA_byGAD1_and_SLC32A1_GABA-A_a3b3g2S_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC07D1D1AD0	GABA_byGAD1_and_SLC6A1_GABA-A_a3b3g2S_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC01D135078	GABA_byGAD1_and_SLC6A11_GABA-A_a3b3g2S_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0079D48C9	GABA_byGAD1_and_SLC6A6_GABA-A_a3b3g2S_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC065D3E23E	GABA_byGAD2_and_SLC32A1_GABA-A_a3b3g2S_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0CCDF6512	GABA_byGAD2_and_SLC6A1_GABA-A_a3b3g2S_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0079A0DC0	GABA_byGAD2_and_SLC6A11_GABA-A_a3b3g2S_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0A3EF2F90	GABA_byGAD2_and_SLC6A6_GABA-A_a3b3g2S_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a3b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0836120E7	GABA_byGAD1_and_SLC32A1_GABA-A_a5b3g2S_complex	complex:GABA_byGAD1_and_SLC32A1	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0A95EED6F	GABA_byGAD1_and_SLC6A1_GABA-A_a5b3g2S_complex	complex:GABA_byGAD1_and_SLC6A1	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0D3BD85F0	GABA_byGAD1_and_SLC6A11_GABA-A_a5b3g2S_complex	complex:GABA_byGAD1_and_SLC6A11	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0D7414489	GABA_byGAD1_and_SLC6A6_GABA-A_a5b3g2S_complex	complex:GABA_byGAD1_and_SLC6A6	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0C8FD4B3E	GABA_byGAD2_and_SLC32A1_GABA-A_a5b3g2S_complex	complex:GABA_byGAD2_and_SLC32A1	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC040C320D0	GABA_byGAD2_and_SLC6A1_GABA-A_a5b3g2S_complex	complex:GABA_byGAD2_and_SLC6A1	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	1	1	1	1	0	0	0	1	1	1	1
+CPI-CC0F35FBFA4	GABA_byGAD2_and_SLC6A11_GABA-A_a5b3g2S_complex	complex:GABA_byGAD2_and_SLC6A11	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC0E1CB4EAF	GABA_byGAD2_and_SLC6A6_GABA-A_a5b3g2S_complex	complex:GABA_byGAD2_and_SLC6A6	complex:GABA-A_a5b3g2S_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by GABA	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-SS0BE567EFB	GAL_GALR1	simple:P22466	simple:P47211	GAL	GALR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Galanin	0	1	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-CS0E30DD72A	Glutamate_byGLS_and_SLC17A6_GRIA1	complex:Glutamate_byGLS_and_SLC17A6	simple:P42261		GRIA1	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS0D5D712A6	Glutamate_byGLS_and_SLC1A1_GRIA1	complex:Glutamate_byGLS_and_SLC1A1	simple:P42261		GRIA1	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS029D39F39	Glutamate_byGLS_and_SLC17A6_GRIA3	complex:Glutamate_byGLS_and_SLC17A6	simple:P42263		GRIA3	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CS0921FDCC0	Glutamate_byGLS_and_SLC1A1_GRIA3	complex:Glutamate_byGLS_and_SLC1A1	simple:P42263		GRIA3	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CS0FDF3EF86	Glutamate_byGLS_and_SLC17A6_GRIK1	complex:Glutamate_byGLS_and_SLC17A6	simple:P39086		GRIK1	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CS070ACE5CB	Glutamate_byGLS_and_SLC1A1_GRIK1	complex:Glutamate_byGLS_and_SLC1A1	simple:P39086		GRIK1	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CC020E8A4A3	Glutamate_byGLS_and_SLC17A6_Glutamate_Kainate_1_4_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_Kainate_1_4_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CC08C4BCAED	Glutamate_byGLS_and_SLC1A1_Glutamate_Kainate_1_4_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_Kainate_1_4_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CC088FD6274	Glutamate_byGLS_and_SLC17A6_Glutamate_Kainate_1_5_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_Kainate_1_5_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CC00F486A57	Glutamate_byGLS_and_SLC1A1_Glutamate_Kainate_1_5_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_Kainate_1_5_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CS061474E36	Glutamate_byGLS_and_SLC17A6_GRIK2	complex:Glutamate_byGLS_and_SLC17A6	simple:Q13002		GRIK2	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CS07D0E4897	Glutamate_byGLS_and_SLC1A1_GRIK2	complex:Glutamate_byGLS_and_SLC1A1	simple:Q13002		GRIK2	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CC05DB41C4E	Glutamate_byGLS_and_SLC17A6_Glutamate_Kainate_2_4_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_Kainate_2_4_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	1	1	0	0	1	1	0	0	1	1	0	0	0	0	0
+CPI-CC052F5C918	Glutamate_byGLS_and_SLC1A1_Glutamate_Kainate_2_4_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_Kainate_2_4_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	1	1	0	0	1	1	0	0	0	0	0	0	0	0	0
+CPI-CC056BCA025	Glutamate_byGLS_and_SLC17A6_Glutamate_Kainate_2_5_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_Kainate_2_5_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CC0EAD8AFBF	Glutamate_byGLS_and_SLC1A1_Glutamate_Kainate_2_5_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_Kainate_2_5_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CC00DB97EEF	Glutamate_byGLS_and_SLC17A6_Glutamate_Kainate_3_4_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_Kainate_3_4_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0
+CPI-CC0B7463256	Glutamate_byGLS_and_SLC1A1_Glutamate_Kainate_3_4_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_Kainate_3_4_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0
+CPI-CC0638AC67E	Glutamate_byGLS_and_SLC17A6_Glutamate_NMDA_1_2A_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_NMDA_1_2A_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	1	0	0	1	1	0	0	1	1	0	0	0	0	0	0
+CPI-CC0CE99AC11	Glutamate_byGLS_and_SLC1A1_Glutamate_NMDA_1_2A_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_NMDA_1_2A_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	1	0	0	1	1	0	0	0	0	0	0	0	0	0	0
+CPI-CC09E794969	Glutamate_byGLS_and_SLC17A6_Glutamate_NMDA_1_2B_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_NMDA_1_2B_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC05708A400	Glutamate_byGLS_and_SLC1A1_Glutamate_NMDA_1_2B_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_NMDA_1_2B_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CC037EB0864	Glutamate_byGLS_and_SLC17A6_Glutamate_NMDA_1_2C_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_NMDA_1_2C_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-CC0FC2F01AB	Glutamate_byGLS_and_SLC1A1_Glutamate_NMDA_1_2C_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_NMDA_1_2C_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	0	0	1	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CC04BD88A3A	Glutamate_byGLS_and_SLC17A6_Glutamate_NMDA_1_2D_complex	complex:Glutamate_byGLS_and_SLC17A6	complex:Glutamate_NMDA_1_2D_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CC037A4383F	Glutamate_byGLS_and_SLC1A1_Glutamate_NMDA_1_2D_complex	complex:Glutamate_byGLS_and_SLC1A1	complex:Glutamate_NMDA_1_2D_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS0ACB62C99	Glutamate_byGLS_and_SLC17A6_GRM4	complex:Glutamate_byGLS_and_SLC17A6	simple:Q14833		GRM4	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS08648BDFD	Glutamate_byGLS_and_SLC1A1_GRM4	complex:Glutamate_byGLS_and_SLC1A1	simple:Q14833		GRM4	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS02BEC2C34	Glutamate_byGLS_and_SLC17A6_GRM5	complex:Glutamate_byGLS_and_SLC17A6	simple:P41594		GRM5	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS0EECB890E	Glutamate_byGLS_and_SLC1A1_GRM5	complex:Glutamate_byGLS_and_SLC1A1	simple:P41594		GRM5	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS040CBA095	Glutamate_byGLS_and_SLC17A6_GRM7	complex:Glutamate_byGLS_and_SLC17A6	simple:Q14831		GRM7	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS093EF3F47	Glutamate_byGLS_and_SLC1A1_GRM7	complex:Glutamate_byGLS_and_SLC1A1	simple:Q14831		GRM7	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CS054C4533B	Glutamate_byGLS_and_SLC17A6_GRM8	complex:Glutamate_byGLS_and_SLC17A6	simple:O00222		GRM8	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-CS0BEF05FE2	Glutamate_byGLS_and_SLC1A1_GRM8	complex:Glutamate_byGLS_and_SLC1A1	simple:O00222		GRM8	True	False	True	curated	False	Ligand-Receptor	Signaling by Glutamate	1	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-CC014456804	Glycine_bySHMT2_and_SLC6A5_Glycine_a1b_complex	complex:Glycine_bySHMT2_and_SLC6A5	complex:Glycine_a1b_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glycine	1	0	0	0	0	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC00045ECF5	Glycine_bySHMT2_and_SLC6A9_Glycine_a1b_complex	complex:Glycine_bySHMT2_and_SLC6A9	complex:Glycine_a1b_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glycine	1	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-CC0F959FD6A	Glycine_bySHMT2_and_SLC6A5_Glycine_a2_complex	complex:Glycine_bySHMT2_and_SLC6A5	complex:Glycine_a2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glycine	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-CC0EA1D60C5	Glycine_bySHMT2_and_SLC6A9_Glycine_a2_complex	complex:Glycine_bySHMT2_and_SLC6A9	complex:Glycine_a2_complex			True	False	True	curated	False	Ligand-Receptor	Signaling by Glycine	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-SS0E12A78EF	IL1RAP_PTPRF	simple:Q9NPH3	simple:P10586	IL1RAP	PTPRF	True	True	True	curated	False	Adhesion-Adhesion	Signaling by Interleukin	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS0D8DC28C6	LRRC4B_PTPRF	simple:Q9NT99	simple:P10586	LRRC4B	PTPRF	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	1	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS00373B59C	LRRC4C_PTPRF	simple:Q9HCJ2	simple:P10586	LRRC4C	PTPRF	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS0CBB9D57D	LRFN5_PTPRF	simple:Q96NI6	simple:P10586	LRFN5	PTPRF	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	1	1	1	1	1	1	1	1	1	0	0	0	1	0	0	0
+CPI-SS0E0D00210	LRRC4B_PTPRD	simple:Q9NT99	simple:P23468	LRRC4B	PTPRD	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1
+CPI-SS081E1A895	LRFN5_PTPRD	simple:Q96NI6	simple:P23468	LRFN5	PTPRD	False	False	True	curated	False	Ligand-Receptor	Signaling by Leucine Rich Repeat And Fibronectin	1	1	1	1	1	1	1	1	0	0	0	1	0	0	0	1
+CPI-SS08069FE13	NLGN3_PTPRD	simple:Q9NZ94	simple:P23468	NLGN3	PTPRD	False	False	True	curated	False	Ligand-Receptor	Signaling by Neuroligin	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1
+CPI-SS0522C3A29	SLITRK1_PTPRD	simple:Q96PX8	simple:P23468	SLITRK1	PTPRD	False	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0	1
+CPI-SS044E718AF	SLITRK3_PTPRD	simple:O94933	simple:P23468	SLITRK3	PTPRD	False	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0
+CPI-SS012AFC842	MDK_ALK	simple:P21741	simple:Q9UM73	MDK	ALK	True	False	True	curated	False	Ligand-Receptor	Signaling by Midkine	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS04F1CBF06	NTN1_DCC	simple:O95631	simple:P43146	NTN1	DCC	True	False	True	curated	False	Ligand-Receptor	Signaling by Netrin	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS0E3C09735	NTN1_DSCAM	simple:O95631	simple:O60469	NTN1	DSCAM	True	False	False	curated	False	Ligand-Receptor	Signaling by Netrin	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS0503D8A55	NTN1_UNC5A	simple:O95631	simple:Q6ZN44	NTN1	UNC5A	True	False	True	curated	False	Ligand-Receptor	Signaling by Netrin	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS07660BCA2	NTN1_UNC5C	simple:O95631	simple:O95185	NTN1	UNC5C	True	False	True	curated	False	Ligand-Receptor	Signaling by Netrin	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS085E14488	NRXN1_DAG1	simple:Q9ULB1	simple:Q14118	NRXN1	DAG1	True	False	True	curated	False	Receptor-Receptor	Signaling by Neurexin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS0193D81E1	NRXN2_DAG1	simple:P58401	simple:Q14118	NRXN2	DAG1	True	False	True	curated	False	Receptor-Receptor	Signaling by Neurexin	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS01D36DDFA	PTPRS_NTRK3	simple:Q13332	simple:Q16288	PTPRS	NTRK3	False	True	True	curated	False	Receptor-Receptor		1	1	1	1	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-SS0730D1EF3	CNTN1_MCAM	simple:Q12860	simple:P43121	CNTN1	MCAM	False	False	False	curated	False	Adhesion-Adhesion		0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS0D37C7C70	DLK1_NOTCH4	simple:P80370	simple:Q99466	DLK1	NOTCH4	False	False	True	curated	False	Ligand-Receptor	Signaling by Notch	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0CD40D735	PDYN_OPRD1	simple:P01213	simple:P41143	PDYN	OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0BD6EE954	PENK_OPRD1	simple:P01210	simple:P41143	PENK	OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-CS005209739	b-Endorphin_byPOMC_OPRD1	complex:b-Endorphin_byPOMC	simple:P41143		OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Proopiomelanocortin	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0D0DC29DB	PDYN_OPRM1	simple:P01213	simple:P35372	PDYN	OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0D97012FB	PENK_OPRM1	simple:P01210	simple:P35372	PENK	OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-CS0FFD6263C	b-Endorphin_byPOMC_OPRM1	complex:b-Endorphin_byPOMC	simple:P35372		OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Proopiomelanocortin	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0DAB76F63	PNOC_OPRL1	simple:Q13519	simple:P41146	PNOC	OPRL1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	1	1	1	1	0	0	0	0	0	0	0	0
+CPI-SS0133239EA	ADCYAP1_ADCYAP1R1	simple:P18509	simple:P41586	ADCYAP1	ADCYAP1R1	True	False	True	curated	False	Ligand-Receptor	Signaling by Pituitary adenylate	0	1	0	0	0	1	0	0	1	1	1	1	0	0	0	0
+CPI-SS062DED513	ADCYAP1_VIPR1	simple:P18509	simple:P32241	ADCYAP1	VIPR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Pituitary adenylate	0	0	0	0	0	0	0	0	1	1	1	0	0	0	0	0
+CPI-SS02CCE14A7	ADCYAP1_VIPR2	simple:P18509	simple:P41587	ADCYAP1	VIPR2	True	False	True	curated	False	Ligand-Receptor	Signaling by Pituitary adenylate	0	0	1	0	0	0	1	0	0	0	1	0	0	0	0	0
+CPI-SS034083FFA	SEMA3A_NRP1	simple:Q14563	simple:O14786	SEMA3A	NRP1	True	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	0	0	0	0	1	1	1	1	1	0	0	0	0	0	0	0
+CPI-SS043E22BF5	VEGFA_NRP1	simple:P15692	simple:O14786	VEGFA	NRP1	True	False	True	curated	False	Ligand-Receptor	Signaling by Vascular endothelial growth factor	0	0	0	0	0	0	0	0	1	1	1	1	1	0	0	0
+CPI-SS0674B0F46	SEMA3F_NRP2	simple:Q13275	simple:O60462	SEMA3F	NRP2	True	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	0	1	0	0	0	1	0	0	0	0	0	0	0	1	0	0
+CPI-SS046F8AD8B	VEGFA_NRP2	simple:P15692	simple:O60462	VEGFA	NRP2	True	False	True	curated	False	Ligand-Receptor	Signaling by Vascular endothelial growth factor	0	0	0	0	0	0	0	0	1	1	1	1	0	1	0	0
+CPI-SS0E2083FAC	NPY_NPY2R	simple:P01303	simple:P49146	NPY	NPY2R	True	False	True	curated	False	Ligand-Receptor	Signaling by Pro-neuregulin	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0
+CPI-CS0C9671CB6	ProstaglandinE2_byPTGES3_PTGER3	complex:ProstaglandinE2_byPTGES3	simple:P43115		PTGER3	True	False	True	curated	False	Ligand-Receptor	Signaling by Prostaglandin	0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS01E3453DB	RSPO2_LGR4	simple:Q6UXX9	simple:Q9BXB1	RSPO2	LGR4	True	False	True	curated	False	Ligand-Receptor	Signaling by R-spondin	0	0	0	0	0	0	0	0	1	1	1	0	0	0	0	0
+CPI-SS034D3988F	RSPO4_LGR4	simple:Q2I0M5	simple:Q9BXB1	RSPO4	LGR4	True	False	True	curated	False	Ligand-Receptor	Signaling by R-spondin	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	0
+CPI-SS0AD2A36FE	RELN_LRP8	simple:P78509	simple:Q14114	RELN	LRP8	True	False	True	curated	False	Ligand-Receptor	Signaling by Reelin	0	0	0	0	1	0	0	0	1	0	0	0	1	1	1	1
+CPI-SS06DF3325D	RELN_VLDLR	simple:P78509	simple:P98155	RELN	VLDLR	True	False	True	curated	False	Ligand-Receptor	Signaling by Reelin	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-SC0C8A5C197	SEMA3A_PlexinA1_complex3	simple:Q14563	complex:PlexinA1_complex3	SEMA3A		True	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	0	0	0	0	1	1	1	1	1	0	0	0	0	0	0	0
+CPI-SC019D0A439	SEMA3A_PlexinA2_complex1	simple:Q14563	complex:PlexinA2_complex1	SEMA3A		True	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	0	0	0	0	1	1	1	1	1	0	0	0	0	0	0	0
+CPI-SC08F771F98	SEMA6A_PlexinA2_complex1	simple:Q9H2E6	complex:PlexinA2_complex1	SEMA6A		False	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	1	0	0	0	1	0	0	0	1	1	1	1	1	1	1	1
+CPI-SS0F3A089DE	SEMA3E_PLXND1	simple:O15041	simple:Q9Y4D7	SEMA3E	PLXND1	True	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS0892F3080	SEMA4C_PLXNB2	simple:Q9C0C4	simple:O15031	SEMA4C	PLXNB2	False	True	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	1	1	1	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-SS012F60F11	SEMA4D_PLXNB2	simple:Q92854	simple:O15031	SEMA4D	PLXNB2	False	True	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-SS011931B0F	SEMA4G_PLXNB2	simple:Q9NTN9	simple:O15031	SEMA4G	PLXNB2	False	False	True	curated	False	Ligand-Receptor	Signaling by Semaphorin	1	0	0	0	1	0	0	0	1	0	0	0	0	0	0	0
+CPI-SS027028983	SLIT1_ROBO1	simple:O75093	simple:Q9Y6N7	SLIT1	ROBO1	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-SS0A932EB77	SLIT2_ROBO1	simple:O94813	simple:Q9Y6N7	SLIT2	ROBO1	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	0	0	0	0	0	0	0	1	1	1	1	0	0	0	0
+CPI-SS0D0235DCE	SLIT2_ROBO2	simple:O94813	simple:Q9HCK4	SLIT2	ROBO2	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	0	0	0	0	1	0	0	1	1	1	1	0	1	0	0
+CPI-SS0FE594C97	SST_SSTR2	simple:P61278	simple:P30874	SST	SSTR2	True	False	True	curated	False	Ligand-Receptor	Signaling by Somatostatin	0	0	0	0	0	0	0	0	1	1	1	0	0	0	0	0
+CPI-SS0F80E4C8B	SST_SSTR5	simple:P61278	simple:P35346	SST	SSTR5	True	False	True	curated	False	Ligand-Receptor	Signaling by Somatostatin	0	0	0	0	0	0	1	0	0	1	1	0	0	0	0	0
+CPI-SS02A8BD654	TAC1_TACR1	simple:P20366	simple:P25103	TAC1	TACR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Tachykinins	0	0	0	0	1	1	1	0	0	0	0	0	0	0	0	0
+CPI-SS0CDDDEE9F	TAC3_TACR1	simple:Q9UHF0	simple:P25103	TAC3	TACR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Tachykinins	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS015B70BF9	TAC1_TACR3	simple:P20366	simple:P29371	TAC1	TACR3	True	False	True	curated	False	Ligand-Receptor	Signaling by Tachykinins	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS0F5177C81	TAC3_TACR3	simple:Q9UHF0	simple:P29371	TAC3	TACR3	True	False	True	curated	False	Ligand-Receptor	Signaling by Tachykinins	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+CPI-SS0F4EF9618	RTN4R_ADGRB1	simple:Q9BZR6	simple:O14514	RTN4R	ADGRB1	False	True	True	curated	False	Ligand-Receptor		0	1	1	0	0	1	1	0	0	1	1	0	0	0	0	0
+CPI-CS0E570EA78	NRXN1_CBLN1_complex_GRID2	complex:NRXN1_CBLN1_complex	simple:O43424		GRID2	False	True	True	curated	False	Ligand-Receptor		1	1	1	1	1	0	0	0	1	0	0	0	1	0	0	0
+CPI-SS04C672963	ESAM_ESAM	simple:Q96AP7	simple:Q96AP7	ESAM	ESAM	False	False	False	curated	False	Adhesion-Adhesion		0	0	0	0	0	0	0	0	0	0	1	0	0	0	0	0
+CPI-SS02B2C16ED	NELL2_ROBO3	simple:Q99435	simple:Q96MS0	NELL2	ROBO3	True	False	True	curated	False	Ligand-Receptor		1	0	0	0	1	0	0	0	1	1	1	1	1	0	0	0
+CPI-SS096F8C268	PTPRD_IL1RAP	simple:P23468	simple:Q9NPH3	PTPRD	IL1RAP	True	True	True	curated	False	Ligand-Receptor		0	0	1	0	0	0	1	0	0	0	1	0	0	0	1	0
+CPI-SS0F9F83827	PTPRD_IL1RAPL1	simple:P23468	simple:Q9NZN1	PTPRD	IL1RAPL1	False	True	True	curated	False	Ligand-Receptor		0	0	0	0	0	0	0	0	0	0	0	0	1	1	1	1
+CPI-SS00F69C501	TRH_TRHR	simple:P20396	simple:P34981	TRH	TRHR	True	False	True	curated	False	Ligand-Receptor		0	0	0	0	0	0	0	0	1	1	0	0	0	0	0	0

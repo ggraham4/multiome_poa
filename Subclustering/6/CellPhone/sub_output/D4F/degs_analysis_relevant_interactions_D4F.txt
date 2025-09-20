@@ -1,0 +1,5 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_3|6_0	6_3|6_1	6_3|6_2	6_3|6_3
+CPI-SS0EAF7B072	NMB_NMBR	simple:P08949	simple:P28336	NMB	NMBR	True	False	True	curated	False	Ligand-Receptor	Signaling by Neuromedin	1	1	1	0
+CPI-SS0BD6EE954	PENK_OPRD1	simple:P01210	simple:P41143	PENK	OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	1	1	1	1
+CPI-SS0D97012FB	PENK_OPRM1	simple:P01210	simple:P35372	PENK	OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	1	1	1	1
+CPI-SS034D3988F	RSPO4_LGR4	simple:Q2I0M5	simple:Q9BXB1	RSPO4	LGR4	True	False	True	curated	False	Ligand-Receptor	Signaling by R-spondin	1	1	1	1

@@ -1,0 +1,3 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_3|6_1	6_3|6_2	6_3|6_3
+CPI-SS06B1216BE	CRH_CRHR1	simple:P06850	simple:P34998	CRH	CRHR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Corticotropin-releasing factor	1	1	1
+CPI-SS0A05319F5	CRH_CRHR2	simple:P06850	simple:Q13324	CRH	CRHR2	True	False	True	curated	False	Ligand-Receptor	Signaling by Corticotropin-releasing factor	1	0	1

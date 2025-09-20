@@ -1,0 +1,5 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_1|6_0	6_2|6_0	6_2|6_1	6_2|6_2	6_2|6_3	6_3|6_0
+CPI-SS00399ED03	AVP_AVPR1A	simple:P01185	simple:P37288	AVP	AVPR1A	True	False	True	curated	False	Ligand-Receptor	Signaling by Vasopressin	0	0	1	0	0	0
+CPI-SS0AD2A36FE	RELN_LRP8	simple:P78509	simple:Q14114	RELN	LRP8	True	False	True	curated	False	Ligand-Receptor	Signaling by Reelin	1	1	0	0	0	1
+CPI-SS0A932EB77	SLIT2_ROBO1	simple:O94813	simple:Q9Y6N7	SLIT2	ROBO1	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	1	1	0	1	0
+CPI-SS0D0235DCE	SLIT2_ROBO2	simple:O94813	simple:Q9HCK4	SLIT2	ROBO2	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	1	1	1	1	0

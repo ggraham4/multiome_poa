@@ -1,0 +1,8 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_0|6_2	6_1|6_2	6_2|6_0	6_2|6_1	6_2|6_2	6_2|6_3	6_3|6_0	6_3|6_1	6_3|6_2	6_3|6_3
+CPI-SS06B1216BE	CRH_CRHR1	simple:P06850	simple:P34998	CRH	CRHR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Corticotropin-releasing factor	0	0	0	0	0	0	0	0	0	1
+CPI-SS0E12A78EF	IL1RAP_PTPRF	simple:Q9NPH3	simple:P10586	IL1RAP	PTPRF	True	True	True	curated	False	Adhesion-Adhesion	Signaling by Interleukin	0	0	1	1	1	1	0	0	0	0
+CPI-SS0BD6EE954	PENK_OPRD1	simple:P01210	simple:P41143	PENK	OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	0	1	1	1	0
+CPI-SS0D1EF9598	PENK_OPRK1	simple:P01210	simple:P41145	PENK	OPRK1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	0	0	0	1	0
+CPI-SS0D97012FB	PENK_OPRM1	simple:P01210	simple:P35372	PENK	OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	0	1	1	1	1
+CPI-SS096F8C268	PTPRD_IL1RAP	simple:P23468	simple:Q9NPH3	PTPRD	IL1RAP	True	True	True	curated	False	Ligand-Receptor		1	1	0	0	1	0	0	0	1	0
+CPI-SS00F69C501	TRH_TRHR	simple:P20396	simple:P34981	TRH	TRHR	True	False	True	curated	False	Ligand-Receptor		0	0	0	1	0	0	0	0	0	0

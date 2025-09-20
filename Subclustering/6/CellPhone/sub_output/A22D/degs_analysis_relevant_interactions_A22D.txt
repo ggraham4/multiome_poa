@@ -1,0 +1,6 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_0|6_2	6_0|6_3	6_1|6_1	6_1|6_2	6_1|6_3	6_2|6_0	6_2|6_1	6_2|6_2	6_2|6_3	6_3|6_2	6_3|6_3
+CPI-SS0BE6DBE1A	POMC_MC5R	simple:P01189	simple:P33032	POMC	MC5R	True	False	True	curated	False	Ligand-Receptor	Signaling by Proopiomelanocortin	0	0	1	0	0	0	0	0	0	0	0
+CPI-SS0E12A78EF	IL1RAP_PTPRF	simple:Q9NPH3	simple:P10586	IL1RAP	PTPRF	True	True	True	curated	False	Adhesion-Adhesion	Signaling by Interleukin	0	0	0	0	0	1	1	1	1	0	0
+CPI-SS027028983	SLIT1_ROBO1	simple:O75093	simple:Q9Y6N7	SLIT1	ROBO1	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	1	0	0	0	0	0	0	1	0	1
+CPI-SS0A932EB77	SLIT2_ROBO1	simple:O94813	simple:Q9Y6N7	SLIT2	ROBO1	True	False	True	curated	False	Ligand-Receptor	Signaling by SLIT and NTRK-like protein	0	0	0	0	1	0	0	0	1	0	1
+CPI-SS096F8C268	PTPRD_IL1RAP	simple:P23468	simple:Q9NPH3	PTPRD	IL1RAP	True	True	True	curated	False	Ligand-Receptor		1	0	0	1	0	0	0	1	0	1	0

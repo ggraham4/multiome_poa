@@ -1,0 +1,2 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_1|6_0	6_3|6_0
+CPI-SS0AD2A36FE	RELN_LRP8	simple:P78509	simple:Q14114	RELN	LRP8	True	False	True	curated	False	Ligand-Receptor	Signaling by Reelin	1	1

@@ -1,0 +1,2 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_0|6_2	6_2|6_2
+CPI-SS02CCE14A7	ADCYAP1_VIPR2	simple:P18509	simple:P41587	ADCYAP1	VIPR2	True	False	True	curated	False	Ligand-Receptor	Signaling by Pituitary adenylate	1	1

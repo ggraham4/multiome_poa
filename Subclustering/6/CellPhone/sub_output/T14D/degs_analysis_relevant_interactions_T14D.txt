@@ -1,0 +1,5 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_0|6_2	6_1|6_0	6_1|6_1	6_1|6_2	6_2|6_2	6_3|6_0	6_3|6_1	6_3|6_2
+CPI-SS0BE567EFB	GAL_GALR1	simple:P22466	simple:P47211	GAL	GALR1	True	False	True	curated	False	Ligand-Receptor	Signaling by Galanin	0	1	1	1	0	0	0	0
+CPI-SS0730D1EF3	CNTN1_MCAM	simple:Q12860	simple:P43121	CNTN1	MCAM	False	False	False	curated	False	Adhesion-Adhesion		1	0	0	1	1	0	0	1
+CPI-SS0BD6EE954	PENK_OPRD1	simple:P01210	simple:P41143	PENK	OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	1	1	1
+CPI-SS0D97012FB	PENK_OPRM1	simple:P01210	simple:P35372	PENK	OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	0	1	1	1

@@ -1,0 +1,3 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_2|6_1	6_3|6_0	6_3|6_2
+CPI-SS034D3988F	RSPO4_LGR4	simple:Q2I0M5	simple:Q9BXB1	RSPO4	LGR4	True	False	True	curated	False	Ligand-Receptor	Signaling by R-spondin	0	1	1
+CPI-SS00F69C501	TRH_TRHR	simple:P20396	simple:P34981	TRH	TRHR	True	False	True	curated	False	Ligand-Receptor		1	0	0

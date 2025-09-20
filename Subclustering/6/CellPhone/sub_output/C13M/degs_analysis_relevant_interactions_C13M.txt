@@ -1,0 +1,5 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_1|6_1	6_2|6_1	6_2|6_2	6_2|6_3	6_3|6_0	6_3|6_2	6_3|6_3
+CPI-SS00C9DE87A	NTN1_UNC5B	simple:O95631	simple:Q8IZJ1	NTN1	UNC5B	True	False	True	curated	False	Ligand-Receptor	Signaling by Netrin	0	0	0	1	0	0	0
+CPI-SS0A5B111F1	OXT_AVPR2	simple:P01178	simple:P30518	OXT	AVPR2	True	False	True	curated	False	Ligand-Receptor	Signaling by Oxytocin	0	0	1	0	0	0	0
+CPI-SS0133239EA	ADCYAP1_ADCYAP1R1	simple:P18509	simple:P41586	ADCYAP1	ADCYAP1R1	True	False	True	curated	False	Ligand-Receptor	Signaling by Pituitary adenylate	1	1	0	0	0	0	0
+CPI-SS034D3988F	RSPO4_LGR4	simple:Q2I0M5	simple:Q9BXB1	RSPO4	LGR4	True	False	True	curated	False	Ligand-Receptor	Signaling by R-spondin	0	0	0	0	1	1	1

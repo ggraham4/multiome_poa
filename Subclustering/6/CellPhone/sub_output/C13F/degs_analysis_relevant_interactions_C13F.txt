@@ -1,0 +1,5 @@
+id_cp_interaction	interacting_pair	partner_a	partner_b	gene_a	gene_b	secreted	receptor_a	receptor_b	annotation_strategy	is_integrin	directionality	classification	6_1|6_0	6_2|6_0	6_3|6_0	6_3|6_1	6_3|6_2
+CPI-SS0BD6EE954	PENK_OPRD1	simple:P01210	simple:P41143	PENK	OPRD1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	1	1	0
+CPI-SS0D1EF9598	PENK_OPRK1	simple:P01210	simple:P41145	PENK	OPRK1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	0	0	1
+CPI-SS0D97012FB	PENK_OPRM1	simple:P01210	simple:P35372	PENK	OPRM1	True	False	True	curated	False	Ligand-Receptor	Signaling by Opioid	0	0	1	0	1
+CPI-SS0AD2A36FE	RELN_LRP8	simple:P78509	simple:Q14114	RELN	LRP8	True	False	True	curated	False	Ligand-Receptor	Signaling by Reelin	1	1	1	0	0
