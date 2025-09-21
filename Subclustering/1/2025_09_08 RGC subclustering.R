@@ -291,7 +291,7 @@ ggplot(cyto_plot, aes(x = sub.cluster,y = mean_cyto, color = Status))+
   geom_boxplot()
 # 3 seems more immature in doms, 5 may be more mature
 
-cyto_1_3 = lmer(cyto~Status+(1|individual), data = subset(rgc@meta.data, sub.cluster =='1_3'))
+cyto_1_3 = lmer(cyto~Status+(1|individual), data = subset(rgc@meta.data, sub.cluster =='1_3' ))
 car::Anova(cyto_1_3, 3)
 #nope
 
@@ -1019,3 +1019,292 @@ right_join(human_go, by =join_by('hsapiens_name' == 'entrezgene_accession'))%>%
 
 cell_cycle
 "
+
+
+##### how many positive marker genes does 1_1 have in common with the others ----
+rgc_markers_good
+
+rgc_markers_good_1 = subset(rgc_markers_good, cluster=='1_1')
+  n_markers_1 = nrow(rgc_markers_good_1)
+  
+overlaps = data.frame()
+for(i in 0:5){
+  if(i ==1){next}
+  markers = subset(rgc_markers_good, cluster == paste0('1_',i))
+  
+  n_markers = nrow(markers)
+  
+  markers_in_1 = sum(markers$gene %in% rgc_markers_good_1$gene)
+  
+  perc_in_1 = markers_in_1/n_markers
+  
+  perc_in_query = sum(rgc_markers_good_1$gene %in% markers$gene)/n_markers_1
+  
+  newd = data.frame(cluster =i,
+                    n_markers = n_markers,
+                    perc_in_1 = perc_in_1,
+                    perc_1_in_query = perc_in_query)
+  
+  overlaps= rbind(overlaps, newd)
+  
+}
+
+similarityScore = function(queryCluster){
+  
+    query_markers = subset(rgc_markers_good, cluster == queryCluster)
+    n_query_markers = nrow(query_markers)
+    
+    out_data = data.frame()
+    for(i in 0:5){
+      testCluster = paste0('1_',i)
+      if(testCluster == queryCluster){next}
+      testMarkers = subset(rgc_markers_good, cluster == testCluster)
+      n_test_markers = nrow(testMarkers)
+      
+      query_in_test = sum(query_markers$gene %in% testMarkers$gene)
+      
+      test_in_query = sum(testMarkers$gene %in% query_markers$gene)
+      
+      percent_query_in_test =query_in_test / n_query_markers
+      percent_test_in_query = test_in_query/n_test_markers
+      
+      newd = data.frame(queryCluster = queryCluster,
+                        testCluster = testCluster,
+                        n_query_markers = n_query_markers,
+                        n_test_markers = n_test_markers, 
+                        percent_query_in_test = percent_query_in_test,
+                        percent_test_in_query = percent_test_in_query)
+      out_data = rbind(out_data, newd)
+            
+    }
+return(out_data)
+  
+}
+
+similarityScore('1_5')
+similarityScore('1_3')
+
+
+##### network analysis of marker gene overlap ----
+# Required libraries
+library(dplyr)
+library(ggplot2)
+library(igraph)
+library(tidyr)
+
+# Your existing function (assuming it's already defined)
+# similarityScore = function(queryCluster){...}
+
+# Generate similarity matrix using your function
+clusters <- paste0('1_', 0:5)
+all_similarities <- data.frame()
+
+for(cluster in clusters) {
+  sim_result <- similarityScore(cluster)
+  all_similarities <- rbind(all_similarities, sim_result)
+}
+
+# Create symmetric similarity matrix
+# First, create a complete pairwise dataset
+complete_pairs <- expand.grid(queryCluster = clusters, testCluster = clusters, 
+                             stringsAsFactors = FALSE)
+
+# Add similarities from your data
+similarity_data <- complete_pairs %>%
+  left_join(
+    all_similarities %>% 
+      select(queryCluster, testCluster, percent_query_in_test, percent_test_in_query),
+    by = c("queryCluster", "testCluster")
+  ) %>%
+  # For diagonal (self-similarity), set to 1
+  mutate(
+    similarity = case_when(
+      queryCluster == testCluster ~ 1,
+      !is.na(percent_query_in_test) ~ (percent_query_in_test + percent_test_in_query) / 2,
+      TRUE ~ 0  # This shouldn't happen with complete data
+    )
+  )
+
+# Convert to wide format (matrix)
+similarity_matrix <- similarity_data %>%
+  select(queryCluster, testCluster, similarity) %>%
+  pivot_wider(names_from = testCluster, values_from = similarity, values_fill = list(similarity = 0))
+
+# Convert to matrix format
+sim_matrix <- as.matrix(similarity_matrix[, -1])
+rownames(sim_matrix) <- similarity_matrix$queryCluster
+colnames(sim_matrix) <- colnames(similarity_matrix)[-1]
+
+# Heatmap visualization
+library(pheatmap)
+pheatmap(sim_matrix, 
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE,
+         display_numbers = TRUE,
+         number_format = "%.2f",
+         main = "Cluster Similarity Matrix\n(Average Bidirectional Overlap)")
+
+# Network analysis
+# Set threshold for edges (adjust as needed)
+threshold <- 0.1  # 10% similarity threshold
+
+# Create adjacency matrix
+adj_matrix <- sim_matrix
+adj_matrix[adj_matrix < threshold] <- 0
+diag(adj_matrix) <- 0  # Remove self-loops
+
+# Create igraph object
+g <- graph_from_adjacency_matrix(adj_matrix, 
+                                mode = "undirected", 
+                                weighted = TRUE, 
+                                diag = FALSE)
+
+# Add node attributes (number of markers)
+marker_counts <- all_similarities %>%
+  select(queryCluster, n_query_markers) %>%
+  distinct() %>%
+  arrange(queryCluster)
+
+V(g)$marker_count <- marker_counts$n_query_markers[match(V(g)$name, marker_counts$queryCluster)]
+
+# Plot network
+par(mfrow = c(1, 2))
+
+# Layout 1: Force-directed
+plot(g, 
+     vertex.size = sqrt(V(g)$marker_count) / 10,  # Size by marker count
+     vertex.label = V(g)$name,
+     vertex.label.cex = 0.8,
+     vertex.color = "lightblue",
+     edge.width = E(g)$weight * 10,  # Edge width by similarity
+     edge.label = round(E(g)$weight, 2),
+     edge.label.cex = 0.6,
+     layout = layout_with_fr(g),
+     main = "Similarity Network\n(Force-directed layout)")
+
+# Layout 2: Hierarchical
+plot(g, 
+     vertex.size = sqrt(V(g)$marker_count) / 10,
+     vertex.label = V(g)$name,
+     vertex.label.cex = 0.8,
+     vertex.color = "lightcoral",
+     edge.width = E(g)$weight * 10,
+     edge.label = round(E(g)$weight, 2),
+     edge.label.cex = 0.6,
+     layout = layout_as_tree(g, root = which(V(g)$name == "1_1")),
+     main = "Similarity Network\n(Hierarchical layout, root = 1_1)")
+
+# Print network statistics
+cat("Network Statistics:\n")
+cat("Number of edges:", ecount(g), "\n")
+cat("Network density:", edge_density(g), "\n")
+cat("Clusters by marker count:\n")
+print(marker_counts[order(-marker_counts$n_query_markers), ])
+
+# Alternative: Minimum spanning tree for clearest lineage structure
+mst <- mst(g)
+plot(mst,
+     vertex.size = sqrt(V(mst)$marker_count) / 8,
+     vertex.label = V(mst)$name,
+     vertex.label.cex = 1,
+     vertex.color = "lightgreen",
+     edge.width = E(mst)$weight * 15,
+     edge.label = round(E(mst)$weight, 2),
+     edge.label.cex = 0.8,
+     layout = layout_as_tree(mst, root = which(V(mst)$name == "1_1")),
+     main = "Minimum Spanning Tree\n(Clearest lineage relationships)")
+
+par(mfrow = c(1, 1))
+
+# Print detailed similarity table for interpretation
+cat("\nDetailed similarity patterns:\n")
+detailed_sim <- all_similarities %>%
+  arrange(queryCluster, -percent_query_in_test) %>%
+  mutate(
+    relationship = case_when(
+      percent_query_in_test > 0.3 & percent_test_in_query > 0.3 ~ "Sister clusters",
+      percent_query_in_test > 0.1 & percent_test_in_query < 0.1 ~ "Query → Test differentiation",
+      percent_query_in_test < 0.1 & percent_test_in_query > 0.1 ~ "Test → Query differentiation",
+      TRUE ~ "Distant relationship"
+    )
+  )
+
+print(detailed_sim %>% select(queryCluster, testCluster, percent_query_in_test, 
+                             percent_test_in_query, relationship))
+
+
+
+###good markers 1_4
+marks_4 = FindMarkers(rgc, '1_4')
+clown_go(rownames(marks_4[marks_4$p_val_adj<0.01 &marks_4$avg_log2FC>1, ]))%>%dotplot()
+
+marks_0 = FindMarkers(rgc, '1_0')
+clown_go(rownames(marks_0[marks_0$p_val_adj<0.01 &marks_0$avg_log2FC>1, ]))%>%dotplot()
+
+
+marks_4_0  = FindMarkers(rgc, '1_4','1_0' )
+
+DotPlot(rgc, c('lmx1a',
+               'lmx1al',
+               'LOC111582483',#1ba
+               'lmx1bb'
+               ))
+
+#### examine rgc degs ----
+geneNamer = function(gene){
+  names = read.csv('Reference/genes updated.csv')
+  
+  name = names$NIH_description[names$NIH_accession==gene][1]
+  return(name)
+}
+
+real_degs$name =c(sapply(X=real_degs$gene, FUN = geneNamer))
+sparse =(real_degs[,c('gene', 'cluster', 'short_label', 'name')])
+
+DotPlot(rgc, c('nkx2.1',
+               'LOC111587547' #dbx1b like
+               ,'reln',
+               'olig2',
+               'htr3a'
+               ))
+
+
+
+####fucking around with hub genes -----
+ggplot(data = rgc@meta.data, aes(x = rgc@assays$RNA$data['LOC111577263',],
+                                y = rgc@assays$RNA$data['LOC111577260',]))+
+  geom_point(aes(color = Status), alpha = 0.2)+
+  geom_smooth(aes(color = Status),method='lm', se = F)+
+  xlim(c(0.1,6))+
+  ylim(c(0.1,5))
+
+
+mod = cor(rgc@assays$RNA$data['LOC111577260',][rgc@assays$RNA$data['LOC111577260',]>0 & rgc@assays$RNA$data['LOC111577263',]>0],
+    rgc@assays$RNA$data['LOC111577263',][rgc@assays$RNA$data['LOC111577260',]>0 & rgc@assays$RNA$data['LOC111577263',]>0])
+mod
+
+red_genes= hub_df$gene_name[hub_df$module=='red']
+red_exp = rgc@assays$RNA$data[red_genes,]%>%as.matrix()%>%t()
+colnames(red_exp) = rownames( rgc@assays$RNA$data[red_genes,])
+cor_matrix = cor(red_exp)
+
+library(pheatmap)
+heatmap(cor_matrix)
+
+all_red_genes = modules$gene_name[modules$module=='red']
+red_exp_all = rgc@assays$RNA$data[all_red_genes,]%>%as.matrix()%>%t()
+colnames(red_exp_all) = rownames( rgc@assays$RNA$data[all_red_genes,])
+cor_matrix_big = cor(red_exp_all)
+diag(cor_matrix_big) <-0
+heatmap(cor_matrix_big)
+
+view(cor_matrix_big[,'LOC111577263'])
+
+hist(cor_matrix_big)
+range(cor_matrix_big)
+
+which(cor_matrix_big == max(cor_matrix_big), arr.ind = TRUE)
+
+means = colMeans(cor_matrix_big) # this is how you get the hub genes
+
+

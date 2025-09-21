@@ -144,7 +144,7 @@ Idents(rgc) <- 'sub.cluster'
 DimPlot(rgc, label = T, reduction = 'harmony_wnn.umap')
 
 rgc$Status = factor(rgc$Status, levels = c('NRM', 'M','D','E','NF','F'))
-
+rgc$sub.cluster= factor(rgc$sub.cluster, levels = c(paste0('1_', 0:5)))
 ### dim ----
 dim = DimPlot(rgc, label = T, reduction = 'harmony_wnn.umap')+
   theme_void()+
@@ -637,6 +637,313 @@ ggsave(plot = arom_1_4,
        width = 2.5,
        height = 2.5,
        path = "Subclustering/1/interrim_figs")
+
+### wgcna
+### WGCNA ----
+clusters_list <- c('1_0',
+                   '1_1',
+                   '1_2',
+                   '1_3',
+                   '1_4',
+                   '1_5')
+
+rgc <- SetupForWGCNA(
+  rgc,
+  gene_select = "fraction",
+  fraction = 0.05, 
+  wgcna_name = "rgc" 
+)
+
+### Construct metacells
+rgc <- MetacellsByGroups(
+  seurat_obj = rgc,
+  group.by = c("sub.cluster"),
+  reduction = 'harmony_wnn.umap', 
+  k = 25, 
+  max_shared = 10,
+  ident.group = 'sub.cluster',
+  min_cells = 90 
+)
+
+# normalize metacell expression matrix:
+rgc <- NormalizeMetacells(rgc)
+
+### Coexpression Network analysis
+rgc <- SetDatExpr(
+  rgc,
+  group_name = clusters_list,
+  group.by='sub.cluster', 
+  assay = 'RNA', 
+  layer = 'data' 
+)
+
+### Select soft power threshold
+rgc <- TestSoftPowers(
+  rgc,
+  networkType = 'signed' #not sure if this should be altered either
+)
+
+# plot the results:
+plot_list <- PlotSoftPowers(rgc)
+wrap_plots(plot_list, ncol=2)
+
+rgc <- ConstructNetwork(
+  rgc,
+  tom_name = 'rgc', 
+  tom_outdir = '/Users/ggraham/WGCNA_rgc/',
+  overwrite_tom = T
+)
+
+PlotDendrogram(rgc, main='clust_1 hdWGCNA Dendrogram')
+
+#model eigengenes
+rgc <- ModuleEigengenes(
+  rgc,
+  group.by.vars="sub.cluster"
+)
+
+# harmonized module eigengenes:
+hMEs <- GetMEs(rgc)
+# module eigengenes:
+MEs <- GetMEs(rgc, harmonized=FALSE)
+
+rgc@misc[["rgc"]][["wgcna_net"]][["TOMFiles"]] <-'/Users/ggraham/WGCNA_rgc/rgc_TOM.rda'
+
+# compute eigengene-based connectivity (kME):
+rgc <- ModuleConnectivity(
+  rgc,
+  group.by = 'sub.cluster', group_name =  clusters_list
+  
+)
+
+p <- PlotKMEs(rgc, ncol=5)
+p
+
+# get the module assignment table:
+modules <- GetModules(rgc) %>% subset(module != 'grey')
+
+### Get hub genes
+hub_df <- GetHubGenes(rgc, n_hubs = 10)
+
+#enrich hub genes
+enrich_df = data.frame()
+for(i in unique(hub_df$module)){
+  #print(i)
+  genes = hub_df$gene_name[hub_df$module==i]
+  
+  go =clown_go(genes)
+  if(length(go$Description)>1){
+  message(paste0(i),paste0('_', go$Description)) 
+  newd = data.frame(module = i,
+                    description = go$Description)
+  enrich_df = rbind(newd, enrich_df)
+  }
+  else{
+    message(paste0(i,' no enrichment'))
+  }
+}
+
+
+MEs$Status = rgc$Status
+MEs$individual = rgc$individual
+MEs$sub.cluster = rgc$sub.cluster
+
+plot_module('turquoise')
+plot_module('yellow')
+
+dmes = data.frame()
+for(subcluster in unique(rgc$sub.cluster)){
+for(i in unique(modules$color)){
+  formula_string <- paste0(i, " ~ Status +(1|individual)")%>%as.formula()
+  model = lmer(formula_string, data = subset(MEs, Status %in% c('M','D','F') & 
+                                               sub.cluster == subcluster))
+  p =car::Anova(model, 3)
+  newd = data.frame(module = i,
+                    subcluster = subcluster,
+                    pval = p$`Pr(>Chisq)`[2])
+  dmes = rbind(dmes, newd)
+  
+}
+}
+
+radar = ModuleRadarPlot(
+  rgc,
+  group.by = 'sub.cluster',
+  axis.label.size=4,
+  grid.label.size=4,
+  combine = F
+)
+radar
+
+clown_go(modules$gene_name[modules$color=='red'])%>%
+  dotplot() # neurogenesis
+clown_go(modules$gene_name[modules$color=='yellow'])%>%
+  dotplot() # cell diff
+clown_go(modules$gene_name[modules$color=='blue'])%>%
+  dotplot() # translation
+
+
+for(i in names(radar)){
+  
+  plot = radar[[i]]
+  ggsave(plot = plot,
+       file = paste0("radar_",i,'.svg'),
+       device = "svg",
+       units = "in",
+       width = 2.5,
+       height = 2.5,
+       path = "Subclustering/1/interrim_figs")
+
+}
+rgc$blue = MEs$blue
+grouped_and_sded_blue = subset(MEs, sub.cluster == '1_3'& Phase != 'NRM')%>%
+  group_by(individual,Phase )%>%
+  summarize(mean_blue = mean(blue),
+            se_blue = sd(blue)/sqrt(n()))
+
+model = lmer(blue~Status+(1|individual), data = subset(MEs, Status %in% c('M','D','F') & 
+                                               sub.cluster == '1_3'))
+car::Anova(model, 3)
+pairs(emmeans(model, 'Status'), adjust = 'none')
+
+set.seed(10)
+blue_1_3 = ggplot(grouped_and_sded_blue, aes(x = Phase, y = mean_blue,fill = Phase))+
+    geom_boxplot(alpha = 0.5,  outlier.shape = NA)+
+  geom_pointrange(aes(x = Phase, y = mean_blue, ymin = mean_blue-se_blue,
+                      ymax= mean_blue+se_blue),position = position_jitterdodge(1))+
+  labs(y = 'Blue Mean +/- SE')+
+  ggtitle('1_3')+
+    theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position = 'none')+
+    geom_signif(xmin = c(1.0),
+              xmax = c(1.9),
+              y_position = c(4.2),
+              annotation =c("p=0.07"), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=4)+
+  geom_signif(xmin = c(2.1),
+              xmax = c(5),
+              y_position = c(4.2),
+              annotation =c("*"), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=6)+
+  ylim(-2, 4.7)
+
+  
+ggsave(plot = blue_1_3,
+       file = 'blue_1_3.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 2.5,
+       path = "Subclustering/1/interrim_figs")
+
+
+
+### how are the red hub dfs correlated ------
+
+ggplot(data = data.frame(), aes(x = rgc@assays$RNA$data['LOC111577263',],
+                                y = rgc@assays$RNA$data['foxg1a',]))+
+  geom_point()
+
+ggplot(data = data.frame(), aes(x = rgc@assays$RNA$data['LOC111577263',],
+                                y = rgc@assays$RNA$data['sox1a',]))+
+  geom_point()
+
+ggplot(data = data.frame(), aes(x = rgc@assays$RNA$data['LOC111577263',],
+                                y = rgc@assays$RNA$data['lhx2b',]))+
+  geom_point()
+
+mecp(rgc, 'lhx2b', '1_3', 'sub.cluster')
+mecp(rgc, 'sox1a', '1_3', 'sub.cluster')
+mecp(rgc, 'foxg1a', '1_3', 'sub.cluster')
+mecp(rgc, 'LOC111577260', '1_3', 'sub.cluster')
+
+#### DNA damage module ====
+#rip the GO term
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+
+
+biomart_basic <-getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'entrezgene_description',
+                   'go_id',
+                   'name_1006',
+                   'namespace_1003'))
+
+dna_damage_genes = unique(
+  biomart_basic$entrezgene_accession[biomart_basic$name_1006 ==
+                                       grepl('break repair', biomart_basic$name_1006) |
+                                       grepl('DNA repair', biomart_basic$name_1006) |
+                                       grepl('DNA damage', biomart_basic$name_1006) |
+                                       grepl('DNA damage', biomart_basic$entrezgene_description)
+                                     ]
+  )
+dna_damage_genes
+
+rgc = AddModuleScore(rgc, list(dna_damage_genes),name = 'Damage')
+
+DotPlot(rgc, 'Damage1')
+
+plotSeuratModule('Damage1', '1_0')
+plotSeuratModule('Damage1', '1_1')
+plotSeuratModule('Damage1', '1_2') #woooah
+plotSeuratModule('Damage1', '1_3')
+plotSeuratModule('Damage1', '1_4')
+plotSeuratModule('Damage1', '1_5')
+
+data_1_2 = subset(rgc@meta.data, sub.cluster == '1_2')
+damage_model2 = lmer(Damage1 ~ Status+(1|individual), data =data_1_2 )
+car::Anova(damage_model2, 3) # big money but what does it mean
+
+pairs(emmeans(damage_model2,'Status'), adjust ='none')
+
+grouped_and_sded_dmg = subset(rgc@meta.data, sub.cluster == '1_2'& Phase != 'NRM')%>%
+  group_by(individual,Phase )%>%
+  summarize(mean_dmg = mean(Damage1),
+            se_dmg= sd(Damage1)/sqrt(n()))
+
+set.seed(10)
+dmg_1_2 = ggplot(grouped_and_sded_dmg, aes(x = Phase, y = mean_dmg,fill = Phase))+
+    geom_boxplot(alpha = 0.5,  outlier.shape = NA)+
+  geom_pointrange(aes(x = Phase, y = mean_dmg, ymin = mean_dmg-se_dmg,
+                      ymax= mean_dmg+se_dmg),position = position_jitterdodge(1))+
+  labs(y = 'DNA Damage Mean +/- SE')+
+  ggtitle('1_2')+
+    theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position = 'none')+
+    geom_signif(xmin = c(1.0),
+              xmax = c(1.9),
+              y_position = c(.01),
+              annotation =c("*"), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=6)+
+  geom_signif(xmin = c(2.1),
+              xmax = c(5),
+              y_position = c(.01),
+              annotation =c("*"), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=6)+
+  ylim(-0.02, 0.015)
+
+ggsave(plot = dmg_1_2,
+       file = 'dmg_1_2.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 2.5,
+       path = "Subclustering/1/interrim_figs")
+
+
+
 
 
 
