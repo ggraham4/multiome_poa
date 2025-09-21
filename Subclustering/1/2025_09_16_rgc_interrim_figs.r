@@ -249,7 +249,7 @@ ggsave(plot = arom,
 rgc$arom_binom = ifelse(rgc@assays$RNA$data['LOC111577263',]>0, 1, 0)
 
 #proportion cells ----
-rgc$Phase  = unfactor(rgc$Status)
+rgc$Phase  = (rgc$Status)
 rgc$Phase = ifelse(rgc$Phase == 'D', 'I', rgc$Phase)
 rgc$Phase = ifelse(rgc$Phase == 'E', 'LI', rgc$Phase )
 rgc$Phase <- factor(rgc$Phase, levels = c('NRM',
@@ -877,7 +877,7 @@ biomart_basic <-getBM(
                    'namespace_1003'))
 
 dna_damage_genes = unique(
-  biomart_basic$entrezgene_accession[biomart_basic$name_1006 ==
+  biomart_basic$entrezgene_accession[
                                        grepl('break repair', biomart_basic$name_1006) |
                                        grepl('DNA repair', biomart_basic$name_1006) |
                                        grepl('DNA damage', biomart_basic$name_1006) |
@@ -928,7 +928,7 @@ dmg_1_2 = ggplot(grouped_and_sded_dmg, aes(x = Phase, y = mean_dmg,fill = Phase)
   geom_signif(xmin = c(2.1),
               xmax = c(5),
               y_position = c(.01),
-              annotation =c("*"), 
+              annotation =c("**"), 
               color = "black",
               tip_length = c(0,0),
               textsize=6)+

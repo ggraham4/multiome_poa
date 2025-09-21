@@ -1307,4 +1307,51 @@ which(cor_matrix_big == max(cor_matrix_big), arr.ind = TRUE)
 
 means = colMeans(cor_matrix_big) # this is how you get the hub genes
 
+### retinoic-----
+DotPlot(rgc, 'LOC111573403')
+mecp(rgc, 'LOC111573403', '1_1', 'sub.cluster')
+
+### which modules are enriched for degs ----
+#unique_degs = unique(real_degs$gene)
+unique_degs = unique(deg_data_1$gene)
+fish_df = data.frame()
+for(i in unique(modules$color)){
+  subset_mods = subset(modules, color ==i)
+  notset_mods = subset(modules, color !=i)
+  
+  n_genes_in_mod = length(subset_mods$gene)
+  n_genes_out_mod =  length(notset_mods$gene)
+  
+  degs_in_mod = sum(unique_degs %in% subset_mods$gene)
+  degs_out_mod = sum(unique_degs %in% notset_mods$gene)
+  
+  fish_matrix <- matrix(NA, 2, 2)
+  fish_matrix[1,1] <- degs_in_mod
+  fish_matrix[2,1] <- degs_out_mod
+  fish_matrix[1,2] <- n_genes_in_mod-degs_in_mod
+  fish_matrix[2,2] <- n_genes_out_mod-degs_out_mod
+
+  test = fisher.test(fish_matrix)
+  
+  newd = data.frame(color =i,
+                    p = test$p.value)
+  fish_df = rbind(newd, fish_df)
+}
+
+# turquoise deficient for degs
+
+### comparing global to subcluster degs ----
+rgc = AddModuleScore(rgc, list(unique(deg_data_1$gene)), name = 'global')
+DotPlot(rgc, 'global1')
+
+rgc = AddModuleScore(rgc, list(unique(real_degs$gene)), name = 'local')
+DotPlot(rgc, 'local1')
+
+intersect(real_degs$gene%>%unique(),deg_data_1$gene%>%unique() )
+
+setdiff(real_degs$gene%>%unique(),deg_data_1$gene%>%unique() )
+clown_go(setdiff(real_degs$gene%>%unique(),deg_data_1$gene%>%unique() ))%>%dotplot()
+
+clown_go(deg_data_1$gene%>%unique() )%>%dotplot()
+clown_go(real_degs$gene%>%unique() )%>%dotplot()
 

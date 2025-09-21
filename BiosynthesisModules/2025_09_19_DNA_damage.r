@@ -106,7 +106,7 @@ biomart_basic <-getBM(
                    'namespace_1003'))
 
 dna_damage_genes = unique(
-  biomart_basic$entrezgene_accession[biomart_basic$name_1006 ==
+  biomart_basic$entrezgene_accession[
                                        grepl('break repair', biomart_basic$name_1006) |
                                        grepl('DNA repair', biomart_basic$name_1006) |
                                        grepl('DNA damage', biomart_basic$name_1006) |
@@ -157,7 +157,7 @@ car::Anova(mod_txn_raw, 3)
 
 ### is this due to increased DNA synthesis in males and females ----
 dna_synthesis_genes = unique(
-  biomart_basic$entrezgene_accession[biomart_basic$name_1006 ==
+  biomart_basic$entrezgene_accession[
                                        grepl('DNA replication', biomart_basic$name_1006) |
                                        grepl('DNA polymerase', biomart_basic$name_1006) |
                                        grepl('DNA clamp', biomart_basic$name_1006) |
@@ -175,10 +175,10 @@ plotSeuratModule('Replication1', '1_2')
 mod_rep =  lmer(Replication1 ~ Status+(1|individual), data =subset(rgc@meta.data, sub.cluster == '1_2' & Status %in%c('M','D', 'F')) )
 car::Anova(mod_rep, 3)
 
-plotSeuratModule('Replication1', '1_1') 
+plotSeuratModule('Replication1', '1_1') # could be something
 
 RNA_synthesis_genes = unique(
-  biomart_basic$entrezgene_accession[biomart_basic$name_1006 ==
+  biomart_basic$entrezgene_accession[
                                        grepl('transcription', biomart_basic$name_1006) |
                                        grepl('RNA polymerase', biomart_basic$name_1006) 
                                      ]
@@ -191,5 +191,29 @@ plotSeuratModule('transcription1', '1_4')
 
 
 
+### is it due to chromatin ----
+obj = readRDS("~/Desktop/nemo.orig_harmony.integration_all_testd_clusters.rds")
+obj$final_clusters = obj$res0.8_50nn_40PC_45LSI
+Idents(obj) = 'final_clusters'
+rgc <- FindSubCluster(obj, 1, 'harmony.wsnn')
+rgc = subset(rgc, final_clusters == 1)
+Idents(rgc) = 'sub.cluster'
+DimPlot(rgc, reduction = 'harmony_wnn.umap')
+
+rgc$chromatin = colSums(rgc@assays$ATAC$data)
+
+hist(rgc$chromatin)
+
+DotPlot(rgc, 'chromatin')
+
+plotSeuratModule('chromatin', '1_2') 
+plotSeuratModule('chromatin', '1_3') 
+plotSeuratModule('chromatin', '1_1') 
+plotSeuratModule('chromatin', '1_0') 
+plotSeuratModule('chromatin', '1_4') 
+plotSeuratModule('chromatin', '1_5') 
+
+mod = lmer(chromatin~Phase+(1|individual), data = subset(rgc@meta.data, sub.cluster=='1_5' & Status %in% c('M','D','F')))
+car::Anova(mod, 3)
 
 
