@@ -42,8 +42,36 @@
 
   `%notin%` <- Negate(`%in%`)
   
+  geneNamer = function(gene){
+  names = read.csv('Reference/genes updated.csv')
+  
+  name = names$NIH_description[names$NIH_accession==gene][1]
+  
+  if(is.na(name)){name = gene}
+  return(name)
+}
+
+  
   #define functions
-plot_module <-  function(module){
+p_annotate <- function(p_value) {
+  if (is.na(p_value)) {
+    return("NA")
+  }
+  
+  if (p_value < 0.001) {
+    return("***")
+  } else if (p_value < 0.01) {
+    return("**")
+  } else if (p_value < 0.05) {
+    return("*")
+  } else if (p_value < 0.1) {
+    return(paste0("p = ", round(p_value, 3)))
+  } else {
+    return("NS")
+  }
+}
+
+  plot_module <-  function(module){
   #ur supposed to use ME not hME
   me_subset=MEs%>%
     group_by(individual, Status)%>%
@@ -943,6 +971,236 @@ ggsave(plot = dmg_1_2,
        path = "Subclustering/1/interrim_figs")
 
 
+###### growth factors and whatnot ----
+lower_string_degs = read.csv('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering/cluster_1.csv')
+degs = subset(lower_string_degs, av_q.value < 0.1)
+degs$name = sapply(degs$gene, geneNamer)
+sparse_degs = degs[,c('gene', 'name', 'singular')]   
+
+all_degs_1_1 =  read.csv('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/09_16_2025 1 Subclusters Neg Bin Anova First/cluster_1_1.csv')
+
+#define a function to plot DEGs the way I like
+deg_plotter = function(object = rgc, 
+                       gene, 
+                       cluster , 
+                       clustering='sub.cluster',
+                       signif_dm  ,
+                       signif_df ,
+                       signif_mf ,
+                       singular=F,
+                       common_name){
+  set.seed(10)
+  singular = ifelse(singular == T, 'Singular', '')
+  meta= object@meta.data
+  meta$gene = object@assays$RNA$data[gene,]
+  
+  meta_grouped_and_sded = meta%>%
+    filter(Phase != 'NRM' & !!sym(clustering) == cluster) %>%
+    group_by(individual, Phase)%>%
+    summarize(mean_gene = mean(gene),
+              se_gene = sd(gene)/sqrt(n()))
+  
+  plot_lower_lim = min(meta_grouped_and_sded$mean_gene -meta_grouped_and_sded$se_gene )
+  plot_upper_lim= max(meta_grouped_and_sded$mean_gene +meta_grouped_and_sded$se_gene ) * 1.2
+  plot_signif_lower = max(meta_grouped_and_sded$mean_gene +meta_grouped_and_sded$se_gene ) * 1.05
+  plot_signif_upper = max(meta_grouped_and_sded$mean_gene +meta_grouped_and_sded$se_gene ) * 1.25
+  
+
+  
+    signif_dm = p_annotate(signif_dm)
+    signif_df = p_annotate(signif_df)
+    signif_mf = p_annotate(signif_mf)
+  
+  textsize_dm = ifelse(grepl("\\*", signif_dm), 6, 3)  
+  textsize_df = ifelse(grepl("\\*", signif_df), 6, 3)  
+  textsize_mf = ifelse(grepl("\\*", signif_mf), 6, 3)    
+
+  
+      plot_upper_lim= ifelse(signif_mf!= 'NS', max(meta_grouped_and_sded$mean_gene +meta_grouped_and_sded$se_gene ) * 1.4,plot_upper_lim )
+
+  
+plot = ggplot(meta_grouped_and_sded, aes(x = Phase, y = mean_gene,fill = Phase))+
+    geom_boxplot(alpha = 0.5,  outlier.shape = NA)+
+  geom_pointrange(aes(x = Phase,
+                      y = mean_gene,
+                      ymin = mean_gene-se_gene,
+                      ymax= mean_gene+se_gene),
+                  position = position_jitterdodge(1), 
+                  size = 0.2
+                  )+
+  labs(y = 'Mean +/- SE Expression', subtitle = singular)+
+  ggtitle(paste0(common_name, ': ', cluster))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, size =12),
+        plot.subtitle = element_text(hjust = 0.5, size =8))+
+  theme(legend.position = 'none')+
+    geom_signif(xmin = c(1.0),
+              xmax = c(1.9),
+              y_position = c(plot_signif_lower),
+              annotation =c(signif_dm), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=textsize_dm)+
+  geom_signif(xmin = c(2.1),
+              xmax = c(5),
+              y_position = c(plot_signif_lower),
+              annotation =c(signif_df), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=textsize_df)+
+  ylim(plot_lower_lim, plot_upper_lim)
+   
+ if(signif_mf != 'NS'){
+   plot  <- plot+
+      geom_signif(xmin = c(1),
+              xmax = c(5),
+              y_position = c(plot_signif_upper),
+              annotation =c(signif_mf), 
+              color = "black",
+              tip_length = c(0,0),
+              textsize=textsize_mf)
+    
+  }
+
+return(plot)
+  
+}
+
+
+#rarb
+rarb = deg_plotter(rgc, 
+            'LOC111573403',
+            '1_1',
+            'sub.cluster',
+            real_degs$d_m_p.value[real_degs$gene=='LOC111573403'],
+            real_degs$d_f_p.value[real_degs$gene=='LOC111573403'],
+            real_degs$f_m_p.value[real_degs$gene=='LOC111573403'],
+            real_degs$singular[real_degs$gene=='LOC111573403'],
+            'rarb'
+            )
+
+ggsave(plot = rarb,
+       file = 'rarb_1_1.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 3,
+       path = "Subclustering/1/interrim_figs")
+
+
+
+grb10 = deg_plotter(rgc, 
+            'grb10b',
+            '1_1',
+            'sub.cluster',
+            all_degs_1_1$d_m_p.value[all_degs_1_1$gene=='grb10b'],
+            all_degs_1_1$d_f_p.value[all_degs_1_1$gene=='grb10b'],
+            all_degs_1_1$f_m_p.value[all_degs_1_1$gene=='grb10b'],
+            singular = all_degs_1_1$singular[all_degs_1_1$gene=='grb10b'],
+            'grb10b'
+            )
+
+grb10
+
+ggsave(plot = grb10,
+       file = 'grb10_1_1.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 3,
+       path = "Subclustering/1/interrim_figs")
+
+
+ccdc85cb = deg_plotter(rgc, 
+            'ccdc85cb',
+            '1_1',
+            'sub.cluster',
+            all_degs_1_1$d_m_p.value[all_degs_1_1$gene=='ccdc85cb'],
+            all_degs_1_1$d_f_p.value[all_degs_1_1$gene=='ccdc85cb'],
+            all_degs_1_1$f_m_p.value[all_degs_1_1$gene=='ccdc85cb'],
+            singular = all_degs_1_1$singular[all_degs_1_1$gene=='ccdc85cb'],
+            'ccdc85cb'
+            )
+
+ccdc85cb
+
+ggsave(plot = ccdc85cb,
+       file = 'ccdc85cb_1_1.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 3,
+       path = "Subclustering/1/interrim_figs")
+
+ 
+
+fgfbp3 = deg_plotter(rgc, 
+            'fgfbp3',
+            '1',
+            'final_clusters',
+            lower_string_degs$d_m_p.value[lower_string_degs$gene=='fgfbp3'],
+            lower_string_degs$d_f_p.value[lower_string_degs$gene=='fgfbp3'],
+            lower_string_degs$f_m_p.value[lower_string_degs$gene=='fgfbp3'],
+            singular = lower_string_degs$singular[lower_string_degs$gene=='fgfbp3'],
+            'fgfbp3'
+            )
+
+fgfbp3
+
+ggsave(plot = fgfbp3,
+       file = 'fgfbp3_1.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 3,
+       path = "Subclustering/1/interrim_figs")
+
+fgf12a = deg_plotter(rgc, 
+            'fgf12a',
+            '1_1',
+            'sub.cluster',
+            lower_string_degs$d_m_p.value[lower_string_degs$gene=='fgfbp3'],
+            lower_string_degs$d_f_p.value[lower_string_degs$gene=='fgfbp3'],
+            lower_string_degs$f_m_p.value[lower_string_degs$gene=='fgfbp3'],
+            singular = lower_string_degs$singular[lower_string_degs$gene=='fgfbp3'],
+            'fgf12a'
+            )
+
+fgf12a
+
+ggsave(plot = fgf12a,
+       file = 'fgf12a_1_1.tiff',
+       device = "tiff",
+       units = "in",
+       width = 2.5,
+       height = 3,
+       path = "Subclustering/1/interrim_figs")
+
+
+
+dot2<- DotPlot(rgc, c('fgf2',
+               'fgf3',
+               'fgf7',
+               'fgf10a',
+                     'fgf10b',
+               'fgf22'
+               ),
+               group.by = 'sub.cluster',
+               dot.min = .01,
+                 dot.scale = 3)+
+  labs(y = 'Subcluster')+
+  theme(  axis.title.y = element_blank(), axis.text.x = element_text(angle = -90,
+                                                                     hjust =.8,
+                                                                     vjust = 0.75))
+dot2
+
+ggsave(plot = dot2,
+       file = 'dot2.tiff',
+       device = "tif",
+       units = "in",
+       width = 4,
+       height = 2.5,
+       path = "Subclustering/1/interrim_figs")
 
 
 

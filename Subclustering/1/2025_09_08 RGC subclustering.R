@@ -1355,3 +1355,24 @@ clown_go(setdiff(real_degs$gene%>%unique(),deg_data_1$gene%>%unique() ))%>%dotpl
 clown_go(deg_data_1$gene%>%unique() )%>%dotplot()
 clown_go(real_degs$gene%>%unique() )%>%dotplot()
 
+### retinoic acid -----
+ensembl <- useEnsembl(biomart = "genes", 
+                      dataset = "aocellaris_gene_ensembl")
+
+
+biomart_basic <-getBM(
+    mart = ensembl, #working mart 
+    attributes = c("entrezgene_accession",
+                   'entrezgene_description',
+                   'go_id',
+                   'name_1006',
+                   'namespace_1003'))
+
+retinoic_genes= unique(
+  biomart_basic$entrezgene_accession[
+                                       grepl('retinoic', biomart_basic$entrezgene_description) 
+                                     ]
+  )
+
+DotPlot(rgc, retinoic_genes)+
+  coord_flip()
