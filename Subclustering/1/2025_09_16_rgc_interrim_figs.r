@@ -214,9 +214,12 @@ rgc$sub.cluster <- factor(rgc$sub.cluster, levels = c('1_0','1_1','1_2','1_3','1
 
 ### dotplot ----
 dot <- DotPlot(rgc, c(
+                'sox2',
                 'pax6b',
+                'hopx',
                'dclk1a',
                'dclk2a',
+               'rbfox3a',
                'fgfr3',
                      'fgfr4',
                'gfap',
@@ -230,16 +233,20 @@ dot <- DotPlot(rgc, c(
                  dot.scale = 3)+
   coord_flip()+
   scale_x_discrete(labels = c(
+                    'sox2',
                      'pax6b',
+                      'hopx',
                      'dclk1a',
                      'dclk2a',
+                    'NeuN',
                      'fgfr3',
                      'fgfr4',
                      'gfap',
                      'nfia',
                      'cd44b',
                      'EAA1',
-                     'cyp19a1b'))+
+                     'cyp19a1b'
+))+
   labs(y = 'Subcluster')+
   theme(  axis.title.y = element_blank(), axis.text.x = element_text(angle = -15,
                                                                      hjust =.8,
@@ -250,7 +257,7 @@ ggsave(plot = dot,
        device = "tif",
        units = "in",
        width = 5,
-       height = 2.5,
+       height = 2.7,
        path = "Subclustering/1/interrim_figs")
 
 
