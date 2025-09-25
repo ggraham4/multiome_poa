@@ -5,7 +5,7 @@ library(tidyverse)
 library(Seurat)
 `%notin%` <- Negate(`%in%`)
 
-#obj = readRDS("A:/optimal_clustering_05_06_2025/RNA_object_human_names.rds")
+human_named = readRDS("A:/optimal_clustering_05_06_2025/RNA_object_human_names.rds")
 
 ## first, figure out all pathways is analyzed
 example_data = read_tsv("Subclustering/1/CellPhone/Whole/degs_analysis_significant_means_09_19_2025_155229.txt")
@@ -16,7 +16,7 @@ unique_cell_cell_pairs = colnames(example_data[,14:ncol(example_data)])
 base_path = "Subclustering/1/CellPhone/Whole/"
 #read in all sample data
 individual_data = list()
-for(i in unique(obj$individual)){
+for(i in unique(human_named$individual)){
   if(i =='GH'){next}
   print(i)
   
@@ -26,7 +26,7 @@ for(i in unique(obj$individual)){
 }
 
 #first, make a loop to coalesce all the data
-individuals = unique(obj$individual)
+individuals = unique(human_named$individual)
 
 cluster_pair_list = list()  
 for(interacting_pair in unique_interactions){
@@ -71,18 +71,18 @@ saveRDS(cluster_pair_list, paste0(base_path,'coalesced_list_09_19_2025.RDS'))
 test_pull = readRDS(paste0(base_path,'coalesced_list_09_19_2025.RDS'))
 ### ####
 ## read in reference data
-example_data = read_tsv("A:/cellphone_1_09_19_2025/whole_output/degs_analysis_means_09_19_2025_124528.txt")
+example_data = read_tsv("A:/cellphone_1_09_19_2025/whole_output/degs_analysis_means_09_19_2025_155229.txt")
 coalesced_data = readRDS('A:/cellphone_1_09_19_2025/whole_output/coalesced_list_09_19_2025.RDS')
 base_path = 'A:/cellphone_1_09_19_2025/whole_output/'
 
 unique_interactions = unique(example_data$interacting_pair)
 unique_cell_cell_pairs = colnames(example_data[,14:ncol(example_data)])
 
-individuals = unique(obj$individual)
+individuals = unique(human_named$individual)
 individuals = individuals[individuals!= 'GH']
 
 ## read in significance data
-significant_interactions_reference = read_tsv("A:/cellphone_1_09_19_2025/whole_output/degs_analysis_relevant_interactions_09_19_2025_124528.txt")
+significant_interactions_reference = read_tsv("A:/cellphone_1_09_19_2025/whole_output/degs_analysis_relevant_interactions_09_19_2025_155229.txt")
 
 significant_interactions_reference_filtered = significant_interactions_reference[,-c(1,3:13)]
 
@@ -101,8 +101,8 @@ significant_interactions = unique(significant_interactions_reference_filtered_pi
 coalesced_data_subset = coalesced_data[which(names(coalesced_data) %in% significant_interactions)]
 
 ## also add sex to the list
-status_data = data.frame(individual = obj$individual,
-                         Status = obj$Status)%>%
+status_data = data.frame(individual = human_named$individual,
+                         Status = human_named$Status)%>%
   distinct()
 
 
@@ -129,7 +129,7 @@ saveRDS(new_list, 'A:/cellphone_1_09_19_2025/whole_output/signif_only_list_09_19
 
 unique_cell_cell_pairs = colnames(example_data[,14:ncol(example_data)])
 
-individuals = unique(obj$individual)
+individuals = unique(human_named$individual)
 individuals = individuals[individuals!= 'GH']
 
 signif_list = readRDS( 'A:/cellphone_1_09_19_2025/whole_output/signif_only_list_09_19_2025.RDS')
@@ -270,6 +270,31 @@ rownames(signif_data_bound) =(1:nrow(signif_data_bound))
 
 write_csv(signif_data_bound, 'A:/cellphone_1_09_19_2025/whole_output/signif_data_bound.csv')
 
+
+for(i in names(signif_data2)){
+  if(all(signif_data2[[i]]$test_type=='Fisher')){
+    signif_data2[[i]]$main_effect_q.value_no_fisher = 1
+  }
+  else{
+    signif_data2[[i]]$main_effect_q.value_no_fisher = p.adjust(signif_data2[[i]]$main_effect_p.value, 'fdr',nrow(signif_data2[[i]]))
+  }
+  
+}
+
+signif_data_no_fisher = signif_data2
+for(i in names(signif_data_no_fisher)){
+  
+  signif_data_no_fisher[[i]] <- subset(signif_data_no_fisher[[i]], test_type != 'Fisher')
+  
+  signif_data_no_fisher[[i]]$main_effect_q.value = p.adjust(signif_data_no_fisher[[i]]$main_effect_p.value, 'fdr',nrow(signif_data_no_fisher[[i]]))
+  
+  
+}
+
+signif_data_no_fisher_bound = do.call(rbind, signif_data_no_fisher)
+rownames(signif_data_no_fisher_bound) =(1:nrow(signif_data_no_fisher_bound))
+
+write_csv(signif_data_no_fisher_bound, 'A:/cellphone_1_09_19_2025/whole_output/signif_data_bound_no_fisher.csv')
 
 
 
