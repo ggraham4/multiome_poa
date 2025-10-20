@@ -319,37 +319,16 @@ plot_interaction = function(LRpair, CCpair, whole_sub){
   
 }
 
-
+add_transcript_length = function(gene){
+  length = biomart_basic$transcript_length[biomart_basic$entrezgene_accession==gene]%>%min()
+  if(length == Inf){length = 0}
+  return(length)
 }
-obj = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
-
-# gonna have to do markers for 6 and 1 subclusters separately
-
-all_markers = FindAllMarkers(obj)
-
-#subcluster
-sub_6 = FindSubCluster(obj, 6, graph = 'harmony.wsnn')
-sub_6_markers = FindAllMarkers(sub_6, group.by = 'sub.cluster')
-
-sub_1 = FindSubCluster(obj, 1, graph = 'harmony.wsnn')
-sub_1_markers = FindAllMarkers(sub_1, group.by = 'sub.cluster')
-
-
-#join_dfs
-sub_6_sub_markers = subset(sub_6_markers,
-                           cluster %in% c(paste0(6,'_', 0:3)) &
-                             p_val_adj < 0.05 & 
-                             pct.1 > pct.2)
-sub_1_sub_markers = subset(sub_1_markers, cluster %in% c(paste0('1_', 0:5))&
-                             p_val_adj < 0.05 & 
-                             pct.1 > pct.2)
-
-whole_markers = subset(all_markers, cluster %notin% c(1, 6) &
-                             p_val_adj < 0.05 & 
-                             pct.1 > pct.2 )
-
-joined_markers = rbind(whole_markers,sub_1_sub_markers,  sub_6_sub_markers)
-
+add_max_expression = function(gene){
+  print(gene)
+  return(max(counts_matrix[gene,]))
+  
+}
 
 ## whip out biomart
 ensembl <- useEnsembl(biomart = "genes", 
@@ -361,92 +340,230 @@ biomart_basic <-getBM(
     mart = ensembl, #working mart 
     attributes = c("entrezgene_accession",
                    'transcript_length'))
-
-# add transcript length
-add_transcript_length = function(gene){
-  length = biomart_basic$transcript_length[biomart_basic$entrezgene_accession==gene]%>%min()
-  if(length == Inf){length = 0}
-  return(length)
 }
-
-joined_markers$transcript_length = sapply(joined_markers$gene, add_transcript_length)
-
-#max expression 
+obj = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
 counts_matrix = obj@assays$RNA$counts%>%as.matrix()
-add_max_expression = function(gene){
-  return(max(counts_matrix[gene,]))
-  
+
+### start -----
+
+all_marks_6_vs_0 <- FindMarkers(obj, 
+                                ident.1 = '6', 
+                                ident.2 = c('0',3),
+                                group.by = 'final_clusters')
+
+#candidate genes
+candidate_gene = read.xlsx("MERFISH/candidate_genes.xlsx")
+candidate_genes = data.frame(gene =candidate_gene$gene%>%unique())
+candidate_genes$gene[candidate_genes$gene =='fgf12a'] = 'fosb'
+candidate_genes$gene[candidate_genes$gene =='grb10b'] = 'npas4a'
+
+#candidate_genes[100:122, 'gene'] <- rownames(all_marks_6_vs_0[1:23,])
+
+
+candidate_genes <- candidate_genes%>%
+  distinct(gene)
+
+candidate_genes$gene[candidate_genes$gene =='gal'] =rownames(all_marks_6_vs_0[24,])
+candidate_genes$gene[candidate_genes$gene =='prlh2'] =rownames(all_marks_6_vs_0[25,])
+candidate_genes$gene[candidate_genes$gene =='chgb'] =rownames(all_marks_6_vs_0[26,])
+candidate_genes$gene[candidate_genes$gene =='LOC111564112'] =rownames(all_marks_6_vs_0[27,])
+
+candidate_genes$max_expression = sapply(candidate_genes$gene, add_max_expression)
+candidate_genes$transcript_length = sapply(candidate_genes$gene, add_transcript_length)
+
+# manually filling based on NIH
+candidate_genes$transcript_length[candidate_genes$gene =='LOC111568258'] = 3021
+candidate_genes$transcript_length[candidate_genes$gene =='LOC111564112'] =9486
+candidate_genes$transcript_length[candidate_genes$gene =='LOC129349764'] =2437
+candidate_genes$transcript_length[candidate_genes$gene =='chgb'] =2365
+candidate_genes$transcript_length[candidate_genes$gene =='ttn.2'] =87356
+
+merfish_genes =candidate_genes
+
+# test find transfer labels -- thank you claude
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+
+# MERFISH Gene Panel Validation
+# Tests if selected genes can accurately map held-out cells back to original clusters
+
+# Parameters
+holdout_fraction <- 0.2  # Fraction of cells to hold out for testing
+n_neighbors <- 30        # Number of neighbors for label transfer
+seed <- 42
+
+set.seed(seed)
+
+# Ensure merfish_genes exist in the object
+merfish_genes_filtered <- merfish_genes$gene[merfish_genes$gene %in% rownames(obj)]
+cat(sprintf("Using %d/%d MERFISH genes found in object\n", 
+            length(merfish_genes_filtered), length(merfish_genes$gene)))
+
+# Split cells into reference and query sets
+all_cells <- colnames(obj)
+n_test <- round(length(all_cells) * holdout_fraction)
+test_cells <- sample(all_cells, n_test)
+ref_cells <- setdiff(all_cells, test_cells)
+
+cat(sprintf("\nReference cells: %d\nTest cells: %d\n", 
+            length(ref_cells), length(test_cells)))
+
+# Create reference and query objects
+ref_obj <- subset(obj, cells = ref_cells)
+query_obj <- subset(obj, cells = test_cells)
+
+# Store original cluster labels from query
+true_labels <- query_obj$final_clusters
+names(true_labels) <- colnames(query_obj)
+
+# Subset to MERFISH genes only
+ref_subset <- subset(ref_obj
+                     #, features = merfish_genes_filtered
+                     )
+query_subset <- subset(query_obj
+                      # , features = merfish_genes_filtered
+                       )
+
+# Normalize and scale data
+ref_subset <- NormalizeData(ref_subset, verbose = FALSE)
+ref_subset <- ScaleData(ref_subset, verbose = FALSE)
+query_subset <- NormalizeData(query_subset, verbose = FALSE)
+
+# Find anchors and transfer labels
+cat("\nFinding transfer anchors...\n")
+anchors <- FindTransferAnchors(
+  reference = ref_subset,
+  query = query_subset,
+  dims = 1:min(30, length(merfish_genes_filtered) - 1),
+  features = merfish_genes$gene,
+  verbose = FALSE
+)
+
+cat("Transferring labels...\n")
+predictions <- TransferData(
+  anchorset = anchors,
+  refdata = ref_subset$final_clusters,
+  dims = 1:min(30, length(merfish_genes_filtered) - 1),
+  k.weight = n_neighbors,
+  verbose = FALSE
+)
+
+# Add predictions to query object
+query_obj$predicted_clusters <- predictions$predicted.id
+query_obj$prediction_score <- predictions$prediction.score.max
+
+# Calculate accuracy metrics
+accuracy <- mean(query_obj$predicted_clusters == true_labels)
+cat(sprintf("\n=== RESULTS ===\n"))
+cat(sprintf("Overall Accuracy: %.2f%%\n", accuracy * 100))
+
+# Per-cluster accuracy
+cluster_accuracy <- query_obj@meta.data %>%
+  group_by(final_clusters) %>%
+  summarise(
+    n_cells = n(),
+    correct = sum(predicted_clusters == final_clusters),
+    accuracy = mean(predicted_clusters == final_clusters),
+    mean_score = mean(prediction_score)
+  ) %>%
+  arrange(desc(accuracy))
+
+print(cluster_accuracy)
+
+# Confusion matrix
+conf_matrix <- table(True = true_labels, Predicted = query_obj$predicted_clusters)
+cat("\nConfusion Matrix:\n")
+print(conf_matrix)
+
+# Calculate mean prediction score
+mean_score <- mean(query_obj$prediction_score)
+cat(sprintf("\nMean Prediction Score: %.3f\n", mean_score))
+
+# Visualize results
+p1 <- ggplot(query_obj@meta.data, aes(x = final_clusters, fill = predicted_clusters)) +
+  geom_bar(position = "fill") +
+  theme_minimal() +
+  labs(title = "Prediction Distribution by True Cluster",
+       x = "True Cluster", y = "Proportion", fill = "Predicted") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+p2 <- ggplot(query_obj@meta.data, aes(x = prediction_score)) +
+  geom_histogram(bins = 50, fill = "steelblue", alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Distribution of Prediction Scores",
+       x = "Prediction Score", y = "Count") +
+  geom_vline(xintercept = mean_score, linetype = "dashed", color = "red")
+
+print(p1)
+#print(p2)
+
+# Summary assessment
+cat("\n=== ASSESSMENT ===\n")
+if (accuracy > 0.9 & mean_score > 0.7) {
+  cat("✓ EXCELLENT: Gene panel is highly suitable for MERFISH mapping\n")
+} else if (accuracy > 0.8 & mean_score > 0.6) {
+  cat("✓ GOOD: Gene panel should work well for MERFISH mapping\n")
+} else if (accuracy > 0.7 & mean_score > 0.5) {
+  cat("⚠ MODERATE: Gene panel may need refinement\n")
+} else {
+  cat("✗ POOR: Consider adding more informative genes\n")
 }
-joined_markers$max_expression = lapply(joined_markers$gene, add_max_expression)
 
-## filter time
-joined_markers_filtered = subset(joined_markers, max_expression <= 136 & transcript_length>= 1440)
+# Identify problematic clusters
+low_acc_clusters <- cluster_accuracy %>%
+  filter(accuracy < 0.7) %>%
+  pull(final_clusters)
 
-unique_good_genes = unique(joined_markers_filtered$gene)
+if (length(low_acc_clusters) > 0) {
+  cat(sprintf("\nClusters with <70%% accuracy: %s\n", 
+              paste(low_acc_clusters, collapse = ", ")))
+}
 
-# output
-truncated_matrix = counts_matrix[unique_good_genes, ]
 
-sparse_mat = Matrix(truncated_matrix, sparse = T)
-library(Matrix)
 
-writeMM(sparse_mat, file = "/Users/ggraham/MERFISH/2025_10_06_genes_meeting_criteria.mtx")
-test_pull =readMM("/Users/ggraham/MERFISH/2025_10_06_genes_meeting_criteria.mtx")
 
-write.csv(colnames(sparse_mat), "/Users/ggraham/MERFISH/2025_10_06_sparse_mat_colnames.csv")
-write.csv(rownames(sparse_mat), "/Users/ggraham/MERFISH/2025_10_06_sparse_mat_rownames.csv")
+### what the fuck -----
 
-dict = data.frame(  clusterName = joined_markers_filtered$cluster,
-                  markers = joined_markers_filtered$gene
-                )
+obj_sub_6 = FindSubCluster(obj, '6', graph = 'harmony.wsnn')
 
-write.csv(dict, "/Users/ggraham/MERFISH/dict.csv")
+for(i in paste0('6_', 0:3)){
+  marks = FindMarkers(obj_sub_6, ident.1 = i, ident.2 = 0, group.by='sub.cluster')
+  assign(paste0('best_10_',i),head(marks,20), envir   = .GlobalEnv )
+  print(head(marks))
+}
 
-### clusters list 
-obj$final_clusters <- unfactor(obj$final_clusters )
+## look at query object
+names_6_3 = obj@meta.data[obj_sub_6$sub.cluster=='6_3',]%>%rownames()
+names_6_2 = obj@meta.data[obj_sub_6$sub.cluster=='6_2',]%>%rownames()
+names_6_1 = obj@meta.data[obj_sub_6$sub.cluster=='6_1',]%>%rownames()
+names_6_0 = obj@meta.data[obj_sub_6$sub.cluster=='6_0',]%>%rownames()
 
-obj$final_clusters2 <- ifelse(obj$final_clusters==1, sub_1$sub.cluster, obj$final_clusters)
-obj$final_clusters2 <- ifelse(obj$final_clusters==6, sub_6$sub.cluster, obj$final_clusters2)
+query_obj@meta.data$predicted_clusters[rownames(query_obj@meta.data) %in% c(names_6_3)]%>%table()%>%sort()
+query_obj@meta.data$predicted_clusters[rownames(query_obj@meta.data) %in% c(names_6_2)]%>%table()%>%sort()
+query_obj@meta.data$predicted_clusters[rownames(query_obj@meta.data) %in% c(names_6_1)]%>%table()%>%sort()
+query_obj@meta.data$predicted_clusters[rownames(query_obj@meta.data) %in% c(names_6_0)]%>%table()%>%sort()
 
-DimPlot(obj, group.by = 'final_clusters2')
-DimPlot(subset(obj, final_clusters==6), group.by = 'final_clusters2')
+# its literally all of them EXCEPT 6_3
 
-dat = data.frame(clusters = obj$final_clusters2, 
-                 cell_label = rownames(obj@meta.data))
-#write.csv(dat, "/Users/ggraham/MERFISH/2025_10_06_clusters.csv")
+# How many strong markers exist?
+strong_markers <- all_marks_6_vs_0[abs(all_marks_6_vs_0$avg_log2FC) > 1 & 
+                                   all_marks_6_vs_0$p_val_adj < 0.01,]
 
-dat2 = data.frame(clusters = obj$final_clusters, 
-                 cell_label = rownames(obj@meta.data)) # added for no subcluster MI analysis
-#write.csv(dat2, "/Users/ggraham/MERFISH/2025_10_14_clusters.csv")
+misclassified_6_cells = rownames(query_obj@meta.data[query_obj$final_clusters == 6 &query_obj$predicted_clusters!=6,])
+cells_0  = rownames(query_obj@meta.data[query_obj$final_clusters == 0,])
+# Assign a temporary grouping
+Idents(query_obj) <- "tmp_ident"
+query_obj$tmp_ident <- "other"
+query_obj$tmp_ident[misclassified_6_cells] <- "misclassified6"
+query_obj$tmp_ident[cells_0] <- "cells_0"
 
-#### top 3 marker genes from each cluster
-joined_markers_filtered$transcript_length <- as.numeric(joined_markers_filtered$transcript_length)
-joined_markers_filtered$max_expression <- as.numeric(joined_markers_filtered$max_expression)
+# Run FindMarkers using those groups
+misclassified_markers = FindMarkers(
+  query_obj,
+  ident.1 = "misclassified6",
+  ident.2 = "cells_0",
+  group.by = 'tmp_ident'
+)
 
-joined_markers_log2fc <- joined_markers_filtered %>%
-  group_by(cluster) %>%
-  distinct(gene, .keep_all = TRUE) %>%
-  slice_max(order_by = avg_log2FC, n = 3)
-
-joined_markers_pval <- joined_markers_filtered %>%
-  group_by(cluster) %>%
-  distinct(gene, .keep_all = TRUE) %>%
-  slice_max(order_by = p_val_adj, n = 3)
-
-write.csv(joined_markers_pval, "/Users/ggraham/MERFISH/2025_10_06_joined_markers_pval.csv")
-write.csv(joined_markers_log2fc, "/Users/ggraham/MERFISH/2025_10_06_joined_markers_log2fc.csv")
-
-###
-NSmarkers =read_csv("/Users/ggraham/MERFISH/NSForest Output/final_clusters2_markers.csv")
-  geneNamer = function(gene){
-  names = read.csv('Reference/genes updated.csv')
-  
-  name = names$NIH_description[names$NIH_accession==gene][1]
-  
-  if(is.na(name)){name = gene}
-  return(name)
-  }
-  
-  NSmarkers$longName = sapply(NSmarkers$markerGene, geneNamer)
-write.csv(NSmarkers, "MERFISH/2025_10_06_NSMarkers_named.csv")
-
+head(misclassified_markers)
