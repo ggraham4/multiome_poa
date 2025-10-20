@@ -29,11 +29,11 @@ def selectNCells(labels, THRESH=4, seed=None, n_boot=100):
 ######
 
 #read in data
-obj = ad.read_h5ad("A:/2025_10_19_obj_rgc_subclusters.h5ad")
-obj = obj[obj.obs['individual'] != 'GH']
+obj1 = ad.read_h5ad("A:/2025_10_19_obj_rgc_subclusters.h5ad")
+obj1 = obj1[obj1.obs['individual'] != 'GH']
 
 #subset to ONLY sub.cluster 1_2 and the neuronal clusters
-obj_subset= obj[~obj.obs['sub.cluster'].isin(['1_0',
+obj_subset= obj1[~obj1.obs['sub.cluster'].isin(['1_0',
                                              '1_1',
                                              '1_3',
                                              '1_4', # all the RGC subclusters not 1_2
@@ -45,6 +45,8 @@ obj_subset= obj[~obj.obs['sub.cluster'].isin(['1_0',
                                              '15', #ependymal
                                              '20']# leuko
                                              )]
+
+obj = obj_subset
 
 #Only use genes with a greater than 0.005 mean expression
 genes_use = (obj.X > 0).mean(0).A.flatten() >= 0.005
