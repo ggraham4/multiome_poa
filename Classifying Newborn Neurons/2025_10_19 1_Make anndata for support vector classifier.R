@@ -7,7 +7,7 @@ obj = readRDS("C:/Users/Gabe/Desktop/nemo.orig_harmony.integration_all_testd_clu
 Idents(obj) = 'res0.8_50nn_40PC_45LSI'
 obj = FindSubCluster(obj, 1, graph.name='harmony.wsnn')
 Idents(obj) = 'sub.cluster'
-DimPlot(obj, reduction = 'harmony_wnn.umap')
+DimPlot(obj, reduction = 'harmony_wnn.umap', label = T)
 
 obj@meta.data <- data.frame(obj@meta.data)  # Ensure it's a dataframe
 DefaultAssay(obj) <- "RNA"
