@@ -425,6 +425,7 @@ expression_genes = results[results$av_expression_q < 0.1, ]
 # i guess this is a dead end
 
 plot_gene_ieg('kdm6bb')
+plot_gene_ieg('LOC111571064')
 
 ### trying whole cluster ----
 mat_6 = sub_6@assays$RNA$data[,
@@ -594,5 +595,25 @@ prop_glmer = glmer(cbind(ieg_prop_pos_6_3$n_pos, ieg_prop_pos_6_3$n_cells)~Statu
 car::Anova(prop_glmer, 3)
 
 # will probably have to look at my beta binomial code to analyze some of these higher ones
+
+###
+sub_6_pc1 = sub_6@meta.data%>%
+  subset( Status%in%c('M','D','F'))%>%
+  group_by(individual, Status)%>%
+  summarize(mean_pc1 = mean(ieg_PC1))
+  
+ggplot(sub_6_pc1, aes(x = Status, y = mean_pc1))+
+  geom_boxplot()+
+  geom_jitter()
+
+sub_6_2_pc1 = sub_6@meta.data%>%
+  subset(sub.cluster =='6_2'& Status%in%c('M','D','F'))%>%
+  group_by(individual, Status)%>%
+  summarize(mean_pc1 = mean(ieg_PC1))
+  
+ggplot(sub_6_2_pc1, aes(x = Status, y = mean_pc1))+
+  geom_boxplot()+
+  geom_jitter()
+
 
 
