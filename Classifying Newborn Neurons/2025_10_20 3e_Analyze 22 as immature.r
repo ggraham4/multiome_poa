@@ -73,4 +73,4 @@ ggplot(data_for_plot, aes(x = percentage))+
 
 
 
-
+DotPlot(obj, 'neurod1')

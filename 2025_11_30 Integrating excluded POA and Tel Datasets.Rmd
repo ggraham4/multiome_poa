@@ -1,0 +1,186 @@
+---
+---
+---
+
+**Integrating Tel and OLD POA datasets following realignment**
+
+```{r}
+library(Seurat)
+library(tidyverse)
+
+```
+
+```{r}
+POA = readRDS("~/Desktop/old_multiome_removed_clusters.rds")
+```
+
+```{r}
+
+POA <- RunUMAP(
+  object = POA,
+  nn.name = "harmony.wnn",
+  reduction.name = "harmony_wnn.umap",
+  reduction.key = "harmony_wnnUMAP_",
+  verbose = TRUE,
+  min.dist = 0.4,
+  metric = "euclidean"
+)
+```
+
+```{r}
+POA <- FindClusters(POA, graph.name = "harmony.wsnn", algorithm = 3, verbose = T, resolution = 0.4, cluster.name = 'harmony.wnn_res0.4_clusters')
+```
+
+```{r}
+DimPlot(POA, reduction = 'harmony_wnn.umap', group.by = 'harmony.wnn_res0.4_clusters', label = T)
+```
+
+```{r}
+POA@assays$ATAC <- NULL
+```
+
+```{r}
+tel = readRDS("~/Desktop/allcells_filtered_2025-11-13.Rds")
+```
+
+```{r}
+parker = readRDS("~/Desktop/parker_object.rds")
+```
+
+```{r}
+DimPlot(parker, label = T)
+```
+
+```{r}
+POA$source = 'POA'
+tel$source = 'tel'
+DefaultAssay(POA) = 'RNA'
+POA = JoinLayers(POA)
+```
+
+```{r}
+unintegrated <- merge(POA, tel)
+unintegrated <- NormalizeData(unintegrated)
+unintegrated <- FindVariableFeatures(unintegrated)
+unintegrated <- ScaleData(unintegrated)
+unintegrated <- RunPCA(unintegrated)
+unintegrated <- FindNeighbors(unintegrated, dims = 1:30, reduction = "pca")
+unintegrated <- FindClusters(unintegrated, resolution = 2, cluster.name ="unintegrated_clusters")
+unintegrated <- RunUMAP(unintegrated, dims = 1:30, reduction = "pca", reduction.name = "umap.unintegrated")
+```
+
+```{r}
+integrated <- IntegrateLayers(
+  object = unintegrated, method = HarmonyIntegration,
+  orig.reduction = "pca", new.reduction = "harmony",
+  verbose = FALSE
+)
+rm(unintegrated)
+```
+
+```{r}
+integrated <- FindNeighbors(integrated, reduction = "harmony", dims = 1:30)
+integrated <- FindClusters(integrated, resolution = 0.5, cluster.name = "harmony_default") 
+integrated <- RunUMAP(integrated, reduction = "harmony", dims = 1:30, reduction.name = "harmony.clusters")
+```
+
+**Native clusters**
+
+```{r}
+Idents(integrated) = 'harmony_default'
+DimPlot(integrated, group.by = 'harmony_default', reduction = 'harmony.clusters', label = T)
+```
+
+**By source**
+
+```{r}
+DimPlot(integrated, group.by = 'source', reduction = 'harmony.clusters')
+```
+
+**Mapping old POA clusters onto the new object**
+
+```{r}
+poa_anchors <- FindTransferAnchors(reference = POA, query = integrated, dims = 1:30,
+    reference.reduction = "rnaPCA")
+predictions <- TransferData(anchorset = poa_anchors, refdata = POA$harmony.wnn_res0.4_clusters, dims = 1:30)
+integrated <- AddMetaData(integrated, metadata = predictions)
+integrated$multiome_prediction = integrated$predicted.id
+```
+
+**For reference, here is the old project**
+
+```{r}
+DimPlot(POA, group = 'harmony.wnn_res0.4_clusters', reduction = 'harmony_wnn.umap', label = T)
+```
+
+**POA labels projected**
+
+```{r}
+DimPlot(integrated, group = 'multiome_prediction', reduction = 'harmony.clusters', label = T)
+```
+
+**Labeling removed clusters**
+
+```{r}
+# comments are what I labeled these clusters in my thesis, I beleive per our emails using CV, these are all the ones we removed
+
+integrated$removed = ifelse(integrated$multiome_prediction %in% c(
+  3,#GLUT_gal+/fat2+
+  5, #GABA_npy+/ndst3+
+  6, #GLUT_Dm
+  7,#GLUT_tac1+/kcnip4a+
+  8, #GLUT_POA_3
+  13, #GLUT_cckb+/rftn1a+
+  15, 
+  17, #GLUT_POA_4
+  29,#Pericyte
+  30#GABA_th2+/cart2+
+),
+'removed',
+'kept')
+```
+
+```{r}
+DimPlot(integrated, group = 'removed', reduction = 'harmony.clusters', label = T)
+```
+
+**Parent cluster projections from parker object**
+
+```{r}
+parker_anchors <- FindTransferAnchors(reference = parker, query = integrated, dims = 1:30,
+    reference.reduction = "pca")
+predictions <- TransferData(anchorset = parker_anchors, refdata = parker$clusters20, dims = 1:30)
+integrated <- AddMetaData(integrated, metadata = predictions)
+integrated$parker_predictions20 = integrated$predicted.id
+```
+
+```{r}
+DimPlot(parker, group.by = 'clusters20', label =T )
+```
+
+```{r}
+DimPlot(integrated, group = 'parker_predictions20', reduction = 'harmony.clusters', label = T)
+```
+
+**Child cluster projections**
+
+```{r}
+parker_anchors <- FindTransferAnchors(reference = parker, query = integrated, dims = 1:30,
+    reference.reduction = "pca")
+predictions <- TransferData(anchorset = parker_anchors, refdata = parker$clusters49, dims = 1:30)
+integrated <- AddMetaData(integrated, metadata = predictions)
+integrated$parker_predictions49 = integrated$predicted.id
+```
+
+```{r}
+DimPlot(parker, group.by = 'clusters49', label =T )
+```
+
+```{r}
+DimPlot(integrated, group = 'parker_predictions49', reduction = 'harmony.clusters', label = T)
+```
+
+```{r}
+integrated@meta.data = integrated@meta.data%>%
+  select(-starts_with("prediction.score"))
+```

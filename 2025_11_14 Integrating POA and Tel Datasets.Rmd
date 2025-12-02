@@ -1,0 +1,159 @@
+Integrating Tel and POA datasets following realignment
+
+```{r}
+library(Seurat)
+library(tidyverse)
+```
+
+Read in POA data (RNA only)
+
+```{r}
+POA = readRDS("~/Desktop/nemo.orig_harmony.integration_all_testd_clusters.rds")
+```
+
+```{r}
+#so ATAC data doesnt bother us
+POA@assays$ATAC <- NULL
+```
+
+```{r}
+tel = readRDS("~/Desktop/allcells_filtered_2025-11-13.Rds")
+```
+
+```{r}
+parker = readRDS("~/Desktop/parker_object.rds")
+```
+
+Because I'm curious what the tel object looks like
+
+```{r}
+DimPlot(tel, label = T)
+```
+
+It looks like if I tried to draw Coltan's object from memory, cool
+
+Integration time
+
+From the document the core gave us, it looks like all QC was done correctly so I can go straight into integration, I am curious first what it looks like without integration
+
+No integration
+
+```{r}
+unintegrated <- merge(POA, tel)
+```
+
+```{r}
+unintegrated <- NormalizeData(unintegrated)
+unintegrated <- FindVariableFeatures(unintegrated)
+unintegrated <- ScaleData(unintegrated)
+unintegrated <- RunPCA(unintegrated)
+unintegrated <- FindNeighbors(unintegrated, dims = 1:30, reduction = "pca")
+unintegrated <- FindClusters(unintegrated, resolution = 2, cluster.name ="unintegrated_clusters")
+```
+
+```{r}
+unintegrated$source = ifelse(!is.na(unintegrated$pct.atac_mapped), 'POA', 'Tel')
+# I am using the pct. atac_mapped as a proxy for the POA object because I forgot to label the objects prior to integration
+
+unintegrated <- RunUMAP(unintegrated, dims = 1:30, reduction = "pca", reduction.name = "umap.unintegrated")
+DimPlot(unintegrated, reduction = "umap.unintegrated", group.by = c("source"))
+
+```
+
+Ok they seem to merge together (without any integration) more or less well this is actually super interesting
+
+```{r}
+integrated <- IntegrateLayers(
+  object = unintegrated, method = HarmonyIntegration,
+  orig.reduction = "pca", new.reduction = "harmony",
+  verbose = FALSE
+)
+```
+
+```{r}
+integrated <- FindNeighbors(integrated, reduction = "harmony", dims = 1:30)
+integrated <- FindClusters(integrated, resolution = 0.5, cluster.name = "harmony_default") #tinkered with cluster resolution after the fact cause res = 2 got too many, if we were going to be rly specific about it we could do Haowen or Lynna's
+integrated <- RunUMAP(integrated, reduction = "harmony", dims = 1:30, reduction.name = "harmony.clusters")
+
+```
+
+```{r}
+Idents(integrated) = 'harmony_default'
+DimPlot(integrated, group.by = 'harmony_default', reduction = 'harmony.clusters')
+```
+
+```{r}
+DimPlot(integrated, group.by = 'source', reduction = 'harmony.clusters')
+```
+
+Lets map both sets of clusters onto this object, I wan to see what is what
+
+```{r}
+poa_anchors <- FindTransferAnchors(reference = POA, query = integrated, dims = 1:30,
+    reference.reduction = "rnaPCA")
+predictions <- TransferData(anchorset = poa_anchors, refdata = POA$res0.8_50nn_40PC_45LSI, dims = 1:30)
+integrated <- AddMetaData(integrated, metadata = predictions)
+integrated$multiome_prediction = integrated$predicted.id
+```
+
+For reference, the old object
+
+```{r}
+DimPlot(POA, group = 'res0.8_50nn_40PC_45LSI', reduction = 'harmony_wnn.umap', label = T)
+```
+
+The new object
+
+```{r}
+DimPlot(integrated, group = 'multiome_prediction', reduction = 'harmony.clusters', label = T)
+
+```
+
+Very interesting, we have enriched the POA island of 6, 0, 21, 25, 19 ( I guess this supports the idea 24 is also POA). The radial glia cluster (1 and 26) is huge (interestingly, there is a lineage from 1 to the POA neurons, but all of those cells ONLY come from the multiome object which is really cool (likely a combination of enrichment when we dissected + more in the dominants?) 5 might be telencephalon or more ventral to POA? 2 is oligodendrocytes, 11 is microglia, 20 is what I though was leukocytes but it is making such a clear lineage that now I'm not so sure. 9 is a neuron that I think is immature and THOUGHT was getting populated by radial glia and thought was populating 6, though it doesnt seem like that is the case here, it seems like radial glia are directly populating 6 and 0?. 3 is a very interesting cluster it seems to be in between POA and Tel, maybe Vv?
+
+Now lets see what Coltan's clusters look like on it, I will do both clusters 49 and clusters 20
+
+```{r}
+parker_anchors <- FindTransferAnchors(reference = parker, query = integrated, dims = 1:30,
+    reference.reduction = "pca")
+predictions <- TransferData(anchorset = parker_anchors, refdata = parker$clusters49, dims = 1:30)
+integrated <- AddMetaData(integrated, metadata = predictions)
+integrated$parker_predictions49 = integrated$predicted.id
+```
+
+```{r}
+DimPlot(parker, group.by = 'clusters49', label =T )
+```
+
+```{r}
+DimPlot(integrated, group = 'parker_predictions49', reduction = 'harmony.clusters', label = T)
+```
+
+I'm not as in tune with Parker object to know id there is anything interesting about this. It seems like cluster 2a (2) in Coltan's object == cluster 9 in my object? That is really interesting.
+
+```{r}
+parker_anchors <- FindTransferAnchors(reference = parker, query = integrated, dims = 1:30,
+    reference.reduction = "pca")
+predictions <- TransferData(anchorset = parker_anchors, refdata = parker$clusters20, dims = 1:30)
+integrated <- AddMetaData(integrated, metadata = predictions)
+integrated$parker_predictions20 = integrated$predicted.id
+```
+
+```{r}
+DimPlot(parker, group.by = 'clusters20', label =T )
+```
+
+```{r}
+DimPlot(integrated, group = 'parker_predictions20', reduction = 'harmony.clusters', label = T)
+```
+
+Broad classifications in tact.
+
+```{r}
+integrated@meta.data = integrated@meta.data%>%
+  select(-starts_with("prediction.score"))
+```
+
+```{r}
+#saveRDS(integrated, "~/Desktop/2025_11_24_poa_tel_integrated.rds")
+```
