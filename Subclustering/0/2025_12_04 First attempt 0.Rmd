@@ -1,0 +1,197 @@
+```{r}
+library(Seurat)
+library(CytoTRACE)
+library(lme4)
+library(tidyverse)
+```
+
+```{r}
+obj = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
+```
+
+here, I want to compare two methods of subclustering cluster 0, one is using FindSubClusters and the other is subsetting, finding new top variable genes etc and then using findclusters
+
+```{r}
+findsub_0 = FindSubCluster(obj, 0, graph.name = 'harmony.wsnn')%>%
+  subset(final_clusters ==0)
+```
+
+```{r}
+DimPlot(findsub_0, reduction = 'harmony_wnn.umap', group = 'sub.cluster')
+```
+A hunch I've had for a while now is one of these clusters is very very immature, so lets see
+
+```{r}
+findsub_0$cyto = CytoTRACE(findsub_0@assays$RNA$data%>%as.matrix())$CytoTRACE
+```
+```{r}
+findsub_0@meta.data$Status = factor(findsub_0@meta.data$Status, levels = c('NRM','M','D','E','NF','F'))
+dat = findsub_0@meta.data%>%
+  group_by(individual, Status, sub.cluster)%>%
+  summarize(mean_cyto = mean(cyto),
+            se_cyto =sd(cyto)/sqrt(n()))
+```
+```{r}
+ggplot(dat, aes(x = sub.cluster, y = mean_cyto, color = Status))+
+  geom_boxplot()
+```
+So yeah I was basically dead wrong
+
+Proportion differences?
+```{r}
+allcell_findsub_0 = findsub_0@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(total_cells = n())
+
+subcell_findsub_0 = findsub_0@meta.data%>%
+  group_by(individual, Status, sub.cluster)%>%
+  summarize(cells = n())
+
+prop_cells_findsub0 = subcell_findsub_0%>%
+  right_join(allcell_findsub_0, by = 'individual')
+
+prop_cells_findsub0%>%glimpse()
+
+```
+```{r}
+ggplot(prop_cells_findsub0, aes(x = sub.cluster, y = cells/total_cells, color = Status.x))+
+  geom_boxplot()
+```
+
+I think the only interesting things here are 0_1 and 0_3, 0_3 also has an interesting CytoTRACE profile
+
+Lets look at markers then
+```{r}
+findsub_0_markers = FindAllMarkers(findsub_0, group.by = 'sub.cluster', only.pos = T)
+```
+
+```{r}
+top10_markers <- findsub_0_markers %>%
+  group_by(cluster) %>%
+  slice_min(order_by = p_val_adj, n = 3)
+
+DotPlot(findsub_0, features = unique(top10_markers$gene), group.by = 'sub.cluster') + 
+  coord_flip()
+```
+0_0 and 0_2 are GABAergic (slc32a1), 0_1 and 0_3 are Glutamatergic
+
+I guess the question now is why are these cells clustering together if some are glutamatergic and others are gabaergic
+
+```{r}
+DimPlot(obj)
+```
+```{r}
+DimPlot(findsub_0, group.by ='sub.cluster')
+```
+
+```{r}
+very_strong_markers_findsub_0 = subset(findsub_0_markers, pct.1>0.9)
+```
+Still not clear, seems like there is evidence of migration but I'm not convinced
+
+Now to try with reclustering
+```{r}
+findclust_0 = subset(obj, final_clusters ==0)
+```
+
+```{r}
+findclust_0 <- FindVariableFeatures(findclust_0, selection.method = "vst", nfeatures = 5000)
+findclust_0 <- ScaleData(findclust_0)
+findclust_0 <- RunPCA(findclust_0,features = VariableFeatures(object = findclust_0))
+```
+
+```{r}
+ElbowPlot(findclust_0)
+```
+
+I guess 8? Strong arguments also for 2
+
+```{r}
+DimHeatmap(findclust_0, dims = 1:10, cells = 500, balanced = TRUE)
+
+```
+I mean there is still strong signal at 9 so I guess lets go with 8
+
+```{r}
+findclust_0 <- FindNeighbors(findclust_0, dims = 1:8)
+
+```
+
+```{r}
+set.seed(0)
+findclust_0 <- FindClusters(findclust_0, resolution = 0.5)
+```
+
+```{r}
+set.seed(0)
+findclust_0 <- RunUMAP(findclust_0, dims = 1:8)
+```
+```{r}
+DimPlot(findclust_0,reduction="umap",group.by="seurat_clusters",label=T)
+```
+This looks overclustered to me
+
+```{r}
+set.seed(0)
+findclust_0 <- FindClusters(findclust_0, resolution = 0.1)
+findclust_0 <- RunUMAP(findclust_0, dims = 1:8, reduction.name = 'res.1')
+DimPlot(findclust_0,reduction="umap",group.by="RNA_snn_res.0.1",label=T)
+```
+It seems like these clusters are robust so now lets analyze them
+```{r}
+Idents(findclust_0) = 'RNA_snn_res.0.1'
+findclust_0_markers =FindAllMarkers(findclust_0, only.pos = T)
+```
+```{r}
+top10_markers_2 <- findclust_0_markers %>%
+  group_by(cluster) %>%
+  slice_min(order_by = p_val_adj, n = 3, with_ties = F)
+
+DotPlot(findclust_0, features = unique(top10_markers_2$gene), group.by = 'RNA_snn_res.0.1') + 
+  coord_flip()
+```
+```{r}
+findclust_0$cyto = CytoTRACE(findclust_0@assays$RNA$data%>%as.matrix())$CytoTRACE
+
+```
+```{r}
+findclust_0@meta.data$Status = factor(findclust_0@meta.data$Status, levels = c('NRM','M','D','E','NF','F'))
+dat2 = findclust_0@meta.data%>%
+  group_by(individual, Status, RNA_snn_res.0.1)%>%
+  summarize(mean_cyto = mean(cyto),
+            se_cyto =sd(cyto)/sqrt(n()))
+```
+
+```{r}
+ggplot(dat2, aes(x = RNA_snn_res.0.1, y = mean_cyto, color = Status))+
+  geom_boxplot()
+```
+I think findsubclusters is objectively better
+
+```{r}
+allcell_findclust_0 = findclust_0@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(total_cells = n())
+
+subcell_findclust_0 = findclust_0@meta.data%>%
+  group_by(individual, Status, RNA_snn_res.0.1)%>%
+  summarize(cells = n())
+
+prop_cells_findclust0 = subcell_findclust_0%>%
+  right_join(allcell_findclust_0, by = 'individual')
+
+prop_cells_findclust0%>%glimpse()
+```
+```{r}
+ggplot(prop_cells_findclust0, aes(x = RNA_snn_res.0.1, y = cells/total_cells, color = Status.x))+
+  geom_boxplot()
+```
+Yeah I mean cmon
+
+I think part of it might be the lack of chromatin data, the wsnn is necessary
+
+```{r}
+
+```
+
+
