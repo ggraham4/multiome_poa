@@ -3,7 +3,7 @@ library(mgcv)
 library(ggplot2)
 library(factoextra)
 library(patchwork)
-
+library(ggeffects)
 
 coalesced = read.csv('Measures/coalesced_data.csv')
 multiome_measures = read.csv('Measures/all_data.csv')
@@ -750,10 +750,10 @@ ggplot(parker_2023, aes(x = Phase, y =poa_ant_vol_mm3))+
   geom_boxplot()+
   geom_point()
 
-ggplot(subset(parker_2023, Phase == 'D'), aes(x = week_sack_c, y =poa_ant_brdu_total, color = Phase, group = interaction(Phase, week_sack_c)))+
+ggplot(subset(parker_2023), aes(x = week_sack_c, y =poa_ant_brdu_total, color = Phase, group = interaction(Phase, week_sack_c)))+
   geom_boxplot()
 
-ggplot(subset(parker_2023, Phase == 'D'), aes(x = week_sack_c, y =f_index))+
+ggplot(subset(parker_2023), aes(x = week_sack_c, y =f_index, color = Phase))+
   geom_point()+
   geom_smooth()
 
@@ -763,8 +763,7 @@ ggplot(parker_2023, aes(x = f_index, y =poa_mid_brdu_avg))+
 ggplot(parker_2023, aes(x = f_index, y =poa_post_brdu_avg))+
   geom_point()
 
-ggplot(parker_2023, aes(x = f_index, y =poa_full_brdu_total))+
-  geom_point()
+
 
 
 #regress out volume
@@ -773,7 +772,7 @@ anova(mass_mod_3, test = "Chisq")
 
 parker_2023$pred_poa_ant_brdu_avg= predict(mass_mod_3,
                                    newdata = data.frame(Phase = parker_2023$Phase, 
-                                                        poa_ant_vol_mm3 =mean(parker_2023$poa_ant_vol_mm3)))
+                                                        poa_ant_vol_mm3 =mean(parker_2023$poa_ant_vol_mm3, na.rm =T)))
 
 ggplot(parker_2023, aes(x = f_index, y =pred_poa_ant_brdu_avg))+
   geom_point(aes(color = Phase))
@@ -784,7 +783,222 @@ ggplot(parker_2023, aes(x = Phase, y =pred_poa_ant_brdu_avg))+
 ggplot(parker_2023, aes(x = Phase, y =f_index))+
   geom_boxplot()
 
-# i cant figure out where the fuck they get this result???
+# can I git s vs D in my model??
+
+ggplot(subset(parker_2023, !is.na(Phase)), aes(x = f_index, y =poa_ant_brdu_avg/poa_ant_vol_mm3))+
+  geom_point(aes(color = Phase))
+
+# i mean tbh I dont see anything here 
+
+ggplot(subset(parker_2023, !is.na(Phase)), aes(x = f_index, y =poa_ant_vol_mm3/mass_final))+
+  geom_point(aes(color = Phase))
+
+#### lets look at logans data
+ggplot(dodd_2019_good, aes(x = f_index, y = pPOAmedium/mass_final))+
+  geom_point(aes(color =Phase))+
+  geom_smooth(method = 'gam')
+
+# this could be something
+ggplot(dodd_2019_good, aes(x = f_index, y = pPOAmedium))+
+  geom_point(aes(color =Phase, shape = 'Dodd', size =4))+
+  geom_point(data = parker_2023, aes(x =f_index, y = poa_ant_brdu_total, color =Phase, shape = 'Parker', size =4))
+# I think its tood different
+
+
+# ill try my best
+
+ggplot(subset(parker_2023, Phase %in% c("M","D","F")), aes(x = f_index, y =poa_full_brdu_total))+
+  geom_point(aes(color =Phase))
+
+attempt_gam_1 = gam(poa_full_brdu_total~s(f_index)+mass_final, data = parker_2023)
+summary(attempt_gam_1)
+plot(attempt_gam_1)
+
+attempt_gam_1
+
+attempt_glm_1 = glm(poa_full_brdu_total~(f_index)+mass_final, data = parker_2023)
+summary(attempt_glm_1)
+
+glm_equation =function(f_index#, mass_final
+                       ){
+ out= 643+(44.69*f_index)+(-19.04*mean(parker_2023$mass_final, na.rm =T))
+return(out)
+ }
+
+parker_2023$fitted_glm = mapply(glm_equation, parker_2023$f_index#, parker_2023$mass_final
+                                )
+
+ggplot(subset(parker_2023, Phase %in% c("M","D","F")), aes(x = f_index, y =poa_full_brdu_total))+
+  geom_point(aes(color =Phase))+
+  geom_line(aes(x = f_index, y= fitted_glm))
+
+# idk this feels like a waste 
+
+nls_value_tester = function(a=1, b = 1, c = 1){
+
+ p= ggplot(subset(parker_2023, Phase %in% c("M","D","F")), aes(x = f_index, y =poa_full_brdu_total))+
+  geom_point(aes(color =Phase))+
+  geom_line(aes(x = f_index, y= a*(f_index^2)+(b*f_index)+c))
+
+ return(p)
+  }
+
+nls_value_tester()
+nls_value_tester(a=-40, 50, 400+min(parker_2023$poa_ant_brdu_total))
+
+
+nls_attempt = nls(poa_full_brdu_total~ a*(f_index^2)+(b*f_index)+c,
+                  data = parker_2023,
+                  start = list(
+                    a = -40,
+                    b = 50,
+                    c=400+min(parker_2023$poa_ant_brdu_total)
+                  ))
+
+summary(nls_attempt)
+
+nls_value_tester(a=-17.23, 33.62, 584.65)
+
+anova(nls_attempt, attempt_glm_1)
+
+# ok this is my best attempt 
+
+poa_brdu_formula = function(f_index){
+ 
+  out = ( -17.23*(f_index^2)+(33.62*f_index)+584.65)
+return(out)
+}
+
+saveRDS(poa_brdu_formula, 'Functions/Theory/f_index_neurogenesis.rds')
+
+line_data$neurogenesis = sapply(line_data$Z, poa_brdu_formula)
+
+logged2 = ggplot(line_data, aes(x = Z, y = scale_2((kt))))+
+  geom_line(aes(color = 'Log10 11KT (pg/ml)'))+
+  geom_line( aes(linetype = 'Log10 E2 (pg/ml)', color = 'Log10 E2 (pg/ml)', y = scale_2((e2))))+
+      geom_line(color = 'black',aes(linetype = 'Mass (g)',color = 'Mass (g)', y = scale_2((mass))))+
+ # geom_line(aes(color = 'KT/ E2', y = scale(kt_e2)))+
+  geom_line(data = subset(line_data, testicular <= 1),aes(color = 'Testicular %', y = scale_2(testicular)))+
+  geom_line(data = subset(line_data, behavior <= 600),aes(color = 'Behaviors (10m)', y = scale_2(behavior)))+
+  geom_line(data = subset(line_data, time <= 600),aes(color = 'Time in Nest (10m)', y = scale_2(time)))+
+    geom_line(data = subset(line_data),aes(color = 'Neurogenesis', y = scale_2(neurogenesis)))+
+  labs(y= 'Scaled Value', x = 'F Index', color = 'Measurement')+
+  theme_minimal()
+(logged2+boxes)+
+  plot_layout(ncol = 1)
+
+
+
+
+#### proportion of neurons from snRNA-seq data ####
+obj = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
+obj@meta.data$Status = factor(obj@meta.data$Status, levels = c('NRM',
+                                                               'M',
+                                                               'D',
+                                                               'E',
+                                                               'NF',
+                                                               'F'))
+
+status_to_phase = list('D'='I',
+                       'E' = 'LI',
+                       'EP' = 'LIP',
+                       'S' = 'IP',
+                       'M'='M',
+                       'F'='F',
+                       'NF'='NF',
+                       'NM'='NM')
+multiome_measures$Phase = unlist(status_to_phase[multiome_measures$Status])
+
+neur = obj@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(n_cells = n())
+
+joint=multiome_measures%>%right_join(neur, by = join_by('Fish'=='individual'))%>%
+  subset(!is.na(n_cells))
+  
+joint$Phase = factor(joint$Phase, levels = c('M','I','LI','NF','F'))
+
+ggplot(joint, aes(x = Phase, y = n_cells))+
+  geom_boxplot()+
+  geom_point()+
+  labs(y = 'Neurons')
+  
+
+obj@meta.data$neuron = ifelse(!obj@meta.data$final_clusters %in% c(1,2,11,13,20,15,26 ), 'neuron', 'not')
+
+prop_neuron =obj@meta.data%>%
+  group_by(individual, Status)%>%
+  subset(individual != 'GH')%>%
+  summarize(n_neuron = sum(neuron =='neuron'),
+            prop_neuron = sum(neuron=='neuron')/n())
+
+joint2 = joint%>%
+  left_join(prop_neuron,by = join_by('Fish'=='individual'))
+
+joint2$mass_final = joint2$mass_final_cm
+joint2 = f_indexer(joint2)
+
+ggplot(joint2, aes(x = f_index, y = prop_neuron))+
+  geom_point(aes(color= Phase))+
+  labs(y = 'Neurons')
+
+# regress out mass
+mod_mass_neuron= lm(prop_neuron~f_index+mass_final, data = joint2)
+mod_mass_pred = predict(mod_mass_neuron, newdata = data.frame(f_index = joint2$f_index, 
+                                                              mass_final = mean(joint2$mass_final, na.rm=T)))
+summary(mod_mass_neuron)
+
+joint2$pred_prop_neuron = mod_mass_pred
+
+ggplot(joint2, aes(x = f_index, y = mod_mass_pred))+
+  geom_point(aes(color= Phase, shape = 'fitted', size = 4))+
+  geom_point(aes(color = Phase, y = prop_neuron, shape = 'Real', size =4))+
+  labs(y = 'Neurons')
+
+# not convinced
+multiome_measures$mass_final = multiome_measures$mass_final_cm
+multiome_measures= f_indexer(multiome_measures)
+mod_mass_neuron2= glm(cbind(n_neuron, n_cells-n_neuron)~I(f_index^2), data = joint2, family = 'binomial')
+summary(mod_mass_neuron2)
+
+mod_mass_pred2 = predict(mod_mass_neuron2, newdata = data.frame(f_index = joint2$f_index, 
+                                                              mass_final = mean(joint2$mass_final, na.rm=T))
+                         )
+
+test_dat = data.frame(f_index = seq(-1.5,3, by = 0.1)
+                     # , mass_final = mean(multiome_measures$mass_final)
+                      )
+
+out_dat <- ggpredict(
+  mod_mass_neuron2,
+  terms = test_dat,
+  scale = 'response'
+)
+
+
+ggplot(joint2, aes(x = f_index, y = pred_prop_neuron2))+
+  geom_point(aes(color = Phase, y = prop_neuron, shape = 'Real'), size =4)+
+  geom_line(data = out_dat, aes(x = x, y = predicted, color ='fitted'), color= 'black')+
+  geom_ribbon(data = out_dat, aes(x = x, ymin = conf.low, ymax= conf.high), inherit.aes = F, alpha = 0.2)+
+  labs(y = 'Neurons')
+
+summary(mod_mass_neuron2)$dispersion
+# doesnt make any sense
+# chatgpt says to use quasibinomial with prop neuron but that is stupid I think
+# there is nothing here
+
+ggplot(joint2, aes(x = Phase, y = prop_neuron))+
+  geom_boxplot(aes(color = Phase))+
+  geom_point()
+  ylim(0,1)
+
+
+
+
+
+
+
+
 
 
 

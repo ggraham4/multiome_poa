@@ -118,6 +118,7 @@ coalesced = rbind(deangelis_2018[,common_cols],
 
 coalesced$mass_final = as.numeric(coalesced$mass_final)
 
+write.csv(coalesced, 'Measures/coalesced_data.csv')
 
 ggplot(subset(coalesced, Phase != 'S'), aes(x = days, y = mass_final))+
   geom_point(position = position_dodge(1),aes( shape = Phase, color = source), size =3)+
@@ -331,7 +332,6 @@ ggplot(subset(imputation_babey, !is.na(Phase)), aes(Phase, Log_E2, color = imput
     geom_point(position = position_dodge(0.75)) +
   labs(y = 'Log10 E2', color = '')
 
-write.csv(coalesced, 'Measures/coalesced_data.csv')
 
 
 #theoretical model of sex change
