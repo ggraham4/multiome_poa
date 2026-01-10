@@ -67,18 +67,16 @@ cds <- as.cell_data_set(subset_obj)
 subset_obj = FindVariableFeatures(subset_obj)
 
 subset_obj = RunPCA(subset_obj, dim = 50, verbose = TRUE, assay = "RNA",               
- features = subset_obj$, reduction.name = "pca_monocle",  #################
+ features = VariableFeatures(object = subset_obj), reduction.name = "pca_monocle",
  reduction.key = "pca_monocle_")
 
-subset_obj <- JackStraw(subset_obj, num.replicate = 100)
-ScoreJackStraw(subset_obj, dims = 1:30)
-JackStrawPlot(subset_obj, reduction = 'pca_monocle')
+ElbowPlot(subset_obj, reduction = 'pca_monocle')
 
 reducedDims(cds)$PCA <- Embeddings(subset_obj, "pca_monocle")
 reducedDims(cds)$UMAP <- Embeddings(subset_obj, "harmony_wnn.umap")
 
 # Process the dataset with monocle3 functions
-cds <- preprocess_cds(cds, num_dim = 30)
+cds <- preprocess_cds(cds, num_dim = 5) # based on elbow
 cds <- cluster_cells(cds)
 
 # Set up cluster information
@@ -132,9 +130,55 @@ plot_cells(cds,
 plot_cells(cds, color_cells_by = 'pseudotime')
 
 #plot_cells(cds, color_cells_by = 'pseudotime', reduction_method = 'PCA')
+subset_obj@meta.data$Status = factor(subset_obj@meta.data$Status , levels = c('NRM',
+                                                                              'M',
+                                                                              'D',
+                                                                              'E',
+                                                                              'NF',
+                                                                              "F"))
+subset_obj$pseudotime = pseudotime(cds)
 
-cds$pseudotime
+plot_dat =subset_obj@meta.data%>%
+  group_by(individual, sub.cluster, Status)%>%
+  summarize(mean_pseudotime = mean(pseudotime))
 
+library(forcats)
+ggplot(plot_dat, aes(x = fct_reorder(sub.cluster,  mean_pseudotime), y = (mean_pseudotime)))+
+  geom_boxplot()+
+  geom_point()
 
+ggplot(subset(plot_dat, Status %in% c('M','D','F')), aes(x = fct_reorder(sub.cluster,  mean_pseudotime), y = (mean_pseudotime), color= Status))+
+  geom_boxplot()
+
+ggplot(subset(plot_dat, sub.cluster ==6), aes(x = Status, y = (mean_pseudotime), color= Status))+
+  geom_boxplot()+
+  geom_point()
+
+ggplot(subset(plot_dat, sub.cluster ==5), aes(x = Status, y = (mean_pseudotime), color= Status))+
+  geom_boxplot()+
+  geom_point()# could be something
+
+ggplot(subset(plot_dat, sub.cluster ==24), aes(x = Status, y = (mean_pseudotime), color= Status))+
+  geom_boxplot()+
+  geom_point()# surely
+
+ggplot(subset(plot_dat, sub.cluster ==19), aes(x = Status, y = (mean_pseudotime), color= Status))+
+  geom_boxplot()+
+  geom_point() # definitely
+
+ggplot(subset_obj@meta.data, aes(x = fct_reorder(sub.cluster,  pseudotime), y = (pseudotime)))+
+  geom_boxplot()+
+  geom_point()
+
+ggplot(subset(subset_obj@meta.data, Status %in% c('M','D','E','F') ), aes(x = fct_reorder(sub.cluster,  pseudotime), y = (pseudotime),color = Status))+
+  geom_boxplot()
+
+ggplot(subset(subset_obj@meta.data,res0.8_50nn_40PC_45LSI==9 & Status %in% c('M','D','E','F') ), aes(x = Status, y = (pseudotime),color = Status))+
+  geom_boxplot()+
+  geom_point()
+
+ggplot(subset(subset_obj@meta.data,res0.8_50nn_40PC_45LSI==5 & Status %in% c('M','D','E','F') ), aes(x = Status, y = (pseudotime),color = Status))+
+  geom_boxplot()+
+  geom_point()
 
 

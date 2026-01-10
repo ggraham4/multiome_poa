@@ -439,21 +439,20 @@ b = ggplot(data = multiome_good, aes(x = SexState, y = Status))+
   plot_layout(ncol=1)
 
 
-### save work
-saveRDS(state_from_z_time, 'Functions/Theory/SexState_from_z_time.rds')
-saveRDS(state_from_z11kt, 'Functions/Theory/SexState_from_z_11kt.rds')
-saveRDS(state_from_zlogitTestis, 'Functions/Theory/SexState_from_z_logit_tesits.rds')
-saveRDS(z_percent_testicular_from_state, 'Functions/Theory/SexState_from_z_percent_tesits.rds')
-saveRDS(state_from_zmass, 'Functions/Theory/SexState_from_z_mass_tesits.rds')
-saveRDS(temp_state_from_z_behavior, 'Functions/Theory/SexState_temp_from_z_behavior.rds')
-saveRDS(state_from_z_e2, 'Functions/Theory/SexState_from_z_e2.rds')
+### #save work
+#saveRDS(state_from_z_time, 'Functions/Theory/SexState_from_z_time.rds')
+#saveRDS(state_from_z11kt, 'Functions/Theory/SexState_from_z_11kt.rds')
+#saveRDS(state_from_zlogitTestis, 'Functions/Theory/SexState_from_z_logit_tesits.rds')
+#saveRDS(z_percent_testicular_from_state, 'Functions/Theory/SexState_from_z_percent_tesits.rds')
+#saveRDS(state_from_zmass, 'Functions/Theory/SexState_from_z_mass_tesits.rds')
+#saveRDS(temp_state_from_z_behavior, 'Functions/Theory/SexState_temp_from_z_behavior.rds')
+#saveRDS(state_from_z_e2, 'Functions/Theory/SexState_from_z_e2.rds')
 
 multiome = read.csv('Measures/all_data.csv')
 multiome=multiome %>%
   dplyr::rename(mass_final=mass_final_cm)
 
 multiome$Percent_Testicular[multiome$Status %in%c('NF','F')]=0
-
 multiome$z_11kt = scale(multiome$Log_11KT)[,1]
 multiome$z_mass = scale(multiome$mass_final)[,1]
 multiome$z_time = scale(multiome$Time_Day_2)[,1]
@@ -474,7 +473,24 @@ status_to_phase = list('D'='I',
                        'NM'='NM')
 multiome$Phase = unlist(status_to_phase[multiome$Status])
 
-write.csv(multiome, '2025_12_26 all_data.csv')
+#write.csv(multiome, 'Measures/2025_12_26 all_data.csv')
+
+
+coalesced =read.csv('Measures/coalesced_data.csv')
+
+coalesced$Percent_Testicular[coalesced$Phase %in%c('NF','F')]=0
+coalesced$z_11kt = scale(coalesced$Log_11KT)[,1]
+coalesced$z_mass = scale(coalesced$mass_final)[,1]
+#coalesced$z_time = scale(coalesced$Time_Day_2)[,1]
+#coalesced$z_behavior = scale(coalesced$Behaviors_Day_2)[,1]
+coalesced$z_percent_testicular = scale(coalesced$Percent_Testicular)[,1]
+coalesced$z_testis = scale(car::logit(coalesced$Percent_Testicular, adjust = 0.01))[,1]
+#coalesced$z_volume = scale(coalesced$Log10_Volume)[,1]
+coalesced$SexState = predict(fit, coalesced)*-1
+
+#write.csv(coalesced, 'Measures/2026_01_08 Coalesced sex state.csv')
+
+            
 
 ##### variance by states #####
 vart =multiome%>%
