@@ -98,4 +98,5 @@ obj@meta.data = obj@meta.data%>%
 
 # plotting ###
 latent_plotter('nkx2.2a', 1)
+latent_plotter('gnrhr4', 21)
 

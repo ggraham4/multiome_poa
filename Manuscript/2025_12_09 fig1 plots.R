@@ -516,6 +516,71 @@ ggsave(plot = massplot,
        height = 2,
        path = "Manuscript/Plots/Fig.1/mass")
 
+##### latent variable ##### 
+state_from_z_time = readRDS('Functions/Theory/SexState_from_z_time.rds')
+state_from_z11kt=readRDS( 'Functions/Theory/SexState_from_z_11kt.rds')
+state_from_zlogitTestis=readRDS( 'Functions/Theory/SexState_from_z_logit_tesits.rds')
+z_percent_testicular_from_state =readRDS('Functions/Theory/SexState_from_z_percent_tesits.rds')
+state_from_zmass =readRDS('Functions/Theory/SexState_from_z_mass_tesits.rds')
+temp_state_from_z_behavior=readRDS( 'Functions/Theory/SexState_temp_from_z_behavior.rds')
+state_from_z_e2=readRDS( 'Functions/Theory/SexState_from_z_e2.rds')
+
+
+
+plot_data = data.frame(SexState = seq(min(multiome_good$SexState, na.rm = T),
+                                    max(multiome_good$SexState, na.rm =T),by = 0.1)
+                       )
+
+
+plot_data$z_kt= sapply(plot_data$SexState,z_kt_from_state )
+plot_data$z_logit_testis= sapply(plot_data$SexState,z_logitTestis_from_state )
+plot_data$z_e2= sapply(plot_data$SexState,z_e2_from_state )
+plot_data$z_mass= sapply(plot_data$SexState,z_mass_from_state )
+#plot_data$z_time= sapply(plot_data$SexState,z_time_from_state )
+plot_data$z_behavior= sapply(plot_data$SexState,z_behavior_from_state )
+plot_data$z_testis= sapply(plot_data$SexState,z_percent_testicular_from_state )
+plot_data$z_neuro= sapply(plot_data$SexState,neuro )
+
+
+xbeh = seq(-2,2, by = 0.1)
+ybeh = temp_state_from_z_behavior(seq(-2,2, by = 0.1))
+
+xtim = seq(-2,2, by = 0.1)
+ytim = state_from_z_time(xtim)
+
+
+neuro = function(SexState){
+ y = exp(1)^(SexState)
+ return(y-1.5)
+}
+
+z_neuro =sapply(xtim,neuro )
+
+
+a=ggplot(plot_data, aes(x = SexState, y = z_kt))+
+  geom_line(aes(color = '11KT'), linewidth =2)+
+  geom_line(aes(color = '% Testicular', y = z_testis), linewidth =2)+
+    geom_line(aes(color = 'E2', y = z_e2), linewidth =2)+
+  geom_line(aes(color= 'Mass', y =z_mass), linewidth =2)+
+      geom_line(data = data.frame(), aes(color= 'Time in Nest',x =xtim, y =ytim), linewidth =2)+
+        geom_line(data = data.frame(), aes(color= 'Neurogenesis',x =xtim, y =z_neuro), linewidth =2)+
+      geom_line(data = data.frame(), aes(color= 'Parental Behavior',x =xbeh, y =ybeh), linewidth =2)+
+    xlim(min(multiome_good$SexState, na.rm = T),
+                                    max(multiome_good$SexState, na.rm =T))+
+  labs(y = 'Arbitrary Units', x = '', color = 'Measurement')+
+  theme_minimal()+
+  ylim(-2, 4)+
+  
+ theme(axis.text.y = element_blank(), axis.text.x = element_blank())
+a
+
+ggsave(plot = a,
+       file = "latent.svg",
+       device = "svg",
+       units = "in",
+       width = 8,
+       height = 3.5,
+       path = "Manuscript/Plots/Fig.1/latent")
 
 
 

@@ -408,7 +408,7 @@ plot_data$z_kt= sapply(plot_data$SexState,z_kt_from_state )
 plot_data$z_logit_testis= sapply(plot_data$SexState,z_logitTestis_from_state )
 plot_data$z_e2= sapply(plot_data$SexState,z_e2_from_state )
 plot_data$z_mass= sapply(plot_data$SexState,z_mass_from_state )
-plot_data$z_time= sapply(plot_data$SexState,z_time_from_state )
+#plot_data$z_time= sapply(plot_data$SexState,z_time_from_state )
 plot_data$z_behavior= sapply(plot_data$SexState,z_behavior_from_state )
 plot_data$z_testis= sapply(plot_data$SexState,z_percent_testicular_from_state )
 
@@ -508,4 +508,41 @@ ggplot(vart, aes(y= testis_sample_var, x = Status))+
 ggplot(vart, aes(y= testis_sample_var, x = mean_status))+
   geom_point(aes(color = Status))
 
+## 
+multiome_complete = multiome[,c('Log_11KT',
+            'Percent_Testicular',
+            'Time_Day_2',
+            'Behaviors_Day_2',
+            'mass_final', 'Status')]%>%
+  na.omit()
 
+multiome_complete[,1:5]%>%
+  scale()%>%
+  prcomp()%>%
+  fviz_pca_biplot(habillage =multiome_complete$Status)
+multiome_complete$Status= factor(multiome_complete$Status, levels = c('S',
+                                                                      'EP',
+                                                                      'NM',
+                                                                      'M',
+                                                                      'D',
+                                                                      'E',
+                                                                      'NF',
+                                                                      'F'))
+multiome_long_scaled =multiome_complete %>%
+  mutate(across(c(Log_11KT, Percent_Testicular, Time_Day_2, 
+                  Behaviors_Day_2, mass_final), scale)) %>%
+  pivot_longer(values_to = 'value',
+               names_to = 'measure',
+               cols = c(Log_11KT, Percent_Testicular, Time_Day_2, 
+                       Behaviors_Day_2, mass_final))%>%
+  subset(Status %in% c('M',
+                       'D',
+                       'E',
+                       'NF',
+                       "F"))
+
+ggplot(multiome_long_scaled, aes(x = Status, y = value))+
+  geom_boxplot()+
+  geom_point()+
+  facet_wrap(~measure)
+            
