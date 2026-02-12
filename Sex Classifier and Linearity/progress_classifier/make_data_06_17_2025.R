@@ -13,7 +13,7 @@ for(i in deg_csvs){
   all_degs <- rbind(all_degs, data)
 }
 
-all_degs_subset <- subset(all_degs, av_q.value <0.1 & f_m_p.value <0.05 & singular ==F)
+all_degs_subset <- subset(all_degs, av_q.value <0.1 & f_m_p.value <0.05) ### EDIT HERE 2026_02_11
 
 mecd = readRDS("Functions/mean_expression_cluster_data.rds")
 

@@ -209,6 +209,7 @@ gene_ecm_pca_matrix = sub_6@assays$RNA$data[unique(ecm_genes),]%>%t()%>%as.matri
 pca_ecm_no0 = gene_ecm_pca_matrix[,which(colSums(gene_ecm_pca_matrix)>0)]
 pca_ecm = princomp(pca_ecm_no0,cor = T)
 
+library(factoextra)
 fviz_pca_var(pca_ecm)
  pca_ecm$center
  pca_ecm$loadings
@@ -265,7 +266,7 @@ go_module('GO:0034056') #ERE binding
 ere_0 = aov(mean_module~Status, data = subset(`module_GO:0034056`,Status!= 'NRM' & sub.cluster == '6_0' ))
 pair2 = pairs(emmeans(ere_0, 'Status'), adjust = 'none')
 
-ere_module_6_0
+#ere_module_6_0
 
   dag2 =subset(`module_GO:0034056`,Status!= 'NRM' & sub.cluster == '6_0' )
 
@@ -491,11 +492,151 @@ for(i in data$gene[data$cluster=='6']){
   
 }
 
+#### GnRH + and cckb+ neurons ####
+sub_6$GnRH = ifelse(sub_6@assays$RNA$data['LOC111571064',]>0, T, F)
+
+gnrh = sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(n_GnRH = sum(GnRH == T))
+
+tot= sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(total_cells = n())
+
+tog = gnrh%>%
+  right_join(tot, by = c('individual'))
+
+tog_6_gnrh= subset(tog, Status.x!='NRM')
+
+gnrh_glm =glm(cbind(tog_6_gnrh$n_GnRH, tog_6_gnrh$total_cells-tog_6_gnrh$n_GnRH)~Status.x, 
+              data = tog_6_gnrh,
+              family = binomial('logit'))
+
+anova(gnrh_glm, test = 'Chisq')
+
+tog_6_gnrh$Phase = as.character(tog_6_gnrh$Status.x)
+tog_6_gnrh$Phase = ifelse(tog_6_gnrh$Phase =='D','I', tog_6_gnrh$Phase )
+tog_6_gnrh$Phase = ifelse(tog_6_gnrh$Phase =='E','LI', tog_6_gnrh$Phase )
+tog_6_gnrh$Phase = factor(tog_6_gnrh$Phase, levels = c('M',
+                                                       'I',
+                                                       'LI',
+                                                       'NF',
+                                                       'F'))
+
+gnrh_pairs = pairs(emmeans(gnrh_glm, 'Status.x'), adjust = 'none')
+
+tog_6_gnrh$prop = tog_6_gnrh$n_GnRH/tog_6_gnrh$total_cells
+
+gnrh_prop = ggplot(tog_6_gnrh, aes(x = Phase, y = n_GnRH/total_cells))+
+    geom_boxplot(data = subset(tog_6_gnrh,Phase != "NF"),
+                 aes(x = Phase, y =n_GnRH/total_cells ,
+                     fill = Phase), outlier.shape = NA)+
+    geom_point(size =0.5)+
+    theme_classic()+
+        scale_x_discrete(drop = FALSE)+  
+    scale_y_continuous(labels = scales::percent)+
+    labs(x = 'Phase', y = '% GnRH of 6')+
+    theme(legend.position = 'none')+
+      geom_signif(xmin = c(1),
+                xmax = c(1.9),
+                y_position = c(max(tog_6_gnrh$prop*1.1)),
+                annotation =c('p = 0.514'),
+                color = "black",
+                tip_length = c(0,0), textsize = 3)+
+          geom_signif(xmin = c(1),
+                xmax = c(5),
+                y_position = c(max(tog_6_gnrh$prop*1.3)),
+                annotation =c('p = 0.127'),
+                color = "black",
+                tip_length = c(0,0), textsize = 3)+
+    geom_signif(xmin = c(2.1),
+                xmax = c(5),
+                y_position = c(max(tog_6_gnrh$prop*1.1)),
+                annotation =c('p = 0.372'),
+                color = "black",
+                tip_length = c(0,0), textsize = 3)
+  
+
+#ggsave(plot = gnrh_prop,
+#       file =  'gnrh_prop.svg',
+#       device = "svg",
+#       units = "in",
+#       width = 1.5,
+#       height = 1.5,
+#       path = "Manuscript/Plots/Fig.3")
 
 
+###
+sub_6$cckb = ifelse(sub_6@assays$RNA$data['cckb',]>0, T, F)
 
+cckb = sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(n_cckb = sum(cckb == T))
 
+tot= sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(total_cells = n())
 
+tog = cckb%>%
+  right_join(tot, by = c('individual'))
+
+tog_6_cckb= subset(tog, Status.x !=c('NRM'))
+
+cckb_glm =glm(cbind(tog_6_cckb$n_cckb, tog_6_cckb$total_cells-tog_6_cckb$n_cckb)~Status.x, 
+              data = tog_6_cckb,
+              family = binomial('logit'))
+
+anova(cckb_glm, test = 'Chisq')
+
+tog_6_cckb$Phase = as.character(tog_6_cckb$Status.x)
+tog_6_cckb$Phase = ifelse(tog_6_cckb$Phase =='D','I', tog_6_cckb$Phase )
+tog_6_cckb$Phase = ifelse(tog_6_cckb$Phase =='E','LI', tog_6_cckb$Phase )
+tog_6_cckb$Phase = factor(tog_6_cckb$Phase, levels = c('M',
+                                                       'I',
+                                                       'LI',
+                                                       'NF',
+                                                       'F'))
+
+cckb_pairs = pairs(emmeans(cckb_glm, 'Status.x'), adjust = 'none')
+
+tog_6_cckb$prop = tog_6_cckb$n_cckb/tog_6_cckb$total_cells
+
+cckb_prop = ggplot(tog_6_cckb, aes(x = Phase, y = n_cckb/total_cells))+
+    geom_boxplot(data = subset(tog_6_cckb,Phase != "NF"),
+                 aes(x = Phase, y =n_cckb/total_cells ,
+                     fill = Phase), outlier.shape = NA)+
+    geom_point(size =0.5)+
+    theme_classic()+
+        scale_x_discrete(drop = FALSE)+  
+    scale_y_continuous(labels = scales::percent)+
+    labs(x = 'Phase', y = '% cckb of 6')+
+    theme(legend.position = 'none')+
+      geom_signif(xmin = c(1),
+                xmax = c(1.9),
+                y_position = c(max(tog_6_cckb$prop*1.1)),
+                annotation =c('p = 0.629'),
+                color = "black",
+                tip_length = c(0,0), textsize = 3)+
+          geom_signif(xmin = c(1),
+                xmax = c(5),
+                y_position = c(max(tog_6_cckb$prop*1.3)),
+                annotation =c('*'),
+                color = "black",
+                tip_length = c(0,0), textsize = 3)+
+    geom_signif(xmin = c(2.1),
+                xmax = c(5),
+                y_position = c(max(tog_6_cckb$prop*1.1)),
+                annotation =c('*'),
+                color = "black",
+                tip_length = c(0,0), textsize = 3)
+
+ggsave(plot = cckb_prop,
+       file =  'cckb_prop.svg',
+       device = "svg",
+       units = "in",
+       width = 1.5,
+       height = 1.5,
+       path = "Manuscript/Plots/Fig.3")
 
 
 

@@ -426,18 +426,48 @@ for(i in unique(mf_data$cluster)){
   
   data =mf_data%>%subset(cluster == i & status == 'm')
 
-male_p = t.test(data$proba)$p.value
+male_p = t.test(data$proba, mu =0)$p.value
 data2 =mf_data%>%subset(cluster == i & status == 'f')
 
-female_p=t.test(1-data2$proba)$p.value 
+female_p=t.test(data2$proba, mu = 1)$p.value 
 newd = data.frame(cluster =i, 
                   male_p = male_p,
                   female_p = female_p)
 t_data = rbind(t_data, newd)
 
 }
-t_data$different = ifelse(t_data$male_p<0.05| t_data$female_p<0.05, '*', NA)
-confident_clusters = t_data$cluster[is.na(t_data$different)]
+t_data$different = ifelse(t_data$male_p<0.1| t_data$female_p<0.1, '*', NA) ## this is not a very good approach I think
+
+cluster_performance = mf_data %>%
+  group_by(cluster, status) %>%
+  summarize(
+    mean_prob = mean(proba),
+    sd_prob = sd(proba),
+    n = n(),
+    .groups = 'drop'
+  ) %>%
+  pivot_wider(
+    names_from = status, 
+    values_from = c(mean_prob, sd_prob, n)
+  )
+
+# Keep clusters based on practical thresholds
+confident_clusters = cluster_performance %>%
+  filter(
+    mean_prob_m < 0.10 &      # Males classified as male
+    mean_prob_f > 0.9        # Females classified as female
+  ) %>%
+  pull(cluster)
+
+ggplot(mf_data, aes(x = as.factor(cluster), y = proba, color = status))+
+  stat_summary(fun = 'mean', geom = 'crossbar')+
+  stat_summary(fun.data = "mean_se", geom = "errorbar", width = 0.2) + # why does the t test get this wrong
+  geom_point(color = 'black', aes(shape = status))
+
+ggplot(subset(mf_data, cluster %in% confident_clusters), aes(x = as.factor(cluster), y = proba, color = status))+
+  stat_summary(fun = 'mean', geom = 'crossbar')+
+  stat_summary(fun.data = "mean_se", geom = "errorbar", width = 0.2) + # why does the t test get this wrong
+  geom_point(color = 'black', aes(shape = status))
 
 ggplot(subset(data_with_dom_mean, cluster %in% confident_clusters), aes(x = fct_reorder(as.factor(cluster), mean_dom), y = prediction, color = status, shape = status))+
   stat_summary(geom= 'point', fun='mean', size=3)+
@@ -450,20 +480,32 @@ plott =subset(data_with_dom_mean, cluster %in% confident_clusters)%>%
             se_prediction = sd(prediction)/sqrt(n()))%>%
   subset(status == 'D')
 
+plott$neurotransmitter = ifelse(plott$cluster %in% c(24,0, 6, 9), 'Mixed',NA)
+plott$neurotransmitter = ifelse(plott$cluster %in% c(1,2, 11, 13, 15, 20, 26), 'Glial',plott$neurotransmitter)
+plott$neurotransmitter = ifelse(plott$cluster %in% c(19, 3, 14, 25), 'GABAergic',plott$neurotransmitter)
+plott$neurotransmitter = ifelse(is.na(plott$neurotransmitter), 'Glutamatergic', plott$neurotransmitter)
+
+
 library(forcats)
 classifier = ggplot(plott, aes(x = fct_reorder(as.factor(cluster), mean_prediction, .desc= T), y = mean_prediction))+
-  geom_point()+
   geom_errorbar(aes(x =fct_reorder(as.factor(cluster), mean_prediction,.desc= T), y =mean_prediction ,ymin =mean_prediction -se_prediction,ymax = mean_prediction+se_prediction ), width = 0.4)+
+  geom_point(aes( shape = neurotransmitter), size = 1.5)+
+    geom_point(aes( color = neurotransmitter, shape = neurotransmitter), size = 1)+
   labs(y = 'Prediction', x= 'Cluster')+
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = 'none')+
+  scale_color_manual(values = c('purple', 'black', '#5bb450', 'maroon'))+
+  scale_shape_manual(values =c(15, 16, 17, 18))
 
-#ggsave(plot = classifier,
-#       file = "classifier.svg",
- #      device = "svg",
-  #     units = "in",
-   #    width = 2.5,
-    #   height = 1.5,
-     #  path = "Manuscript/Plots/Fig.2")
+classifier
+
+ggsave(plot = classifier,
+       file = "classifier.svg",
+       device = "svg",
+       units = "in",
+       width = 2.5,
+       height = 1.5,
+       path = "Manuscript/Plots/Fig.2")
 
 ### linearity ####
 mecd = readRDS("Functions/mean_expression_cluster_data.rds")
@@ -475,7 +517,7 @@ base_dir = dir("DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering")
 for(i in base_dir){
   data = read.csv(paste0(base_path, i))
   
-  subset_data = subset(data, av_q.value < 0.1 & singular == F)
+  subset_data = subset(data, av_q.value < 0.1) #### EDIT MADE HERE, SINGULAR IN ERROR
   
   data_to_append = subset_data%>%
     dplyr::select(gene, cluster)
@@ -648,24 +690,32 @@ summary_data = linearity_individual_data %>%
     .groups = 'drop'
   )
 
-
+summary_data$neurotransmitter = ifelse(summary_data$cluster %in% c(24,0, 6, 9), 'Mixed',NA)
+summary_data$neurotransmitter = ifelse(summary_data$cluster %in% c(1,2, 11, 13, 15, 20, 26), 'Glial',summary_data$neurotransmitter)
+summary_data$neurotransmitter = ifelse(summary_data$cluster %in% c(19, 3, 14, 25), 'GABAergic',summary_data$neurotransmitter)
+summary_data$neurotransmitter = ifelse(is.na(summary_data$neurotransmitter), 'Glutamatergic', summary_data$neurotransmitter)
 
 linearity =ggplot(subset(summary_data, status == 'D'), aes(x = fct_reorder(as.factor(cluster), .x=mean_linearity,.desc = T), y = mean_linearity)) +
-  geom_point() +
   geom_errorbar(aes(ymin = mean_linearity - se_linearity, 
                     ymax = mean_linearity + se_linearity),
                 width = 0.4) +
+      geom_point( aes(shape = neurotransmitter), size = 1.5) +
+    geom_point(aes(color =neurotransmitter, shape = neurotransmitter), size = 1) +
   ylim(0, 1) +
   labs(x = "Cluster", y = "Linearity Index") +
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = 'none')+
+  scale_color_manual(values = c('purple', 'black', '#5bb450', 'maroon'))+
+  scale_shape_manual(values =c(15, 16, 17, 18))
+linearity
 
-#ggsave(plot = linearity,
-#       file = "linearity.svg",
-##       device = "svg",
-#       units = "in",
-#       width = 3,
-#       height = 1.5,
-#       path = "Manuscript/Plots/Fig.2")
+ggsave(plot = linearity,
+       file = "linearity.svg",
+       device = "svg",
+       units = "in",
+       width = 3.5,
+       height = 1.5,
+       path = "Manuscript/Plots/Fig.2")
 
 
 ####linearity and classifier correlation #####
@@ -674,7 +724,6 @@ lin_clas = summary_data%>%
   right_join(plott,by = 'cluster')
 
 corr = ggplot(lin_clas, aes(x = mean_linearity, y = mean_prediction))+
-  geom_point()+
   geom_errorbar(aes(x = mean_linearity, y = mean_prediction, 
                     ymin = mean_prediction-se_prediction,
                     ymax = mean_prediction+se_prediction), width = 0.0)+
@@ -682,17 +731,23 @@ corr = ggplot(lin_clas, aes(x = mean_linearity, y = mean_prediction))+
                     xmin = mean_linearity-se_linearity,
                     xmax = mean_linearity+se_linearity), height = 0.0)+
   theme_minimal()+
+      geom_point(aes(shape = neurotransmitter.x), size =1.5)+
+    geom_point(aes(color = neurotransmitter.x, shape = neurotransmitter.x), size =1)+
+    scale_color_manual(values = c('purple', 'black', '#5bb450', 'maroon'))+
+  scale_shape_manual(values =c(15, 16, 17, 18))+
   labs(x = 'Mean +/- SE Linearity', y = 'Mean +/- SE Prediction')+
   geom_text(aes(label = cluster, hjust =1,
-                vjust = 1))
+                vjust = 1))+
+  theme(legend.position ='none')
+corr
 
-#ggsave(plot = corr,
- #      file = "linearity_classifier_corr.svg",
-  #     device = "svg",
-   #    units = "in",
-    #   width = 2,
-     #  height = 2,
-      #path = "Manuscript/Plots/Fig.2")
+ggsave(plot = corr,
+       file = "linearity_classifier_corr.svg",
+       device = "svg",
+       units = "in",
+       width = 2.5,
+       height = 2,
+      path = "Manuscript/Plots/Fig.2")
 
 
 ### degs of interest, I need to write a function for this bs I think
