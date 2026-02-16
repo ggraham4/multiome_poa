@@ -108,8 +108,12 @@ set.seed(0)
 sce <- slingshot(sce, 
                  clusterLabels = 'cluster',
                  reducedDim = 'PCA',
-                 start.clus = '1_1')
+                 start.clus = '1_1', approx_points= 100, omega = T)
 
+saveRDS(sce, '/Users/ggraham/Desktop/slingshot.rds')
+sce =readRDS( '/Users/ggraham/Desktop/slingshot.rds')
+
+#### statistics ####
 pseudotime_slingshot <- slingPseudotime(sce)
 #what to do with this matrix
 
@@ -132,7 +136,6 @@ ggplot(pt_df, aes(x = pseudotime, fill = Status)) +
   facet_wrap(~Status) # looks like there is a missing male peak at 40 that is present in doms and females
 # and a male and dominant peak at 20 that is missing in females
 
-#### statistics ####
 ### rolling window setup
 window_width <- 10
 
@@ -242,16 +245,78 @@ ggplot(rolling_proportion_bound,
     linetype = "dashed"
   )
 
+ggplot(subset(rolling_proportion_bound, window < 45 & window >35),
+       aes(x = as.factor(window), y = proportion_cells, color = Status)) +
+  geom_point(alpha = 0.4) +
+  geom_boxplot()
+
 # need to do this for several lineages ...
 
-#saveRDS(sce, '/Users/ggraham/Desktop/slingshot.rds')
-sce =readRDS( '/Users/ggraham/Desktop/slingshot.rds')
+
 library(patchwork)
+library(scater)
+
 plot(as.SlingshotDataSet(sce))
 
 embedded <- embedCurves(sce, "UMAP")
-em <- slingCurves(embedded)[[1]] # only 1 path.
-em <- as.data.frame(embedded$s[embedded$ord,])
+embedded <- slingCurves(embedded)[[1]] # only 1 path.
+embedded <- data.frame(embedded$s[embedded$ord,])
 
-DimPlot(subset_obj)+
-    geom_path(data=em, aes(x=UMAP1, y=UMAP2))
+embedded_all <- embedCurves(sce, "UMAP")
+embedded_all <-  slingCurves(embedded_all)
+
+emb_all = list()
+for(i in 1:length(embedded_all)){
+  emb_all[[paste0(i)]] = (embedded_all)[[i]] 
+}
+
+plotUMAP(sce) +
+    geom_path(data=embedded, aes(x=harmonywnnUMAP_1, y=harmonywnnUMAP_2), size=1.2)
+
+p = plotUMAP(sce)
+for(i in seq_along(embedded_all)){
+
+  dat = emb_all[[paste0(i)]][["s"]]%>%as.data.frame()
+  dat$curve_id <- paste0(i)   # evaluate NOW
+
+  p = p +
+    geom_path(
+      data = dat,
+      aes(x = harmonywnnUMAP_1,
+          y = harmonywnnUMAP_2,
+          color = curve_id),
+      size = 1.2
+    )
+}
+p + theme(legend.position = 'left')
+p
+# they all get routed through 0 more or less wow
+
+plotUMAP(sce, color = 'slingPseudotime_1')
+
+DimPlot(obj, reduction = 'harmony_wnn.umap')
+### plot the cells that differ
+# Create a logical vector for cells in significant windows
+sig_windows <- rolling_stats_out$window[rolling_stats_out$signif == '*']
+
+# Mark cells that fall within any significant window
+# Need to account for the window width
+window_width <- 10
+half_window <- window_width / 2
+
+sce$in_sig_window <- FALSE
+for(sig_win in sig_windows) {
+  in_window <- sce$slingPseudotime_1 >= (sig_win - half_window) & 
+               sce$slingPseudotime_1 <= (sig_win + half_window)
+  sce$in_sig_window <- sce$in_sig_window | in_window
+}
+
+# Now plot with the significant cells highlighted
+plotUMAP(sce, colour_by = 'in_sig_window')
+
+# Or if you want to show pseudotime only for significant cells:
+sce$pseudotime_sig <- ifelse(sce$in_sig_window, 
+                              sce$slingPseudotime_1, 
+                              NA)
+
+plotUMAP(sce, colour_by = 'pseudotime_sig')
