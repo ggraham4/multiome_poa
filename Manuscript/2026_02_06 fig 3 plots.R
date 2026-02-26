@@ -638,6 +638,66 @@ ggsave(plot = cckb_prop,
        height = 1.5,
        path = "Manuscript/Plots/Fig.3")
 
+#### how are the genes grouped ####
+library(Seurat)
+library(patchwork)
+library(tidyverse)
+library(ggplot2)
+library(Polychrome)
+library(emmeans)
+library(ggsignif)
+  clown_go = readRDS("Functions/clown_go2")  
+library(clusterProfiler)
+  library(factoextra)
+
+    mecd = readRDS("Functions/mean_expression_cluster_data.rds")  
+
+
+  obj  = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
+
+sub_6 = FindSubCluster(obj, 6, graph.name='harmony.wsnn')
+Idents(sub_6) <- 'sub.cluster'
+sub_6 = subset(sub_6, final_clusters ==6)
+sub_6$sub.cluster = factor(sub_6$sub.cluster, levels = c(paste0('6_',0:3)))
+sub_6$Status = factor(sub_6$Status, levels = c('NRM','M',"D",'E','NF','F'))
+
+
+  ### DEG enrichgment
+degs =read.csv('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/FINAL degs classified w singular.csv')
+degs_6 = degs$gene[degs$cluster==6]
+degs_6_df = subset(degs, cluster ==6)
+
+deg_data = data.frame()
+for(i in degs_6){
+dat = mecd(sub_6, i, '6', 'final_clusters')
+dat$gene = i
+dat$mean = scale(dat$mean)
+deg_data = rbind(dat, deg_data)
+
+}
+ labels = data.frame(gene = degs_6_df$gene, short_label = degs_6_df$short_label)
+matching_vector= match(deg_data$gene, labels$gene)
+ 
+deg_data$short_label = labels$short_label[matching_vector]
+
+mat_data = deg_data%>%
+  dplyr::select(individual, Status, gene, mean)%>%
+  pivot_wider(names_from= gene,
+              values_from = mean)
+
+piv_mat = mat_data[,-c(1,2)]%>%t()
+piv_mat <- as.data.frame(piv_mat)
+hab <- labels$short_label[match(rownames(piv_mat), labels$gene)]  
+pca = prcomp(piv_mat, scale = T)
+
+fviz_pca_biplot(pca)
+
+fviz_pca_ind(pca)
+fviz_pca_ind(pca, habillage = hab)
+# would be interesting to find unbiased clusters here
+
+
+
 
 
 

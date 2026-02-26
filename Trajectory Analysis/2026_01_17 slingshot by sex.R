@@ -84,33 +84,33 @@ subset_obj <- subset(obj,
 
 
 ### Learn the trajectory ####
-sce= SingleCellExperiment(assays = list(
-  counts = GetAssayData(subset_obj, layer='counts'),
-  logcounts = GetAssayData(subset_obj, layer='data')
-))
+#sce= SingleCellExperiment(assays = list(
+#  counts = GetAssayData(subset_obj, layer='counts'),
+#  logcounts = GetAssayData(subset_obj, layer='data')
+#))
 
-subset_obj = FindVariableFeatures(subset_obj, layer  = "data")
-subset_obj = RunPCA(subset_obj, dim = 50, verbose = TRUE, assay = "RNA",               
- features = VariableFeatures(object = subset_obj), reduction.name = "pca_slingshot",
- reduction.key = "pca_slingshot_")
+#subset_obj = FindVariableFeatures(subset_obj, layer  = "data")
+#subset_obj = RunPCA(subset_obj, dim = 50, verbose = TRUE, assay = "RNA",               
+# features = VariableFeatures(object = subset_obj), reduction.name = "pca_slingshot",
+# reduction.key = "pca_slingshot_")
 
-reducedDims(sce)= list(
-  PCA = Embeddings(subset_obj,'pca_slingshot' ),
-  UMAP = Embeddings(subset_obj, 'harmony_wnn.umap')
-)
+#reducedDims(sce)= list(
+#  PCA = Embeddings(subset_obj,'pca_slingshot' ),
+ # UMAP = Embeddings(subset_obj, 'harmony_wnn.umap')
+#)
 #add these reductions into the cds object
-reducedDims(sce)$PCA <- Embeddings(subset_obj, "pca_slingshot")
+#reducedDims(sce)$PCA <- Embeddings(subset_obj, "pca_slingshot")
 
-colData(sce)$cell_type = subset_obj$sub.cluster
-colData(sce)$cluster = subset_obj$sub.cluster
+#colData(sce)$cell_type = subset_obj$sub.cluster
+#colData(sce)$cluster = subset_obj$sub.cluster
 
-set.seed(0)
-sce <- slingshot(sce, 
-                 clusterLabels = 'cluster',
-                 reducedDim = 'PCA',
-                 start.clus = '1_1', approx_points= 100, omega = T)
+#set.seed(0)
+#sce <- slingshot(sce, 
+#                 clusterLabels = 'cluster',
+ #                reducedDim = 'PCA',
+#                 start.clus = '1_1', approx_points= 100, omega = T)
 
-saveRDS(sce, '/Users/ggraham/Desktop/slingshot.rds')
+#saveRDS(sce, '/Users/ggraham/Desktop/slingshot.rds')
 sce =readRDS( '/Users/ggraham/Desktop/slingshot.rds')
 
 #### statistics ####

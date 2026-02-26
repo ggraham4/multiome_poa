@@ -409,6 +409,7 @@ clown_go(degs$gene[degs$cluster==1 & degs$second_word=='Upregulated'])%>%dotplot
 clown_go(degs$gene[degs$cluster==1 ],p = 1, fdr =1)%>%dotplot()
 
 ##### Classifier #####
+{
 mf_data = read.csv('/Users/ggraham/Desktop/multiome_poa/Sex Classifier and Linearity/progress_classifier/logistic_mf_validation_07_07_2025.csv')
 data = read_csv("/Users/ggraham/Desktop/multiome_poa/Sex Classifier and Linearity/progress_classifier/logistic_individual_probabilities_07_05_2025.csv")
 mean_dominants = data%>%
@@ -496,11 +497,11 @@ classifier = ggplot(plott, aes(x = fct_reorder(as.factor(cluster), mean_predicti
   theme(legend.position = 'none')+
   scale_color_manual(values = c('purple', 'black', '#5bb450', 'maroon'))+
   scale_shape_manual(values =c(15, 16, 17, 18))
-
+}
 classifier
 
 ggsave(plot = classifier,
-       file = "classifier.svg",
+       file = "classifier_c_10.svg",
        device = "svg",
        units = "in",
        width = 2.5,
