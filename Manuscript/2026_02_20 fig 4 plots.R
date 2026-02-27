@@ -7,50 +7,8 @@ library(emmeans)
 library(ggsignif)
 clown_go = readRDS("Functions/clown_go2")  
 library(clusterProfiler)
-  go_module = function(term){
-term2gene = readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
-term2name = readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
-
-go_terms = term2gene%>%
-left_join(term2name, by = 'go_id')
-
-term_genes = go_terms$aocellaris_name[ go_terms$go_id == term]
-term_genes_in_obj = term_genes[term_genes %in% rownames(sub_6)]
-print(paste0(length(term_genes_in_obj),' genes found'))
-
-gene_pca_matrix = sub_6@assays$RNA$data[unique(term_genes_in_obj),]%>%t()%>%as.matrix()
-gene_pca_matrix_no0 = gene_pca_matrix[,which(colSums(gene_pca_matrix)>0)]
-pca = princomp(gene_pca_matrix_no0, cor = T)
-
-  var_explained = pca$sdev^2
-  max_var_pc = which.max(var_explained)
-  print(paste0("PC", max_var_pc, " explains ", 
-               round(var_explained[max_var_pc]/sum(var_explained)*100, 2), 
-               "% of variance"))
-
-if(mean(pca$loadings[,max_var_pc])>0){
-  scores = pca$scores[,max_var_pc]
-}else{
-  scores=pca$scores[,max_var_pc]*-1
-}
-
-dupe = sub_6
-
-dupe$module = scores
-
-pca_ind =dupe@meta.data%>%
-  group_by(Status, individual, sub.cluster)%>%
-  summarize(mean_module = mean(module),
-            se_module = sd(module)/sqrt(n()))
-
-assign(paste0('module_', term), pca_ind, envir = .GlobalEnv)
-p = ggplot(pca_ind, aes(x = Status, y= mean_module))+
-  geom_boxplot()+
-  geom_point()+
-  facet_wrap(~sub.cluster, scales ='free')
-return(p)
-}
-
+mecp = readRDS('Functions/mean_expression_cluster_plot.rds')
+mecd = readRDS('Functions/mean_expression_cluster_data.rds')
 
 #colors = c("red", "#006400", "blue",'#000000', 'purple','gray','brown','orange')
 
@@ -386,13 +344,13 @@ prop_1_1 = ggplot(cells_total_1_1,
   theme(legend.position = 'none')
 prop_1_1 
 
-ggsave(plot = prop_1_1,
-       file = "prop_1_1.svg",
-       device = "svg",
-       units = "in",
-       width = 1.5,
-       height = 1.5,
-       path = "Manuscript/Plots/Fig.4/prop")
+#ggsave(plot = prop_1_1,
+#       file = "prop_1_1.svg",
+#       device = "svg",
+#       units = "in",
+ #      width = 1.5,
+  #     height = 1.5,
+   #    path = "Manuscript/Plots/Fig.4/prop")
 
 #### Aromatase ####
 degs =read.csv('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/FINAL degs classified w singular.csv')
@@ -604,13 +562,13 @@ for(i in c(tf_degs)){
   plok = plotter_function_final(sub_1, degs_1, i)+
     labs( y = i)
   
-       ggsave(plot = plok,
-       file = paste0('tf_',i,'.svg'),
-       device = "svg",
-       units = "in",
-       width = 1.35,
-       height = 1.5,
-       path = "Manuscript/Plots/Fig.4/tfs")
+     #  ggsave(plot = plok,
+      # file = paste0('tf_',i,'.svg'),
+       #device = "svg",
+       #units = "in",
+       #width = 1.35,
+       #height = 1.5,
+       #path = "Manuscript/Plots/Fig.4/tfs")
 
   
 }
@@ -618,8 +576,98 @@ for(i in c(tf_degs)){
 #glceb another ECM gene, and we could discuss junctional adhesion molecule 3B-like
 # and gap junction gamma-1 protein-like as well in that same sentence maybe 
 
+chromatin =degs_1_concise$gene[degs_1_concise$type == 'chromatin']
+
+for(i in c(chromatin)){
+  
+  plok = plotter_function_final(sub_1, degs_1, i)+
+    labs( y = i)
+  
+      # ggsave(plot = plok,
+     #  file = paste0('tf_',i,'.svg'),
+      # device = "svg",
+     #  units = "in",
+     #  width = 1.35,
+     #  height = 1.5,
+      # path = "Manuscript/Plots/Fig.4/chromatin")
+
+  # moving skida1 to this folder too
+}
 
 
 
+##### GO module #####
+  go_module = function(term){
+term2gene = readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
+term2name = readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
+
+go_terms = term2gene%>%
+left_join(term2name, by = 'go_id')
+
+term_genes = go_terms$aocellaris_name[ go_terms$go_id == term]
+term_genes_in_obj = term_genes[term_genes %in% rownames(sub_1)]
+print(paste0(length(term_genes_in_obj),' genes found'))
+
+gene_pca_matrix = sub_1@assays$RNA$data[unique(term_genes_in_obj),]%>%t()%>%as.matrix()
+gene_pca_matrix_no0 = gene_pca_matrix[,which(colSums(gene_pca_matrix)>0)]
+pca = princomp(gene_pca_matrix_no0, cor = T)
+
+  var_explained = pca$sdev^2
+  max_var_pc = which.max(var_explained)
+  print(paste0("PC", max_var_pc, " explains ", 
+               round(var_explained[max_var_pc]/sum(var_explained)*100, 2), 
+               "% of variance"))
+
+if(mean(pca$loadings[,max_var_pc])>0){
+  scores = pca$scores[,max_var_pc]
+}else{
+  scores=pca$scores[,max_var_pc]*-1
+}
+
+dupe = sub_1
+
+dupe$module = scores
+
+pca_ind =dupe@meta.data%>%
+  group_by(Status, individual)%>%
+  summarize(mean_module = mean(module),
+            se_module = sd(module)/sqrt(n()))
+
+assign(paste0('module_', term), pca_ind, envir = .GlobalEnv)
+p = ggplot(pca_ind, aes(x = Status, y= mean_module))+
+  geom_boxplot()+
+  geom_point()
+return(p)
+}
+
+  go_module('GO:0034056')+
+    labs(title='ERE Binding Module, Radial Glia')
+  
+  mecp(sub_1, 'esr2a', 1)
+  mecp(sub_1, 'esr2b', 1)
+  mecp(sub_1, 'esr1', 1)
 
   
+  ###### TFs #####
+  
+  tfs = degs$gene[degs$cluster==1 & degs$type=='transcription factor']
+  
+  labs = degs$short_label[degs$cluster==1 & degs$type=='transcription factor']
+  cbind(tfs, labs)
+  
+tf_pca_matrix =data.frame()
+for(tf in tfs){
+  data = mecd(sub_1, tf, 1)
+  data$gene = tf
+  data$mean = scale(data$mean)
+  tf_pca_matrix=rbind(tf_pca_matrix, data)
+}
+  
+tf_pca_matrix_wide = tf_pca_matrix%>%
+  dplyr::select(individual, Status, mean, gene)%>%
+  pivot_wider(names_from = 'gene', 
+              values_from = 'mean')
+
+tf_pca = prcomp(tf_pca_matrix_wide[,3:ncol(tf_pca_matrix_wide)]%>%t(), scale = T)
+library(factoextra)
+fviz_pca_ind(tf_pca,  habbillage = colnames(tf_pca_matrix_wide[,3:ncol(tf_pca_matrix_wide)]))

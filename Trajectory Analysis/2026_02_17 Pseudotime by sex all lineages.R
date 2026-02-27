@@ -408,3 +408,152 @@ pseudo_18_ordered =pseudo_18[order(pseudo_18$p.value),]
 # yeah I dont know man Im not really convinced, maybe I should do a more complex model like
 # degs by Status along the pseudotime, though that could be very computationally expensive,
 #though in theory testLinearModel could do it, but I think its not worth my time
+
+
+### heatmap of lineages ####
+
+cell_clusters <- sce$cluster
+pt_matrix <- slingPseudotime(sce)
+num_lineages <- ncol(pt_matrix)
+
+### Order clusters by mean pseudotime
+
+
+mean_pt_per_cluster <- data.frame(
+  cell = rownames(pt_matrix),
+  cluster = cell_clusters,
+  mean_pt = rowMeans(pt_matrix, na.rm = TRUE)
+) %>%
+  group_by(cluster) %>%
+  summarize(mean_pt = mean(mean_pt, na.rm = TRUE)) %>%
+  arrange(mean_pt)
+
+cluster_order <- mean_pt_per_cluster$cluster
+
+
+##  Order lineages by mean pseudotime
+
+mean_lineage_pt <- as.data.frame(pt_matrix) %>%
+  mutate(cell = rownames(pt_matrix)) %>%
+  pivot_longer(cols = starts_with("Lineage")) %>%
+  group_by(name) %>%
+  summarize(mean_pseudotime = mean(value, na.rm = TRUE)) %>%
+  arrange(mean_pseudotime)
+
+lineage_order <- mean_lineage_pt$name
+
+
+lineage_cluster_mat <- matrix(
+  0,
+  nrow = num_lineages,
+  ncol = length(unique(cell_clusters)),
+  dimnames = list(
+    colnames(pt_matrix),
+    sort(unique(cell_clusters))
+  )
+)
+
+for (lin in 1:num_lineages) {
+  cells_in_lin <- !is.na(pt_matrix[, lin])
+  clusters_hit <- cell_clusters[cells_in_lin]
+  tab <- table(clusters_hit)
+  lineage_cluster_mat[lin, names(tab)] <- as.numeric(tab)
+}
+
+
+### 4. Normalize to proportions
+
+
+lineage_cluster_mat_norm <- lineage_cluster_mat / 
+                            rowSums(lineage_cluster_mat)
+
+
+row_means <- rowMeans(lineage_cluster_mat_norm)
+col_means <- colMeans(lineage_cluster_mat_norm)
+
+lineage_cluster_mat_norm <- cbind(
+  lineage_cluster_mat_norm,
+  Mean = row_means
+)
+
+lineage_cluster_mat_norm <- rbind(
+  lineage_cluster_mat_norm,
+  Mean = c(col_means, mean(row_means))
+)
+
+
+lineage_cluster_mat_norm <- 
+  lineage_cluster_mat_norm[lineage_order, cluster_order, drop = FALSE]
+
+# Re-add Mean row/column at bottom/right
+lineage_cluster_mat_norm <- rbind(
+  lineage_cluster_mat_norm,
+  Mean = c(col_means[cluster_order], mean(row_means))
+)
+
+lineage_cluster_mat_norm <- cbind(
+  lineage_cluster_mat_norm,
+  Mean = c(row_means[lineage_order], mean(row_means))
+)
+
+
+
+heatmap = pheatmap(
+  lineage_cluster_mat_norm,
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  angle_col = 45,
+  display_numbers = round(lineage_cluster_mat_norm, 2),
+  color = colorRampPalette(c("white", "blue"))(100),
+  fontsize = 7
+)
+heatmap
+     
+#ggsave(plot = heatmap,
+ #      file = "2026_02_18_pseudotime_by_sex lineage heatmap.svg",
+  #     device = "svg",
+   #    units = "in",
+    #   width = 6,
+     #  height = 4,
+      # path = "Manuscript/Plots/RGC supplementary")
+
+mean_pseudotime = pt_matrix %>%
+  as.data.frame() %>%
+  mutate(cell = rownames(pt_matrix),
+         cluster = sce$cluster) %>%
+  pivot_longer(cols = starts_with('Lineage')) %>%
+  group_by(name, cluster) %>%
+  summarize(mean_pseudotime = mean(value, na.rm = T)) %>%
+  pivot_wider(names_from = cluster, values_from = mean_pseudotime)
+
+mean_pseudo_matrix = as.matrix(mean_pseudotime[,-1])
+rownames(mean_pseudo_matrix) = mean_pseudotime$name
+
+# Sort rows and columns by their means
+mean_pseudo_matrix = mean_pseudo_matrix[order(rowMeans(mean_pseudo_matrix, na.rm = T)), 
+                                        order(colMeans(mean_pseudo_matrix, na.rm = T))]
+
+# Add mean row and column
+mean_pseudo_matrix = cbind(mean_pseudo_matrix, Row_Mean = rowMeans(mean_pseudo_matrix, na.rm = T))
+mean_pseudo_matrix = rbind(mean_pseudo_matrix, Col_Mean = colMeans(mean_pseudo_matrix, na.rm = T))
+
+heatmap2 = pheatmap(
+  mean_pseudo_matrix,
+  na_col = "gray",
+  cluster_cols = F,
+  cluster_rows = F,
+    fontsize = 7,
+    display_numbers = round(mean_pseudo_matrix, 2),
+  angle_col = 45
+)
+heatmap2
+
+ggsave(plot = heatmap2,
+       file = "2026_02_18_pseudotime_by_sex lineage heatmap mean pseudo.svg",
+       device = "svg",
+       units = "in",
+       width = 6,
+       height = 4,
+       path = "Manuscript/Plots/RGC supplementary")
+
+

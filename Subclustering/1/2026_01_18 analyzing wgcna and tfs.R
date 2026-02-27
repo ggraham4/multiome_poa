@@ -9,6 +9,8 @@ library(Seurat)
 library(hdWGCNA)
 library(patchwork)
 library(tidyverse)
+  clown_go = readRDS("Functions/clown_go2")  
+
   
   prop_plotter =function(obj, clustering){
     n_cells = obj@meta.data%>%
@@ -118,7 +120,7 @@ deg_tfs = c('skida1',
 deg_tfs%in%hub_df$gene_name # no
 deg_tfs%in%modules$gene_name # mix
 
-modules[modules$gene_name %in% deg_tfs,]
+modules[modules$gene_name %in% deg_tfs,] 
 # so gli, pbnox, and coup are coexpressed, and sox6 is in its own camp
 
 plot_module('blue')
@@ -164,7 +166,7 @@ marks_1_2 = subset(markers, cluster =='1_2')
 Scenario 2: Hypothalamic Neuroendocrine Neurons
 Scenario 3: Mature Functional Astrocyte Cluster (least likely)
 "
-"GPT things this is more likely astrocytic, based on my previously constricted lineage I agree with perplexity more
+"GPT thinks this is more likely astrocytic, based on my previously constricted lineage I agree with perplexity more
 "
 
 
@@ -219,4 +221,11 @@ DotPlot(rgc, c('elavl3',
   coord_flip()
 
 
+###
+hdWGCNA::ModuleRadarPlot(rgc)
+
+clown_go(modules$gene_name[modules$color=='blue'])%>%dotplot() # translation 
+clown_go(modules$gene_name[modules$color=='yellow'])%>%dotplot()  # neurogenesis
+clown_go(modules$gene_name[modules$color=='red'])%>%dotplot() # probably also neurogenesis
+clown_go(modules$gene_name[modules$color=='green'])%>%dotplot() # this is why I think its a tanycyte
 
