@@ -1,0 +1,230 @@
+I wanted to simulate what we talked about to make sure I was thinking about it right, turns out I got two things wrong so I wanted to correct those here.
+
+```{r message=FALSE, warning=FALSE}
+#install.packages('lme4')
+#install.packages('car)
+#install.packages('ggplot2)
+#install.packages('tidyverse')
+
+library(lme4)
+library(car)
+library(ggplot2)
+library(ggeffects)
+library(tidyverse)
+```
+
+# Simulated Data 
+
+Simulate data that looks like survival data Here I had an AI do it because the data structure is complicated, ignore this part
+
+```{r}
+set.seed(1)
+
+# --- Define structure ---
+n_mice <- 6
+n_dendrites_per_mouse <- 4
+n_spines_per_dendrite <- 10
+days <- 1:8
+
+# --- Mouse-level info ---
+mouse_ids <- paste0("mouse_", sample(1000:9999, n_mice))
+genotypes <- rep_len(c("wt", "exp"), n_mice)  # alternating, or randomize
+mouse_df <- tibble(
+  mouse_id = mouse_ids,
+  genotype = genotypes
+)
+
+# --- Dendrite-level info ---
+dendrite_df <- tibble(
+  mouse_id = rep(mouse_ids, each = n_dendrites_per_mouse),
+  dendrite_id = paste0("dend_", sample(10000:99999, n_mice * n_dendrites_per_mouse))
+)
+
+# --- Spine-level skeleton ---
+spine_df <- tibble(
+  dendrite_id = rep(dendrite_df$dendrite_id, each = n_spines_per_dendrite),
+  spine_id = paste0("spine_", sample(100000:999999, n_mice * n_dendrites_per_mouse * n_spines_per_dendrite))
+)
+
+# --- Expand to daily observations ---
+df <- spine_df %>%
+  tidyr::crossing(day = days) %>%
+  left_join(dendrite_df, by = "dendrite_id") %>%
+  left_join(mouse_df, by = "mouse_id")
+
+# --- Add cut ---
+df <- df %>%
+  mutate(cut = day >= 5)
+
+# --- Simulate spine presence (survival-style, but with random start) ---
+# For each spine: sample a birth day (or never born = Inf), and a death day
+# Spine is present (1) between birth and death day, inclusive
+
+spine_survival <- spine_df %>%
+  distinct(spine_id) %>%
+  mutate(
+    birth_day = sample(1:8, n(), replace = TRUE),   # day spine first appears
+    # death day is >= birth day; some spines survive the whole window
+    lifespan  = sample(1:8, n(), replace = TRUE),   # how many days it lives
+    death_day = pmin(birth_day + lifespan - 1, 8)
+  )
+
+df <- df %>%
+  left_join(spine_survival, by = "spine_id") %>%
+  mutate(
+    spine = as.integer(day >= birth_day & day <= death_day)
+  ) %>%
+  select(-birth_day, -lifespan, -death_day)
+
+# --- Add area (only meaningful when spine == 1, but simulate for all) ---
+df <- df %>%
+  mutate(
+    area = rnorm(n(), mean = 1.5, sd = 0.4),
+    day  = factor(day)
+  )
+
+# --- Final column order ---
+df <- df %>%
+  select(mouse_id, genotype, dendrite_id, spine_id, day, cut, spine, area)
+
+days <- 1:8
+cut_day <- 5
+
+# initialize each spine as alive on day 1 with some probability
+spine_states <- spine_df %>%
+  mutate(alive = rbinom(n(), 1, 0.5))  # baseline prevalence
+
+all_days <- list()
+
+for (d in days) {
+
+  # define rates
+  if (d < cut_day) {
+    p_birth <- 0.05
+    p_death <- 0.05
+  } else {
+    p_birth <- 0.05
+    p_death <- 0.25   # increased death after cut
+  }
+
+  # deaths
+  died <- rbinom(nrow(spine_states), 1, p_death)
+  spine_states$alive <- ifelse(spine_states$alive == 1 & died == 1, 0, spine_states$alive)
+
+  # births (only for currently dead spines)
+  born <- rbinom(nrow(spine_states), 1, p_birth)
+  spine_states$alive <- ifelse(spine_states$alive == 0 & born == 1, 1, spine_states$alive)
+
+  all_days[[d]] <- spine_states %>%
+    mutate(day = d, spine = alive)
+}
+
+df2 <- bind_rows(all_days) %>%
+  left_join(dendrite_df, by = "dendrite_id") %>%
+  left_join(mouse_df, by = "mouse_id") %>%
+  mutate(day = factor(day),
+         cut = day %in% 5:8)
+df2$area =df$area
+```
+
+Ok we have some fake data
+
+```{r}
+glimpse(df2)
+```
+
+# Logistic Regression
+
+Here, we specify a logistic regression using glmer with the parameters we discussed
+
+I want to point out something I realized after our discussion, if we consider day as a categorical variable rather than continuous, then day as a factor perfectly covaries with cut, so cut must be removed from the model, **two variables cannot perfectly covary**. We can still analyze the difference before vs after the cut by just looking at the probability of survival before and after, and we could probably recover the p-value of the cut in some way, though I'd have to think more about it.
+
+Because the spine is the unit of repeated measurement, **we should actually include a random effect of spine nested within dendrite (1\|dendrite_id/spine_id)**. If we wanted to be super precise we would do (1\|mouse/dendrite/spine), but that may be too conservative statistically.
+
+```{r}
+model = glmer(spine ~genotype*day +(1|dendrite_id/spine_id), data = df2,
+              family = 'binomial', 
+             control = glmerControl(optimizer = "bobyqa") #I include this optimizer because the model was not able to converge with my fake data, hopefully it does with the real data
+             )
+summary(model)
+```
+
+Here, the model fit is singular, meaning it is not able to estimate the random effect, so it reverts to assuming all data are independent. This is not surprising given made up data, there is no true random effect here.
+
+# Type 3 tests
+
+```{r}
+car::Anova(model, 3)
+```
+
+There should be a significant effect of day because thats the way the data was made.
+
+# Plot marginal estimates
+
+An easy way to do this is to use the package ggeffects, which will keep the other variables at their average value and just vary the term(s) you specify, then output the means and 95% confidence intervals and standard errors
+
+```{r}
+newdata = ggpredict(model, 'day')%>%
+  as.data.frame(terms_to_colnames= T)
+newdata
+```
+
+```{r}
+ggplot(newdata, aes(x =day, y = predicted ))+
+  geom_pointrange(aes(x = day, y = predicted, ymin = conf.low, ymax = conf.high))+
+  labs(title = 'Probability of Survival over Days')+
+  geom_vline(xintercept = 4.5)
+```
+
+I appreciate that survival probability should not increase over days, I think this is due to how death and birth were simulated and not due to some aspect of the model.
+
+```{r}
+newdata2 = ggpredict(model, 'genotype')%>%
+  as.data.frame(terms_to_colnames= T)
+newdata2
+```
+
+```{r}
+ggplot(newdata2, aes(x =genotype, y = predicted ))+
+  geom_pointrange(aes(x = genotype, y = predicted, ymin = conf.low, ymax = conf.high))+
+  labs(title = 'Probability of Survival over Genotype')
+
+```
+
+# Plot marginal estimates with specific perturbations
+
+What if we just wanted to see how the survival would look if all the genotypes were WT
+
+```{r}
+newdata3 = df2
+newdata3$genotype='wt'
+newdata3$dendrite_id = df$dendrite_id[1]
+newdata3$spine_id = df$spine_id[1] # random effects add a lot of noise so we keep them stable
+
+prediction = predict(model, newdata3, type = 'response')
+newdata3$predicted = prediction
+
+ggplot(newdata3, aes(x =day, y = predicted))+
+  geom_point()+
+  labs(title = 'Probability of Survival over Days, Genotype == WT')+
+  geom_vline(xintercept = 4.5)
+```
+
+Or experimental
+
+```{r}
+newdata4 = df2
+newdata4$genotype='exp'
+newdata4$dendrite_id = df$dendrite_id[1]
+newdata4$spine_id = df$spine_id[1] # random effects add a lot of noise so we keep them stable
+
+prediction = predict(model, newdata4, type = 'response')
+newdata4$predicted = prediction
+
+ggplot(newdata4, aes(x =day, y = predicted))+
+  geom_point()+
+  labs(title = 'Probability of Survival over Days, Genotype == Exp')+
+  geom_vline(xintercept = 4.5)
+```
+
+Basically the same which isnt surprising

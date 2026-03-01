@@ -288,8 +288,20 @@ for(i in seq_along(embedded_all)){
       size = 1.2
     )
 }
-p + theme(legend.position = 'left')
+p=p + theme(legend.position = 'top')+
+  labs(color = 'Lineage')+
+  theme_void()
 p
+
+ggsave(plot = p,
+       file = "2026_01_16_pseudotime all lineages.tiff",
+       device = "tiff",
+       units = "in",
+       width = 5,
+       height = 5,
+       path = "Manuscript/Plots/RGC supplementary")
+
+
 # they all get routed through 0 more or less wow
 
 plotUMAP(sce, color = 'slingPseudotime_1')

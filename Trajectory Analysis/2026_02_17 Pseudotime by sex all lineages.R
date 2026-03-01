@@ -548,12 +548,12 @@ heatmap2 = pheatmap(
 )
 heatmap2
 
-ggsave(plot = heatmap2,
-       file = "2026_02_18_pseudotime_by_sex lineage heatmap mean pseudo.svg",
-       device = "svg",
-       units = "in",
-       width = 6,
-       height = 4,
-       path = "Manuscript/Plots/RGC supplementary")
+#ggsave(plot = heatmap2,
+ #      file = "2026_02_18_pseudotime_by_sex lineage heatmap mean pseudo.svg",
+  #     device = "svg",
+   #    units = "in",
+    #   width = 6,
+     #  height = 4,
+      # path = "Manuscript/Plots/RGC supplementary")
 
 
