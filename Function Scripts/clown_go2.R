@@ -30,7 +30,7 @@ saveRDS(term2gene_clown_go2, 'Function Scripts/Dependencies/Term2gene_clown_go2.
 saveRDS(term2desc_clown_go2, 'Function Scripts/Dependencies/Term2desc_clown_go2.rds')
 
 
-clown_go2 <- function(significant.list, whole.list = NULL){ #list must be SYMBOL
+clown_go2 <- function(significant.list, whole.list = NULL, fdr = 0.05,p =0.05){ #list must be SYMBOL
   
   if (!require(biomaRt)) BiocManager::install('biomaRt')
   if (!require(clusterProfiler)) BiocManager::install('clusterProfiler')
@@ -48,8 +48,8 @@ clown_go2 <- function(significant.list, whole.list = NULL){ #list must be SYMBOL
                    TERM2NAME=term2desc,
                    pAdjustMethod = "fdr", #What p adjust method should I use?
                    universe = whole.list,
-                   pvalueCutoff = 0.05,
-                   qvalueCutoff = 0.05)
+                   pvalueCutoff = p,
+                   qvalueCutoff = fdr)
   return(ego2)
 }
 

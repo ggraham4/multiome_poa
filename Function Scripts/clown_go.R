@@ -16,7 +16,7 @@ biomart_basic <-
 term2gene =biomart_basic[, c("go_id", "entrezgene_accession")]
 term2desc=biomart_basic[, c("go_id", "name_1006")]
 
-clown_go <- function(significant.list, whole.list = NULL){ #list must be SYMBOL
+clown_go <- function(significant.list, whole.list = NULL, fdr = 0.05){ #list must be SYMBOL
   
   if (!require(biomaRt)) BiocManager::install('biomaRt')
     if (!require(clusterProfiler)) BiocManager::install('clusterProfiler')
@@ -35,7 +35,7 @@ library(biomaRt)
                    pAdjustMethod = "fdr", #What p adjust method should I use?
                    universe = whole.list,
                    pvalueCutoff = 0.05,
-                   qvalueCutoff = 0.05)
+                   qvalueCutoff = fdr)
   return(ego2)
 }
 

@@ -426,6 +426,9 @@ expression_genes = results[results$av_expression_q < 0.1, ]
 
 plot_gene_ieg('kdm6bb')
 plot_gene_ieg('LOC111571064')
+plot_gene_ieg('cckb')
+plot_gene_ieg('LOC111562384')
+
 
 ### trying whole cluster ----
 mat_6 = sub_6@assays$RNA$data[,
