@@ -36,6 +36,9 @@ for(interacting_pair in unique_interactions){
     temp_data = full_data[full_data$cluster_pair == cluster_pair,]
     
     if(sum(temp_data$mean==0)>=4){
+      
+      next# here, I am skipping the fisher cases I analyzed in the past because I think they are low confidence
+      
       #run a fisher's exact test, first , binarize the data
       temp_data$binary = ifelse(temp_data$mean == 0, 0, 1)
       
