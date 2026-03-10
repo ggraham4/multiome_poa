@@ -24,12 +24,12 @@
   library(ComplexHeatmap)
 }
 
-multiome_object <- readRDS("C:/seurat_objects/optimal_clustering_05_06_2025.rds")
+multiome_object <- readRDS("~/Desktop/nemo.orig_harmony.integration_all_testd_clusters.rds")
 Idents(multiome_object) <- "res0.8_50nn_40PC_45LSI"
 
 
 #### Find anchorsets and transfer labels #####
-previous_object <- readRDS('C:/Users/Gabe/Desktop/Old object.rds')
+previous_object <- readRDS("~/Desktop/parker_object.rds")
 
 #### Clusters 20 ####
 Idents(previous_object) <- 'clusters20'

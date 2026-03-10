@@ -500,13 +500,29 @@ classifier = ggplot(plott, aes(x = fct_reorder(as.factor(cluster), mean_predicti
 }
 classifier
 
-ggsave(plot = classifier,
-       file = "classifier_c_10.svg",
-       device = "svg",
-       units = "in",
-       width = 2.5,
-       height = 1.5,
-       path = "Manuscript/Plots/Fig.2")
+#ggsave(plot = classifier,
+ #      file = "classifier_c_10.svg",
+  #     device = "svg",
+   #    units = "in",
+    #   width = 2.5,
+     #  height = 1.5,
+      # path = "Manuscript/Plots/Fig.2")
+
+data_with_dom_mean%>%
+  summarize(mean_pred = mean(prediction),
+            se_pred = sd(prediction)/sqrt(n()))
+
+data_with_dom_mean$neurotransmitter = ifelse(data_with_dom_mean$cluster %in% c(24,0, 6, 9), 'Mixed',NA)
+data_with_dom_mean$neurotransmitter = ifelse(data_with_dom_mean$cluster %in% c(1,2, 11, 13, 15, 20, 26), 'Glial',data_with_dom_mean$neurotransmitter)
+data_with_dom_mean$neurotransmitter = ifelse(data_with_dom_mean$cluster %in% c(19, 3, 14, 25), 'GABAergic',data_with_dom_mean$neurotransmitter)
+data_with_dom_mean$neurotransmitter = ifelse(is.na(data_with_dom_mean$neurotransmitter), 'Glutamatergic', data_with_dom_mean$neurotransmitter)
+
+data_with_dom_mean%>%
+  group_by(neurotransmitter)%>%
+  summarize(mean_pred = mean(prediction),
+            se_pred = sd(prediction)/sqrt(n()))
+
+#write.csv(data_with_dom_mean, '/Users/ggraham/Desktop/multiome_poa/Manuscript/Supplementary Tables/classifier_scores.csv')
 
 ### linearity ####
 mecd = readRDS("Functions/mean_expression_cluster_data.rds")
