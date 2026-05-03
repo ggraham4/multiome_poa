@@ -15,6 +15,7 @@ degs_6 = subset(degs, cluster == 6)
 
 # define genes to examine
 genes_interest = c(
+  'sox2',
   'drd3',
   'tacr3a',
   'npy7r',

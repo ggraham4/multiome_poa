@@ -41,14 +41,14 @@ p = ggplot(newd, aes(x = Sex, y = BodyMass))+
       geom_line(aes(y = E2,color = 'E2'),linewidth = 2)+
       geom_line(aes(y = Vitellogenesis,color = 'Vitellogenesis'),linewidth = 2)+
   scale_color_manual(values = c(
-    "#000000",  # black
-"#D55E00",  # vermillion
-"#7F7F7F",  # dark gray
-"#0072B2",  # blue
-"#CC79A7",  # purple-pink
- "#009E73",  # green
-"#E69F00",# orange
-"#F0E442"   # yellow
+    "#882E72",  # 9
+"#1965B0",  # 10
+"#7BAFDE",  #  14
+"#4EB265",  # 15
+"black",  # black
+ "#F7F056",  # 18
+"#EE8026",# 23
+"#DC050C"   # 26
 ))+
   theme_classic()+
   labs(x = 'Phase', y = 'Arbitrary Value', color = 'Measurement')+
@@ -71,7 +71,7 @@ ggsave(plot = p,
        file = "smooth_transition.svg",
        device = "svg",
        units = "in",
-       width = 8,
-       height = 3,
-       path = "Manuscript/Plots/Fig.1")
+       width = 6.7,
+       height = 1.5,
+       path = '/Users/ggraham/Desktop/multiome_poa/Manuscript/Plots/Manuscript v1.2')
 
