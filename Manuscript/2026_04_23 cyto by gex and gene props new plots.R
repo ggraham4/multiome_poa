@@ -20,7 +20,9 @@ genes_interest = c(
   'tacr3a',
   'npy7r',
   'cckb',
-  'LOC111571064' # gnrh1
+  'LOC111571064', # gnrh1
+  'pgr',
+  'LOC111568069'
 )
 
 #loop through them to test for proportion differences
@@ -34,7 +36,7 @@ for(i in genes_interest){
        units = "in",
        width = 2,
        height = 2,
-       path = paste0("Manuscript/Plots/Manuscript v1.2/prop_expressing_6_NPO"))
+       path = paste0("Manuscript/Plots/Manuscript v1.2.1/prop_expressing_6_NPO"))
 
   
 }
@@ -51,9 +53,7 @@ for(i in genes_interest){
        units = "in",
        width = 3,
        height = 2,
-       path = paste0("Manuscript/Plots/Manuscript v1.2/cyto_genes_6_NPO"))
+       path = paste0("Manuscript/Plots/Manuscript v1.2.1/cyto_genes_6_NPO"))
 
 }
-
-
 

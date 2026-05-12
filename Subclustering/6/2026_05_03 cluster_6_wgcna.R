@@ -253,7 +253,14 @@ enrich_df$description[enrich_df$module=='purple']
 
 plot_module('pink')
 pink_t = lmer(pink~Status+(1|individual), data = MEs)
-car::Anova(pink_t, type = 'III')
+car::Anova(pink_t, type = 'III') # enriched for nervous system development
+
+
+plot_module('blue')
+blue_t = lmer(blue~Status+(1|individual), data = MEs)
+car::Anova(blue_t, type = 'III')
+
+
 
 
 enrich_df2 = data.frame()
@@ -278,4 +285,65 @@ ggplot(MEs, aes(x = pink, y = obj_6_only$cyto)) +
   theme_classic()+
   geom_smooth()
 
+ggplot(MEs, aes(x = purple, y = obj_6_only$cyto)) +
+  geom_point(alpha = 0.6) +
+  theme_classic()+
+  geom_smooth() # ok first of all woah, super interesting and worth a look later
 
+
+ggplot(MEs, aes(x = grey, y = obj_6_only$cyto)) +
+  geom_point(alpha = 0.6) +
+  theme_classic()+
+  geom_smooth() # ok I think there are some detection effects going on here
+
+ggplot(MEs, aes(x = grey, y = obj_6_only$nCount_RNA)) +
+  geom_point(alpha = 0.6) +
+  theme_classic()+
+  scale_y_log10()+
+  geom_smooth()  # yeah there is 
+
+
+
+# how to avoid a "linear regression is my passion"
+
+passion_pink = lmer(pink~obj_6_only$cyto+obj_6_only$nCount_RNA+(1|individual),
+                    data = MEs,
+                    control = lmerControl(autoscale=T))
+car::Anova(passion_pink) # it says yes here
+
+
+# compare to a module I dont think is
+
+
+passion_grey =lmer(grey~obj_6_only$cyto*obj_6_only$nCount_RNA+(1|individual),
+                    data = MEs,
+                    control = lmerControl(autoscale=T))
+car::Anova(passion_grey, 3) # it says yes here
+
+
+
+
+
+
+ggplot(MEs, aes(x = blue, y = obj_6_only$cyto)) +
+  geom_point(alpha = 0.6) +
+  theme_classic()+
+  geom_smooth()
+
+
+###  I think there is something with pink ###
+# synapse assembly and brain development, specific genes?
+# hmx tfs part of this module
+#foxg1a
+#lhx5
+
+
+# blue seems like a more mature neuron, should do fishers exact test to see if any modules enriched for degs
+
+
+sofiya_data = data.frame(cyto = obj_6_only$cyto, 
+                    nCount_RNA = obj_6_only$nCount_RNA, 
+                    pink = MEs$pink,
+                    individual = obj_6_only$individual)
+
+write.csv(sofiya_data, 'sofiya_data.csv')
