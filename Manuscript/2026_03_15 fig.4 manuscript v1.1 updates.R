@@ -502,13 +502,13 @@ gnrh1_prop = proportion_plot('LOC111571064')+
               tip_length = c(0, 0), textsize = 3) 
 
 
-ggsave(plot = gnrh1_prop,
-       file =  'gnrh1_prop.svg',
-       device = "svg",
-       units = "in",
-       width = 3,
-       height = 3,
-       path = "Manuscript/Plots/Manuscript v1.1/Fig.4")
+##ggsave(plot = gnrh1_prop,
+  #     file =  'gnrh1_prop.svg',
+   #    device = "svg",
+    #   units = "in",
+     #  width = 3,
+      # height = 3,
+       #path = "Manuscript/Plots/Manuscript v1.1/Fig.4")
 
 
 

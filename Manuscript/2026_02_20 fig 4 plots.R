@@ -74,7 +74,8 @@ markers_1_subclusters = DotPlot(sub_1, group.by = 'sub.cluster',
         #'lmx1bb',
         'frzb',
         'ptch1',
-        'sema3c'
+        'sema3c',
+        'gja1b'
         ),       dot.min = .05,
         scale=T,
         dot.scale = 5)+coord_flip()+
