@@ -353,6 +353,26 @@ plot_go_aucell('GO:0042551', obj_6_only) # neuron maturation
 model_go_aucell('GO:0042551', obj_6_only) %>%anova(test= 'Chisq')
 
 
+plot_go_aucell_manuscript('GO:0008046', sub_6)# axon guidance
+model_go_aucell('GO:0008046', sub_6)%>%anova(test= 'Chisq') ## axon guidanc
+# significance
+
+axon_guidance = plot_go_aucell_manuscript('GO:0008046', sub_6) +
+  labs(subtitle = 'GO:0008046 axob guidance receptor activity')
+
+   #  ggsave(plot = axon_guidance,
+  #     file = paste0('axon_guidance_go_module','.svg'),
+  #     device = "svg",
+  #     units = "in",
+  #     width = 2,
+  #     height = 2.25,
+  #     path = '/Users/ggraham/Desktop/multiome_poa/Manuscript/Plots/Manuscript v1.2.1/6_modules')
+
+plot_go_aucell_manuscript('GO:0097484', sub_6)# intereesting 0 evidence for dendritogenesis
+
+
+
+
 
 
 
