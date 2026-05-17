@@ -1,0 +1,28 @@
+,d_m,d_f,f_m,Full_label,First_word,Second_word,Short_label
+1,<,<,<,"Transiently downregulated, reduced rebound",Transiently,Downregulated,Transiently Downregulated
+2,<,<,>,"Transiently downregulated, high rebound",Transiently,Downregulated,Transiently Downregulated
+3,<,<,NS,"Transiently downregulated, full rebound",Transiently,Downregulated,Transiently Downregulated
+4,<,>,<,Progressively downregulated,Progressively,Downregulated,Progressively Downregulated
+5,<,>,>,Impossible_1,Impossible,Impossible,Impossible Impossible
+6,<,>,NS,Impossible_2,Impossible,Impossible,Impossible Impossible
+7,<,NS,<,"Early downregulated, no rebound",Early,Downregulated,Early Downregulated
+8,<,NS,>,Impossible_3,Impossible,Impossible,Impossible Impossible
+9,<,NS,NS,"Early downregulated, reduced rebound",Early,Downregulated,Early Downregulated
+10,>,<,<,Impossible_4,Impossible,Impossible,Impossible Impossible
+11,>,<,>,Progressively upregulated,Progressively,Upregulated,Progressively Upregulated
+12,>,<,NS,Impossible_5,Impossible,Impossible,Impossible Impossible
+13,>,>,<,"Transiently upregulated, high rebound",Transiently,Upregulated,Transiently Upregulated
+14,>,>,>,"Transiently upregulated, reduced rebound",Transiently,Upregulated,Transiently Upregulated
+15,>,>,NS,"Transiently upregulated, full rebound",Transiently,Upregulated,Transiently Upregulated
+16,>,NS,<,Impossible_6,Impossible,Impossible,Impossible Impossible
+17,>,NS,>,"Early upregulated, no rebound",Early,Upregulated,Early Upregulated
+18,>,NS,NS,"Early upregulated, reduced rebound",Early,Upregulated,Early Upregulated
+19,NS,<,<,Impossible_7,Impossible,Impossible,Impossible Impossible
+20,NS,<,>,Late upregulated_1,Late,Upregulated,Late Upregulated
+21,NS,<,NS,Late upregulated_2,Late,Upregulated,Late Upregulated
+22,NS,>,<,Late_downregulated_1,Late,Downregulated,Late Downregulated
+23,NS,>,>,Impossible_8,Impossible,Impossible,Impossible Impossible
+24,NS,>,NS,Transiently weakly upregulated,Transiently,Upregulated,Transiently Upregulated
+25,NS,NS,<,Terminally downregulated,Transiently,Downregulated,Transiently Downregulated
+26,NS,NS,>,Terminally upregulated,Transiently,Upregulated,Transiently Upregulated
+27,NS,NS,NS,No Pairs,None,None,None None

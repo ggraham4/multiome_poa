@@ -1,0 +1,490 @@
+```{r, echo = FALSE, include = FALSE}
+library(Seurat)
+library(tidyverse)
+library(car)
+library(lme4)
+library(ggplot2)
+library(ggsignif)
+library(AUCell)
+go_module_aucell <- function(term, obj) {
+    set.seed(1)
+
+  term2gene <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
+  term2name <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
+  
+  go_terms <- term2gene %>% left_join(term2name, by = 'go_id')
+  
+  term_genes        <- go_terms$aocellaris_name[go_terms$go_id == term]
+  term_name         <- unique(go_terms$go_name[go_terms$go_id == term])
+  term_genes_in_obj <- unique(term_genes[term_genes %in% rownames(obj)])
+  
+ # print(paste0(length(term_genes_in_obj), ' genes found for: ', term_name))
+  
+  if(length(term_genes_in_obj)<1){return(NULL)}
+  # Build rankings from raw counts
+  cell_rankings <- AUCell_buildRankings(expr_matrix, plotStats = FALSE, verbose = FALSE)
+  
+  # Score
+gene_set <- setNames(list(term_genes_in_obj), term)
+  
+  auc_scores <- AUCell_calcAUC(gene_set, cell_rankings, verbose = FALSE)
+  scores     <- as.numeric(getAUC(auc_scores)[1, ])
+  
+  return(list(scores = scores, term_name = term_name))
+}
+
+  go_module = function(term){
+term2gene = readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
+term2name = readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
+
+go_terms = term2gene%>%
+left_join(term2name, by = 'go_id')
+
+term_genes = go_terms$aocellaris_name[ go_terms$go_id == term]
+term_genes_in_obj = term_genes[term_genes %in% rownames(obj_6_only)]
+print(paste0(length(term_genes_in_obj),' genes found'))
+
+gene_pca_matrix = obj_6_only@assays$RNA$data[unique(term_genes_in_obj),]%>%t()%>%as.matrix()
+gene_pca_matrix_no0 = gene_pca_matrix[,which(colSums(gene_pca_matrix)>0)]
+pca = princomp(gene_pca_matrix_no0, cor = T)
+
+  var_explained = pca$sdev^2
+  max_var_pc = which.max(var_explained)
+  print(paste0("PC", max_var_pc, " explains ", 
+               round(var_explained[max_var_pc]/sum(var_explained)*100, 2), 
+               "% of variance"))
+
+if(mean(pca$loadings[,max_var_pc])>0){
+  scores = pca$scores[,max_var_pc]
+}else{
+  scores=pca$scores[,max_var_pc]*-1
+}
+  return(scores)
+  }
+
+  go_module_aucell <- function(term, obj) {
+    set.seed(1)
+
+  term2gene <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
+  term2name <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
+  
+  go_terms <- term2gene %>% left_join(term2name, by = 'go_id')
+  
+  term_genes        <- go_terms$aocellaris_name[go_terms$go_id == term]
+  term_name         <- unique(go_terms$go_name[go_terms$go_id == term])
+  term_genes_in_obj <- unique(term_genes[term_genes %in% rownames(obj)])
+  
+  #print(paste0(length(term_genes_in_obj), ' genes found for: ', term_name))
+  
+  if(length(term_genes_in_obj)<1){return(NULL)}
+  # Build rankings from raw counts
+  cell_rankings <- AUCell_buildRankings(expr_matrix, plotStats = FALSE, verbose = FALSE)
+  
+  # Score
+gene_set <- setNames(list(term_genes_in_obj), term)
+  
+  auc_scores <- AUCell_calcAUC(gene_set, cell_rankings, verbose = FALSE)
+  scores     <- as.numeric(getAUC(auc_scores)[1, ])
+  
+  return(list(scores = scores, term_name = term_name))
+}
+
+plot_go_aucell <- function(term, obj) {
+    set.seed(1)
+
+  result <- go_module_aucell(term, obj)
+  
+  obj$aucell_score <- result$scores
+  
+  plot_df <- obj@meta.data %>%
+    group_by(individual, Status) %>%
+    summarize(mean_mod = mean(aucell_score), .groups = "drop") %>%
+    mutate(Status = factor(Status, levels = c('NRM', 'M', 'D', 'E', 'NF', 'F')))
+  
+  ggplot(plot_df, aes(x = Status, y = mean_mod, color = Status)) +
+    geom_boxplot(aes(fill = Status), alpha = 0.25, outlier.shape = NA) +
+    geom_point(position = position_jitter(width = 0.15), size = 2) +
+    theme_classic(base_size = 13) +
+    labs(
+      x     = "Status",
+      y     = "Mean AUC Score",
+      title = result$term_name,
+      subtitle = term
+    ) +
+    theme(
+      axis.text.x  = element_text(angle = -45, vjust = 1, hjust = 0),
+      legend.position = "none"
+    )
+}
+
+model_go_aucell = function(term, obj){
+  set.seed(1)
+  
+    result <- go_module_aucell(term, obj)
+  
+  obj$aucell_score <- result$scores
+  
+  mod_df <- obj@meta.data %>%
+    group_by(individual, Status) %>%
+    summarize(mean_mod = mean(aucell_score), .groups = "drop") %>%
+    mutate(Status = factor(Status, levels = c('NRM', 'M', 'D', 'E', 'NF', 'F')))%>%
+    subset(Status != 'NRM')
+  
+  regression = lm(mean_mod~Status, data = mod_df)
+  return(regression)
+}
+
+model_go_aucell_mixed = function(term, obj){
+  set.seed(1)
+    result <- go_module_aucell(term, obj)
+  
+  obj$aucell_score <- result$scores
+  
+  mod_df <- obj@meta.data %>%
+    subset(Status != 'NRM')
+  
+  regression = lmer(aucell_score~Status+(1|individual), data = mod_df)
+  return(regression)
+}
+
+plot_go_aucell_manuscript <- function(term, obj) {
+  set.seed(1)
+  
+  colors = c('#1965B0', '#4EB265', '#F7F056', '#DC050C', '#DC050C')
+  
+  format_pval <- function(p) {
+    if (is.na(p)) return(list(label = 'NA', size = 1, adjust = 0))
+    if (p >= 0.05) {
+      list(label = paste0('p = ', round(p, 3)), size = 2, adjust = 0)
+    } else if (p < 0.001) {
+      list(label = '***', size = 7, adjust = .6)
+    } else if (p < 0.01) {
+      list(label = '**',  size = 7, adjust = .6)
+    } else {
+      list(label = '*',   size = 7, adjust = .6)
+    }
+  }
+  
+  # ── Score ──
+  result           <- go_module_aucell(term, obj)
+  obj$aucell_score <- result$scores
+  
+  # ── Aggregate per individual ──
+  plot_df <- obj@meta.data %>%
+    group_by(individual, Status) %>%
+    summarize(mean_mod = mean(aucell_score), .groups = "drop") %>%
+    filter(!Status %in% c('NRM')) %>%
+    mutate(
+      Phase = dplyr::recode(Status, 'D' = 'I', 'E' = 'LI'),
+      Phase = factor(Phase, levels = c('M', 'I', 'LI','NF', 'F'))
+    )
+  
+  # ── Stats ──
+  gene_lm    <- lm(mean_mod ~ Phase, data = plot_df)
+  gene_pairs <- as.data.frame(pairs(emmeans(gene_lm, 'Phase'), adjust = 'none'))
+  
+  get_p <- function(g1, g2) {
+    row <- gene_pairs %>% filter(
+      (contrast == paste(g1, '-', g2)) | (contrast == paste(g2, '-', g1))
+    )
+    if (nrow(row) == 0) return(NA)
+    row$p.value[1]
+  }
+  
+  p_M_I <- get_p('M', 'I')
+  p_M_F <- get_p('M', 'F')
+  p_I_F <- get_p('I', 'F')
+  
+  # ── Y axis limits ──
+  y_max      <- max(plot_df$mean_mod, na.rm = TRUE)
+  y_lower    <- y_max * 1.10
+  y_upper    <- y_max * 1.25
+  y_axis_max <- y_max * 1.35
+  
+  plot_df_no_nf <- plot_df %>% filter(Phase != 'NF')
+
+  # ── Plot ──
+  ggplot(plot_df, aes(x = Phase, y = mean_mod, fill = Phase)) +
+      geom_boxplot(data = plot_df_no_nf,
+                   aes(x = Phase, y = mean_mod, fill = Phase),
+                   outlier.shape = NA, width = 0.6) +
+    geom_point(position = position_jitter(width = 0.15), size = 1, color = 'black') +
+    scale_fill_manual(values = colors) +
+    scale_x_discrete(drop = FALSE) +
+    scale_y_continuous(limits = c(0.95 * min(plot_df$mean_mod), y_axis_max)) +
+      theme_classic() +
+    labs(
+      x        = 'Phase',
+      y        = 'Mean AUC Score',
+      title    = result$term_name,
+      subtitle = term
+    ) +
+    theme(legend.position = 'none') +
+    # Lower tier: M vs I
+    geom_signif(xmin = 1, xmax = 1.9,
+                y_position = y_lower,
+                annotation = format_pval(p_M_I)$label,
+                color = 'black',
+                tip_length = c(0, 0),
+                textsize   = format_pval(p_M_I)$size,
+                vjust      = format_pval(p_M_I)$adjust) +
+    # Lower tier: I vs F
+    geom_signif(xmin = 2.1, xmax = 5,
+                y_position = y_lower,
+                annotation = format_pval(p_I_F)$label,
+                color = 'black',
+                tip_length = c(0, 0),
+                textsize   = format_pval(p_I_F)$size,
+                vjust      = format_pval(p_I_F)$adjust) +
+    # Upper tier: M vs F
+    geom_signif(xmin = 1, xmax = 5,
+                y_position = y_upper,
+                annotation = format_pval(p_M_F)$label,
+                color = 'black',
+                tip_length = c(0, 0),
+                textsize   = format_pval(p_M_F)$size,
+                vjust      = format_pval(p_M_F)$adjust)
+}
+```
+
+Read in Data
+
+```{r}
+
+obj <- readRDS('~/Desktop/optimal_clustering_rna_only.rds')
+obj_6_only = subset(obj, final_clusters == 6)
+  expr_matrix <- obj_6_only@assays$RNA$data
+```
+
+Ok here is the situation. I have the theory that new cells are added to cluster 6 in the intermediate state and then mature during gonadal sex change (or something like that, the point is the main changes in the neurosecretory preoptic area are set up prior to gonadal sex change but only actually occur during gonadal sex cahnge). This is supported by a few lines of evidence
+
+CytoTRACE shows that intermediates have significantly more immature cells than females, but no difference to males
+
+Sox2 (a stem cell marker) is expanded in intermediates, the proportion of cells expressing it is larger
+
+The population of 6_NPO increases in females late in sex change
+
+Coltan showed new cells are added to the aPOA in intermediates
+
+Radial glia show a more neurogenic signature in intermediates (neural progenitors are expanded while stem cells are contracted, and transcription factors also change in an interesting way)
+
+From this, I would hypothesize that in intermediates, there would be more expression of genes related to - Synaptogenesis - Axonogenesis - Neuronal Differentiation - Neuronal Maturation - Extracellular Matrix
+
+SO, I thought why not make an expression module of genes annotated with those GO terms and see if the modules differ in expression
+
+To do this, I translate the GO terms from the human genome to the ortholog in A. ocellaris (A ocellaris genome doesnt have as good annotations). Then, calculate a module score with AUCell (very similar results to taking the first principal component of those genes' expression), then I run lm(mean_module \~ Status) and get the type III p value using anova(model, test = 'Chisq').
+
+The problem: I see very consistent results and they are very interesting, and yet I am basically incapable of getting a significant p- value. Broadly, mixed and fixed models return very similar p-values.
+
+Here are my examples below
+
++Stem cell differentiation. Hypothesis: no difference, there shouldn't be stem cells in 6
+
+```{r}
+plot_go_aucell('GO:0048863', obj_6_only)+
+  labs (title='stem cell differentiation')
+```
+
+Almost but not significant, honestly shocked at how much of a difference there is
+
+```{r}
+model_go_aucell('GO:0048863', obj_6_only) %>%anova(test= 'Chisq') #0.07
+```
+
++Regulation of neuronal differentiation. Hypothesis: increased in intermediates
+
+```{r}
+plot_go_aucell('GO:0045664', obj_6_only)+
+  labs(title='regulation of neuronal differentiation')
+```
+
+Not significant but look at it
+
+```{r}
+model_go_aucell('GO:0045664', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Nervous system development. Hypothesis: up in intermediates
+
+```{r}
+plot_go_aucell('GO:0007399', obj_6_only) +
+  labs(title = 'nervous system development')
+```
+
+Not siginificant but to me I feel like there oculd be something there
+
+```{r}
+model_go_aucell('GO:0007399', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Neurogenesis (not convincing). Hypothesis: increased in intermediates.
+
+```{r}
+plot_go_aucell('GO:0022008', obj_6_only)+
+  labs(title ='neurogenesis')
+```
+
+Not significant, there is nothing there which I think actually makes sense for the same reasons as the stem cell differentiation term.
+
+```{r}
+model_go_aucell('GO:0022008', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++regulation of neurogenesis (not convincing). I guess I would've hypothesized increased in intermediates.
+
+```{r}
+plot_go_aucell('GO:0050767', obj_6_only)+
+  labs(title =' regulation of neurogenesis')
+```
+
+Not even close to significant
+
+```{r}
+model_go_aucell_mixed('GO:0050767', obj_6_only) %>%car::Anova(type= 3)
+```
+
++Positive regulation of neurogenesis (not convincing but interesting). Same story as before
+
+```{r}
+plot_go_aucell('GO:0050769', obj_6_only)+
+  labs(title = 'positive regulation of neurogenesis')
+```
+
++neuron migration. Hypothesis: very elevated in intermediates.
+
+```{r}
+plot_go_aucell('GO:0001764', obj_6_only)+
+  labs(title = ' neuron migration')
+```
+
+Elevated but not by a lot, and not significant.
+
+```{r}
+model_go_aucell('GO:0001764', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Neuronal cell adhesion. Hypothesis: up in dominants as new connections are established.
+
+```{r}
+plot_go_aucell('GO:0007158', obj_6_only)+
+  labs(title = 'neuronal cell adhesion')
+```
+
+Not significant but again look at it.
+
+```{r}
+model_go_aucell('GO:0007158', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Neuron maturation. I expect intermediates to have more immature cells so I guess the maturation term should be higher?
+
+```{r}
+plot_go_aucell('GO:0042551', obj_6_only)+
+  labs(title='neuron maturation')
+```
+
+So I got the pattern backward, I dont have a good reason why unless an immature neuron = low for this module. In any case there looks like a difference
+
+And yet no statistical difference
+
+```{r}
+model_go_aucell('GO:0042551', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Synapse development. Hypothesis: increased in intermediates.
+
+```{r}
+plot_go_aucell('GO:0050808', obj_6_only)+
+  labs(title='synapse development')
+```
+
+Not significant or convincing looking at the plot
+
+```{r}
+model_go_aucell('GO:0050808', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Synaptogenesis. Hypothesis: elevated in intermediates.
+
+```{r}
+plot_go_aucell('GO:0007416', obj_6_only)+
+  labs(title =' synaptogenesis')
+```
+
+not significant, but like look at it.
+
+```{r}
+model_go_aucell('GO:0007416', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Synapse assembly Hypothesis: elevated in intermediates.
+
+```{r}
+plot_go_aucell('GO:0007416', obj_6_only)+
+  labs(title = ' synapse assembly')
+```
+
+Not significant but again... look at it.
+
+```{r}
+model_go_aucell('GO:0007416', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Synapse maturation. Hypothesis: higher in intermediates
+
+```{r}
+plot_go_aucell('GO:0060074', obj_6_only)+
+  labs(title= ' synapse maturation')
+```
+
+Not significant, but the same pattern is present in almost all of these terms
+
+```{r}
+model_go_aucell('GO:0060074', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Positive regulation of axonogenesis. Hypothesis: higher in intermediates
+
+```{r}
+plot_go_aucell('GO:0050772', obj_6_only)+
+  labs(title ='positive regulation of axonogenesis')
+##### if this isnt significant I will eat my shoe #######
+```
+
+My shoe doesnt taste very good, HOW is this not significant
+
+```{r}
+model_go_aucell('GO:0050772', obj_6_only) %>%anova(test= 'Chisq')
+```
+
++Neuron projection development hypothesis: higher in intermediates
+
+```{r}
+plot_go_aucell('GO:0031175', obj_6_only)+
+  labs(title='Neuron projection development')
+```
+
+Like this is a joke at this point how is this not significant
+
+```{r}
+model_go_aucell('GO:0031175', obj_6_only) %>%anova(test= 'Chisq')
+```
+
+But then we get the super vague term "Brain development" and finally the spell is broken
+
+Hypothesis: higher in intermediates
+
+```{r}
+plot_go_aucell('GO:0007420', obj_6_only)+
+  labs(title = 'brain development')# brain development this is SO significant
+```
+
+I guess the effect size needs to be a lot bigger than I thnk
+
+```{r}
+model_go_aucell('GO:0007420', obj_6_only) %>%anova(test= 'Chisq') #FINALLY
+```
+
+So to me at least it seems like a pretty consistent theme is that intermediates have a notably higher expression of genes related to like new immature neurons integrating and becoming functional (synaptogenesis, axonogenesis, neuron projection development, as well as the opposite pattern of neuron maturation), and no difference in neurogenesis terms which makes sense to me cause that shoud be happening in radial glia. All but one of these terms do not significantly differ by phase. Its impressive, I've done enough tests that we are entering the 5% false positive rate of these models. Looking at all of these though, it seems like there is a lot of evidence that intermediates have more immature neurons than males or females, but only one GO term reaches the significance threshold. I am not really sure what to do here. A few ideas 1) we just report a few of the interesting ones and say "its not significant but like look at it its interesting". 2) We could report a lot of these with a lollipop plot that reports how much greater the marginal estimate for intermediates is compared to males and females. 3) We could summarize a lot of these with PCA and that might then become significant. The problem with that last one (because I already tried it) is twofold. 1) You have to pick a broad go term (I tried brain development) and then do the PCA based on all of the offspring terms so as not to pick and choose your data (in my opinion, though you may disagree). This kind of destroys any result with noise. 2) GO modules are not all made the same, each one is made of a different number of genes. Should we weight a module of 2 genes the same as a module of 100 genes, I am not convinced we should.
+
+What would you do in this situation
