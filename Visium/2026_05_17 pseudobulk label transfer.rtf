@@ -1,0 +1,239 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 # =============================================================================\
+# PSEUDOBULK / AGGREGATE EXPRESSION PIPELINE\
+# Multiome obj (final_clusters) vs Visium neuron (anatomical + res_2)\
+# =============================================================================\
+\
+library(Seurat)\
+library(dplyr)\
+library(pheatmap)\
+library(ggplot2)\
+library(patchwork)\
+`%notin%`= Negate(`%in%`)\
+\
+options(future.globals.maxSize = Inf)\
+\
+# =============================================================================\
+# 1. LOAD OBJECTS\
+# =============================================================================\
+\
+obj        <- readRDS("~/Desktop/optimal_clustering_rna_only.rds")\
+Idents(obj) <- "final_clusters"\
+\
+vis_neuron <- readRDS('/Users/ggraham/Desktop/Visium/vis_neuron.rds')\
+vis_neuron$anatomical_renamed = ifelse(vis_neuron$anatomical_renamed == 'TGn', 'TGN',vis_neuron$anatomical_renamed  )\
+# =============================================================================\
+# 2. SCT\
+# =============================================================================\
+\
+DefaultAssay(vis_neuron) <- "sketch"\
+vis_neuron <- SCTransform(vis_neuron, assay = "sketch", verbose = FALSE)\
+\
+DefaultAssay(obj) <- "RNA"\
+obj <- SCTransform(obj, verbose = FALSE)\
+\
+# drop tiny multiome clusters\
+cluster_sizes <- table(obj$final_clusters)\
+keep_clusters <- names(cluster_sizes\
+                       #[cluster_sizes >= 100]\
+                       )\
+\
+### here I need to remove glia I think #####\
+glial_clusters = c(\
+  1, # rgc\
+  2, # ol\
+  15, #ec\
+  11, #mg\
+  20, #leuko\
+  26, #dg\
+  13 #opc\
+  )\
+\
+obj           <- subset(obj, subset = (final_clusters %in% keep_clusters) &\
+                          final_clusters %notin% glial_clusters)\
+\
+\
+\
+# =============================================================================\
+# 3. PSEUDOBULK \'97 VISIUM ANATOMICAL REGIONS\
+# =============================================================================\
+\
+sketch_cells <- colnames(vis_neuron[["sketch"]])\
+vis_sketch   <- subset(vis_neuron, cells = sketch_cells)\
+\
+region_avg <- AggregateExpression(\
+  vis_sketch,\
+  group.by      = "anatomical_renamed",\
+  assays        = "SCT",\
+  slot          = "data",\
+  return.seurat = FALSE\
+)$SCT\
+\
+# =============================================================================\
+# 4. PSEUDOBULK \'97 VISIUM res_2 CLUSTERS\
+# =============================================================================\
+\
+cluster_avg_vis <- AggregateExpression(\
+  vis_sketch,\
+  group.by      = "res_2",\
+  assays        = "SCT",\
+  slot          = "data",\
+  return.seurat = FALSE\
+)$SCT\
+\
+# =============================================================================\
+# 5. PSEUDOBULK \'97 MULTIOME CLUSTERS\
+# =============================================================================\
+\
+cluster_avg_multi <- AggregateExpression(\
+  obj,\
+  group.by      = "final_clusters",\
+  assays        = "SCT",\
+  slot          = "data",\
+  return.seurat = FALSE\
+)$SCT\
+\
+# =============================================================================\
+# 6. SHARED VARIABLE GENES\
+# =============================================================================\
+\
+var_genes    <- VariableFeatures(obj)\
+common_genes <- intersect(rownames(region_avg), rownames(cluster_avg_multi))\
+common_var   <- intersect(common_genes, var_genes)\
+cat("Common variable genes:", length(common_var), "\\n")\
+\
+region_avg        <- region_avg[common_var, ]\
+cluster_avg_vis   <- cluster_avg_vis[intersect(rownames(cluster_avg_vis), common_var), ]\
+cluster_avg_multi <- cluster_avg_multi[common_var, ]\
+\
+# =============================================================================\
+# 7. CORRELATIONS\
+# =============================================================================\
+\
+# anatomical regions vs multiome clusters\
+cor_anat_multi <- cor(\
+  as.matrix(region_avg),\
+  as.matrix(cluster_avg_multi),\
+  method = "spearman"\
+)\
+\
+# res_2 clusters vs multiome clusters\
+cor_res2_multi <- cor(\
+  as.matrix(cluster_avg_vis),\
+  as.matrix(cluster_avg_multi),\
+  method = "spearman"\
+)\
+\
+# anatomical regions vs res_2 clusters (agreement check)\
+cor_anat_res2 <- cor(\
+  as.matrix(region_avg),\
+  as.matrix(cluster_avg_vis),\
+  method = "spearman"\
+)\
+\
+# =============================================================================\
+# 8. HELPER \'97 diagonal ordering\
+# =============================================================================\
+\
+diag_order <- function(mat) \{\
+  best_col   <- apply(mat, 1, which.max)\
+  col_order  <- order(apply(mat, 2, which.max))\
+  row_order  <- order(match(best_col, col_order))\
+  list(mat   = mat[row_order, col_order],\
+       rows   = rownames(mat)[row_order],\
+       cols   = colnames(mat)[col_order])\
+\}\
+\
+plot_cor <- function(mat, title, ...) \{\
+  ord <- diag_order(mat)\
+  pheatmap(\
+    scale(t(scale(t(ord$mat)))),\
+    cluster_rows = FALSE,\
+    cluster_cols = FALSE,\
+    border_color = NA,\
+    color        = colorRampPalette(c("blue", "white", "darkred"))(100),\
+    fontsize_row = 7,\
+    fontsize_col = 7,\
+    main         = title,\
+    ...\
+  )\
+\}\
+\
+# =============================================================================\
+# 9. HEATMAPS\
+# =============================================================================\
+\
+# primary: anatomy vs multiome\
+plot_cor(cor_anat_multi, "Anatomical regions \uc0\u8594  Multiome clusters")\
+\
+ord <- diag_order(cor_anat_multi)\
+\
+# scale only for display, don't reorder after scaling\
+pheatmap(\
+  t(scale(t(ord$mat))),      # row scale for display only\
+  cluster_rows = FALSE,\
+  cluster_cols = FALSE,\
+  border_color = NA,\
+  color        = colorRampPalette(c("blue", "white", "darkred"))(100),\
+  fontsize_row = 7,\
+  fontsize_col = 7,\
+  main         = "Anatomical regions \uc0\u8594  Multiome clusters"\
+)\
+\
+# label assignment also uses raw order \'97 consistent with the plot\
+best_region_per_cluster <- colnames(ord$mat)[apply(ord$mat, 2, which.max)]\
+names(best_region_per_cluster) <- colnames(ord$mat)\
+# res_2 vs multiome\
+plot_cor(cor_res2_multi, "Visium res_2 clusters \uc0\u8594  Multiome clusters")\
+\
+# agreement: do anatomy and res_2 agree?\
+plot_cor(cor_anat_res2,  "Anatomical regions vs Visium res_2 clusters")\
+\
+# =============================================================================\
+# 10. MUTUAL BEST MATCHES \'97 anatomy vs multiome\
+# =============================================================================\
+\
+best_cluster <- apply(cor_anat_multi, 1, function(x) names(which.max(x)))\
+best_region  <- apply(cor_anat_multi, 2, function(x) names(which.max(x)))\
+\
+mutual_df <- data.frame(\
+  anatomical   = names(best_cluster),\
+  best_cluster = best_cluster\
+) %>%\
+  mutate(reverse_match = best_region[best_cluster],\
+         mutual_best   = anatomical == reverse_match)\
+\
+cat("\\n--- Mutual best matches ---\\n")\
+print(mutual_df %>% filter(mutual_best))\
+\
+# =============================================================================\
+# 11. LABEL MULTIOME CLUSTERS BY BEST ANATOMICAL REGION\
+# =============================================================================\
+\
+best_region_per_cluster <- apply(cor_anat_multi, 2, function(x) names(which.max(x)))\
+names(best_region_per_cluster) <- gsub("^g", "", names(best_region_per_cluster))\
+\
+obj$visium_region <- unname(\
+  best_region_per_cluster[as.character(obj$final_clusters)]\
+)\
+obj$visium_region[is.na(obj$visium_region)] <- "Unassigned"\
+\
+# =============================================================================\
+# 12. DIMPLOTS\
+# =============================================================================\
+\
+DimPlot(obj, group.by = "visium_region",   label = TRUE, repel = TRUE,\
+        label.size = 3, reduction = "harmony_wnn.umap") +\
+  labs(title = "Multiome clusters \uc0\u8594  best Visium anatomical region") +\
+  theme(legend.position = "right") +\
+\
+DimPlot(obj, group.by = "final_clusters",  label = TRUE, repel = TRUE,\
+        label.size = 3, reduction = "harmony_wnn.umap") +\
+  labs(title = "Multiome final_clusters") +\
+  theme(legend.position = "none")}

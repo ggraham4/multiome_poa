@@ -299,3 +299,32 @@ obj$visium_region <- unname(
 obj$visium_region[is.na(obj$visium_region)] <- "Unassigned"
 
 table(obj$visium_region)
+
+
+vis_6p17$anatomical = ifelse(vis_6p17@assays$Spatial.Polygons$data['s100b',]>0, 'Ependymoglia', vis_6p17$anatomical )
+
+
+vis_6p17_radial= subset(vis_6p17, anatomical %in% c("Ependymoglia"))
+
+DimPlot(vis_6p17, group.by = 'anatomical')
+
+DimPlot(vis_6p17,
+        group.by = 'anatomical',
+        cells.highlight = rownames(vis_6p17@meta.data[vis_6p17$anatomical=='Ependymoglia',]),
+        pt.size = 0.01,
+          sizes.highlight = 0.01
+        )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['s100b',]>0, 'Ependymoglia', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['LOC111577263',]>0, 'Arob+', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['gfap',]>0, 'gfap+', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['gja1b',]>0, 'gja1b+', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['sox2',]>0, 'sox2+', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['crocc2',]>0, 'EC', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['sv2a',]>0, 'Neuron', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['nkx2.1',]>0, 'nkx2.1', vis_6p17_radial$anatomical )
+vis_6p17_radial$anatomical = ifelse(vis_6p17_radial@assays$Spatial.Polygons$data['nkx2.1',]>0, 'nkx2.1', vis_6p17_radial$anatomical )
+
+DimPlot(vis_6p17_radial, group.by = 'anatomical')
+DimPlot(vis_6p17_radial)
+
+
