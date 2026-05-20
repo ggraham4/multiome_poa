@@ -75,9 +75,8 @@ non_neuronal <- c(1,  #rgc
                   20, # leuko 
                   13,  # opc
                   26, #dg
-                  # remove 9 cause its a dick
-                  9
-                  )
+                 9 #poorly defined
+                   )
 
 obj_balanced_neuron = subset(obj_balanced, final_clusters %notin% non_neuronal)
 
@@ -99,7 +98,7 @@ anchors <- FindTransferAnchors(
 )
 
 
-vis_neuron_sub <- TransferData(
+vis_neuron <- TransferData(
   anchorset        = anchors,
   query            = vis_neuron,
   reference        = obj_balanced_neuron,
@@ -152,11 +151,11 @@ mat <- diag_order(((agreement_vis_clusters) / rowSums(agreement_vis_clusters)))$
 
 # keep clusters (cols) where at least one region maps to them strongly
 col_max <- apply(mat, 2, max)
-mat <- mat[, col_max > 0.15]  # at least one region is >15% in this cluster
+mat <- mat[, col_max > 00]  # at least one region is >15% in this cluster
 
 # keep regions (rows) where they map strongly to at least one cluster
 row_max <- apply(mat, 1, max)
-mat <- mat[row_max > 0.1, ]  # region puts >15% of its cells in one cluster
+mat <- mat[row_max > 0.0, ]  # region puts >15% of its cells in one cluster
 
 vis_to_region = pheatmap(mat,
          cluster_rows = FALSE,
@@ -164,13 +163,13 @@ vis_to_region = pheatmap(mat,
          border_color = NA,
          color = colorRampPalette(c("grey95", "orange", "red", "darkred"))(100))  
 
-ggsave(plot = vis_to_region,
-       file = "vis_to_region.svg",
-       device = "svg",
-       units = "in",
-       width = 2.5,
-       height = 2.3,
-       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+#ggsave(plot = vis_to_region,
+ #      file = "vis_to_region.svg",
+  #     device = "svg",
+   #    units = "in",
+    #   width = 3.5,
+     #  height = 3.5,
+      # path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 #### multiome to region ####
 
@@ -186,11 +185,11 @@ mul = mul[-which(rownames(mul)==('not sure 21')),]
 
 # keep clusters (cols) where at least one region maps to them strongly
 col_max <- apply(mul, 2, max)
-mul <- mul[, col_max > 0.09]  # at least one region is >15% in this cluster
+mul <- mul[, col_max > 0.0]  # at least one region is >15% in this cluster
 
 # keep regions (rows) where they map strongly to at least one cluster
 row_max <- apply(mul, 1, max)
-mul <- mul[row_max > 0.15, ]  # region puts >15% of its cells in one cluster
+mul <- mul[row_max > 0.0, ]  # region puts >15% of its cells in one cluster
 
 mul = mul[rownames(mat),]
 
@@ -202,13 +201,13 @@ mul_to_region = pheatmap(mul[,order(colnames(mul)%>%as.numeric())],
          treeheight_row = 0)  
 
 
-ggsave(plot = mul_to_region,
-       file = "mul_to_region.svg",
-       device = "svg",
-       units = "in",
-       width = 2.5,
-       height = 2.3,
-       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+##ggsave(plot = mul_to_region,
+  #     file = "mul_to_region.svg",
+   #    device = "svg",
+    #   units = "in",
+     #  width = 4.8,
+      # height = 4,
+       #path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 #mul to vis
 
@@ -223,11 +222,11 @@ mul_vis <- diag_order(((agreement_mul_vis) / rowSums(agreement_mul_vis)))$mat %>
 
 # keep clusters (cols) where at least one region maps to them strongly
 col_max <- apply(mul_vis, 2, max)
-mul_vis <- mul_vis[, col_max > 0.09]  # at least one region is >15% in this cluster
+mul_vis <- mul_vis[, col_max > 0.0]  # at least one region is >15% in this cluster
 
 # keep regions (rows) where they map strongly to at least one cluster
 row_max <- apply(mul_vis, 1, max)
-mul_vis <- mul_vis[row_max > 0.15, ]  # region puts >15% of its cells in one cluster
+mul_vis <- mul_vis[row_max > 0.0, ]  # region puts >15% of its cells in one cluster
 
 
 mul_to_vis = pheatmap(mul_vis[order(rownames(mul_vis)%>%as.numeric()),order(colnames(mul_vis)%>%as.numeric())],
@@ -238,13 +237,13 @@ mul_to_vis = pheatmap(mul_vis[order(rownames(mul_vis)%>%as.numeric()),order(coln
          treeheight_row = 0)  
 
 
-ggsave(plot = mul_to_vis,
-       file = "mul_to_vis.svg",
-       device = "svg",
-       units = "in",
-       width = 2.5,
-       height = 2.3,
-       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+#ggsave(plot = mul_to_vis,
+#       file = "mul_to_vis.svg",
+#       device = "svg",
+#       units = "in",
+#       width = 3.5,
+#       height = 3.5,
+#       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 
 
@@ -263,13 +262,13 @@ p =SpatialDimPlot(vis_neuron%>%
                images = 's_6P17.polygons',
                cols = named_colors)
 
-ggsave(plot = p,
-       file = "6p17_clusters.tiff",
-       device = "tiff",
-       units = "in",
-       width = 5,
-       height = 5,
-       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+#ggsave(plot = p,
+#       file = "6p17_clusters.tiff",
+#       device = "tiff",
+#       units = "in",
+#       width = 5,
+#       height = 5,
+#       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 
 
