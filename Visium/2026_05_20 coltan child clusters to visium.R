@@ -99,7 +99,7 @@ anchors <- FindTransferAnchors(
 )
 
 
-vis_neuron_sub <- TransferData(
+vis_neuron <- TransferData(
   anchorset        = anchors,
   query            = vis_neuron,
   reference        = obj_balanced_neuron,
@@ -120,16 +120,16 @@ cat("Cluster agreement between approaches:\n")
 print(best_transfer)
 
 # score distribution split by whether assignment was high confidence
-vis_neuron_sub$transfer_confident <- 
-  vis_neuron_sub$predicted.transferred_cluster.score > 0.3
+vis_neuron$transfer_confident <- 
+  vis_neuron$predicted.transferred_cluster.score > 0.5
 
 cat("\nHigh confidence assignments:", 
-    sum(vis_neuron_sub$transfer_confident), "\n")
+    sum(vis_neuron$transfer_confident), "\n")
 cat("Low confidence assignments:", 
-    sum(!vis_neuron_sub$transfer_confident), "\n")
+    sum(!vis_neuron$transfer_confident), "\n")
 
 
-  vis_neuron_sub$predicted.multiome =   vis_neuron_sub$predicted.transferred_cluster
+  vis_neuron$predicted.child =   vis_neuron$predicted.transferred_cluster[vis_neuron$transfer_confident==T]
 
 pheatmap(
   t(diag_order((agreement)/rowSums(agreement))$mat),
@@ -140,8 +140,8 @@ pheatmap(
 )
 
 
-agreement_mul  =table(vis_neuron_sub$anatomical_renamed,
-                               vis_neuron_sub$predicted.multiome)
+agreement_mul  =table(vis_neuron$anatomical_renamed,
+                               vis_neuron$predicted.child)
 
 
 mul <- diag_order(((agreement_mul) / rowSums(agreement_mul)))$mat %>%
@@ -159,21 +159,21 @@ row_max <- apply(mul, 1, max)
 mul <- mul[row_max > 0.0, ]  # region puts >15% of its cells in one cluster
 
 
-#mul_to_region = pheatmap(mul[,order(colnames(mul)%>%as.numeric())],
-#         cluster_rows = T,
-#         cluster_cols = FALSE,
-#         border_color = NA,
- #        color = colorRampPalette(c("grey95", "orange", "red", "darkred"))(100),
-#         treeheight_row = 0, 
-#         main = 'Percent of Each Region Child Clusters')  
+mul_to_region = pheatmap(mul[,order(colnames(mul)%>%as.numeric())],
+         cluster_rows = T,
+         cluster_cols = FALSE,
+         border_color = NA,
+         color = colorRampPalette(c("grey95", "orange", "red", "darkred"))(100),
+         treeheight_row = 0, 
+         main = 'Percent of Each Region Child Clusters')  
 
 
 ggsave(plot = mul_to_region,
        file = "pakrer_child_to_region.svg",
        device = "svg",
        units = "in",
-       width = 3.5,
-       height = 3.5,
+       width = 5,
+       height = 10,
        path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 
@@ -208,8 +208,8 @@ clusters = c(25, # poa
 colors <- c('#1965B0','#DC050C')
 named_colors <- setNames(colors[1:length(clusters)], clusters)
 
-p =SpatialDimPlot(vis_neuron_sub%>%
-                 subset(predicted.multiome%in%clusters), group.by = 'predicted.multiome',
+p =SpatialDimPlot(vis_neuron%>%
+                 subset(predicted.child%in%clusters), group.by = 'predicted.child',
                pt.size.factor = 0.5,
                images = 's_6P17.polygons',
                cols = named_colors)
@@ -223,3 +223,34 @@ ggsave(plot = p,
        width = 5,
        height = 5,
        path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+
+
+
+vis_neuron$transfer_confident <- 
+  vis_neuron$predicted.transferred_cluster.score > 0.5
+
+
+# subset to confident spots only and rebuild agreement + heatmap
+vis_neuron_confident <- subset(vis_neuron, transfer_confident == TRUE)
+
+agreement_mul_confident <- table(vis_neuron_confident$anatomical_renamed,
+                                 vis_neuron_confident$predicted.child)
+
+mul_confident <- diag_order(((agreement_mul_confident) / rowSums(agreement_mul_confident)))$mat %>%
+  as.data.frame.matrix() %>%
+  na.omit()
+
+# match the same row/col filtering as mul
+mul_confident <- mul_confident[rownames(mul_confident) %in% rownames(mul), 
+                               colnames(mul_confident) %in% colnames(mul)]
+
+mul_to_region_confident <- pheatmap(
+  mul_confident[, order(colnames(mul_confident) %>% as.numeric())],
+  cluster_rows  = TRUE,
+  cluster_cols  = FALSE,
+  border_color  = NA,
+  color         = colorRampPalette(c("grey95", "orange", "red", "darkred"))(100),
+  treeheight_row = 0,
+  main          = 'Percent of Each Region — Confident Transfers Only'
+)
+

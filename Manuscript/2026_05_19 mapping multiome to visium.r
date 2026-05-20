@@ -120,7 +120,7 @@ print(best_transfer)
 
 # score distribution split by whether assignment was high confidence
 vis_neuron$transfer_confident <- 
-  vis_neuron$predicted.transferred_cluster.score > 0.3
+  vis_neuron$predicted.transferred_cluster.score > 0.5
 
 cat("\nHigh confidence assignments:", 
     sum(vis_neuron$transfer_confident), "\n")
@@ -128,7 +128,7 @@ cat("Low confidence assignments:",
     sum(!vis_neuron$transfer_confident), "\n")
 
 
-  vis_neuron$predicted.multiome =   vis_neuron$predicted.transferred_cluster
+vis_neuron$predicted.multiome2 =   vis_neuron$predicted.transferred_cluster[vis_neuron$transfer_confident==T]
 
 pheatmap(
   t(diag_order((agreement)/rowSums(agreement))$mat),
@@ -174,7 +174,7 @@ vis_to_region = pheatmap(mat,
 #### multiome to region ####
 
 agreement_mul  =table(vis_neuron$anatomical_renamed,
-                               vis_neuron$predicted.multiome)
+                               vis_neuron$predicted.multiome2)
 
 
 mul <- diag_order(((agreement_mul) / rowSums(agreement_mul)))$mat %>%
@@ -201,18 +201,18 @@ mul_to_region = pheatmap(mul[,order(colnames(mul)%>%as.numeric())],
          treeheight_row = 0)  
 
 
-##ggsave(plot = mul_to_region,
-  #     file = "mul_to_region.svg",
-   #    device = "svg",
-    #   units = "in",
-     #  width = 4.8,
-      # height = 4,
-       #path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+ggsave(plot = mul_to_region,
+       file = "mul_to_region.svg",
+       device = "svg",
+       units = "in",
+       width = 4.8,
+       height = 4,
+       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 #mul to vis
 
 agreement_mul_vis  =table(vis_neuron$res_2,
-                               vis_neuron$predicted.multiome)
+                               vis_neuron$predicted.multiome2)
 
 
 mul_vis <- diag_order(((agreement_mul_vis) / rowSums(agreement_mul_vis)))$mat %>%
@@ -237,13 +237,13 @@ mul_to_vis = pheatmap(mul_vis[order(rownames(mul_vis)%>%as.numeric()),order(coln
          treeheight_row = 0)  
 
 
-#ggsave(plot = mul_to_vis,
-#       file = "mul_to_vis.svg",
-#       device = "svg",
-#       units = "in",
-#       width = 3.5,
-#       height = 3.5,
-#       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
+ggsave(plot = mul_to_vis,
+       file = "mul_to_vis.svg",
+       device = "svg",
+       units = "in",
+       width = 3.5,
+       height = 3.5,
+       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 
 
@@ -255,6 +255,10 @@ clusters = c(5, 6, 7, 10,14,22,23)
 #9 10 14 15 17 18 26
 colors <- c('#CAE0AB', '#1965B0', '#7BAFDE', '#4EB265','#882E72' ,'#EE8026','#DC050C')
 named_colors <- setNames(colors[1:length(clusters)], clusters)
+
+
+
+
 
 p =SpatialDimPlot(vis_neuron%>%
                  subset(predicted.multiome%in%clusters), group.by = 'predicted.multiome',
@@ -271,7 +275,11 @@ p =SpatialDimPlot(vis_neuron%>%
 #       path = "Manuscript/Plots/Manuscript v1.2.1/visium/")
 
 
+vis_neuron@meta.data =vis_neuron@meta.data%>%
+  dplyr::select(-c(predicted.multiome))%>%
+  rename(predicted.multiome_confidence_0.5=predicted.multiome2 )
 
 
+#saveRDS(vis_neuron, '/Users/ggraham/Desktop/Visium/vis_neuron.rds')
 
 
