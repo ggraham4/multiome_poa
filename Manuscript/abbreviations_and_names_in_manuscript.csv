@@ -1,0 +1,63 @@
+,Abbreviation,Name
+1,ac,anterior commissure
+2,An,anterior thalamic nucleus
+3,ATn,anterior tuberal nucleus
+4,CM,corpus mammillare
+5,CP,central posterior thalamic nucleus
+6,Dc,central part of the dorsal telencephalon
+7,Dc-2,"central part of the dorsal telencephalon, subdivision 2"
+8,Dd,dorsal part of the dorsal telencephalon
+9,Dd-d,"dorsal part of the dorsal telencephalon, dorsal subdivision"
+10,Dd-v,"dorsal part of the dorsal telencephalon, ventral subdivision"
+11,Dl-g,granular zone of lateral zone of the dorsal telencephalon
+12,Dl-v2,"ventral part of the lateral zone of the dorsal telencephalon, subdivision 2"
+13,Dm-1,"medal part of the dorsal telencephalon, subdivision 1"
+14,Dm-2r,"medial part of the dorsal telencephalon, rostral subdivision 2"
+15,Dm-3,"medal part of the dorsal telencephalon, subdivision 3"
+16,Dp,posterior part of the dorsal telencephalon
+17,E,entopeduncular nucleus
+18,Gn,glomerular nucleus
+19,NC,nucleus corticalis
+20,NDILm,medial part of the diffuse nucleus of the inferior lobe
+21,nGMp,"magnocellular preoptic nucleus, gigantocellular division"
+22,nHd,dorsal habenular nucleus
+23,nHv,ventral habenular nucleus
+24,NLTd,"lateral tuberal nucleus, dorsal part"
+25,NLTi,"lateral tuberal nucleus, intermediate part"
+26,NLTm,"lateral tuberal nucleus, medial part"
+27,NLTv,"lateral tuberal nucleus, ventral part"
+28,nPPa,"parvocellular preoptic nucleus, anterior part"
+29,nMMp,"magnocellular preoptic nucleus, magnocellular division"
+30,nPMp,"magnocellular preoptic nucleus, parvocellular division"
+31,nPPp,"parvocellular preoptic nucleus, posterior part"
+32,NP,paracommissural nucleus
+33,NRL,nucleus of the lateral recess
+34,NT,nucleus taenia
+35,nTE,nucleus of the thalamic eminentia
+36,ON,optic nerve
+37,PGa,anterior preglomerular nucleus
+38,PS,pineal stalk
+39,PSi,"superficial pretectal nucleus, intermediate division"
+40,PSm,"superficial pretectal nucleus, medial division"
+41,PSP,parvocellular superficial pretectal nucleus
+42,TGN,tertiary gustatory nucleus
+43,TL,torus longitudinalis
+44,TLa,nucleus of the torus lateralis
+45,TPp,periventricular nucleus of the posterior tuberculum
+46,Vc,central part of the ventral telencephalon
+47,Vd-c,"dorsal part of the ventral telencephalon, caudal subdivision"
+48,Vd-r,"dorsal part of the ventral telencephalon, rostral subdivision"
+49,Vi,intermediate nucleus of the ventral telencephalon
+50,VMn,ventromedial thalamic nucleus
+51,VOT,ventral optic tract
+52,Vp,postcommissural nucleus of the ventral telencephalon
+53,Vs-m,medial part of the supracommissural nucleus of the ventral telencephalon
+54,Vv,ventral part of the ventral telencephalon
+55,Vsst,sst+ region of the ventral telencephalon
+56,Dln-r,"dorsolateral nucleus of the telencephalon, rostral part"
+57,Dln-c,"dorsolateral nucleus of the telencephalon, caudal part"
+58,Dl-gd,"granular zone of lateral zone of the dorsal telencephalon, dorsal part"
+59,Dl-v2d,"ventral part of the lateral zone of the dorsal telencephalon, subdivision 2, dorsal part"
+60,PS,superficial pretectal nucleus
+,NPO,neurosecretory preoptic area
+,Di,diencephalon

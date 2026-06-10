@@ -1,0 +1,303 @@
+GJG 06/06/2026 RGC Spatial locations
+
+Here, I am going to see if our RGC subclusters correspond to spatially distinct 
+populations of RGCs. One caveat here this will not be dissection aware while
+I wait to hear back from Coltan re: which parts of sections should be excluded.
+
+The steps will be
+1) Subset visium object to be ONLY RGCs as defined by expression of markers
+gfap, LOC111577263, sox2, or gja1b
+1a) Run SCT on visium RGC object
+2) Subset multiome object and subcluster
+2a) Because ependymal cells are also gfap+ and crocc2, the main marker, does
+not appear very strongly in the visium data, I will also include them
+2b) 26, a dividing glial cluster will also be included
+3) Use Seurat's label transfer functionality to go multiome_RGC -> Spatial data
+4) Make a heatmap of regions 
+5) Plot on spatial 
+
+From prior knowledge, I hypothesize that 1_shha, 1_NSC, and 1_NP will be along 
+the medial ventricles while 1_gfap will be more filamentous.
+
+Libraries
+```{r, echo = FALSE, include = FALSE}
+library(Seurat)
+library(ggplot2)
+library(pheatmap)
+library(tidyverse)
+options(future.globals.maxSize = Inf)
+library(glmGamPoi)
+```
+
+Read in visium data
+```{r}
+# ── 1. Load ──────────────────────────────────────────────────────────────────
+vis <- readRDS('/Users/ggraham/Desktop/Visium/vis.rds')
+
+# ── 2. Anatomical labels ──────────────────────────────────────────────────────
+barcodes <- list.files(
+  '/Users/ggraham/Desktop/multiome_poa/Visium/Groupings/Maruska Regions Data Informed/',
+  full.names = TRUE
+) %>%
+  lapply(read.csv) %>%
+  bind_rows()
+
+ana <- setNames(barcodes$Anatomical, barcodes$Barcode)
+seurat_barcodes <- gsub("_[0-9]+$", "", Cells(vis))
+vis$anatomical <- unname(ana[seurat_barcodes])
+
+# ── 4. Non-neuronal clusters (from marker genes) ─────────────────────────────
+Idents(vis) <- 'seurat_clusters.projected0.4'
+DotPlot(vis, features = c('elavl3','rbfox3a','gfap','LOC111577263','gja1b',
+                          's100b','sox2',
+                           'mpz','ptprc','p2ry12','cspg4','hbae5')) +
+  coord_flip()
+
+```
+
+```{r, echo = FALSE, include = FALSE}
+rgc_clusters = c(
+  1,
+  9,
+  10,
+  13,
+  21,
+  26,
+  29
+)
+
+vis_rgc_test = subset(vis, seurat_clusters.projected0.4 %in% rgc_clusters)
+marks = FindAllMarkers(vis_rgc_test)
+```
+
+```{r}
+# Top 5 markers per cluster by p_val_adj
+top5 <- marks %>%
+  filter(p_val_adj < 0.05) %>%
+  group_by(cluster) %>%
+  slice_min(order_by = p_val_adj, n = 5, with_ties = FALSE) %>%
+  ungroup()
+
+# DotPlot
+DotPlot(
+  vis_rgc_test,
+  features = unique(top5$gene),
+  group.by = "seurat_clusters.projected0.4"
+) +
+  coord_flip() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+1 is certainly a radial glia 
+9 I'm not sure none of its markers show up in the featureplot of the multiome object
+10 is ependymal cells probably,
+13 is like a new neuron or something
+21 is a neuron, actually its vsst lol
+26 looks like a rgc
+29 is not
+
+Evidence for above^^
+```{r}
+obj <- readRDS('~/Desktop/optimal_clustering_rna_only.rds')
+```
+
+```{r}
+FeaturePlot(obj, c('apoa2',
+                   'apoa1b',
+                   'LOC111579859',
+                   'LOC111579861',
+                   'slc1a2b',
+                   'ptprb',
+                   'slc2a1b',
+                   'prdx1',
+                   'chga',
+                   'cart3',
+                   'sspo',
+                   'tnfrsf19'), reduction = 'harmony_wnn.umap'
+            ) & NoLegend() &
+  theme(axis.title = element_blank(),
+        axis.text = element_blank())
+```
+Subset visium object
+```{r, echo = FALSE, include = FALSE}
+vis_rgc = subset(vis,seurat_clusters.projected0.4 %in% c(1, 10,26) )
+rm(vis_rgc_test)
+rm(vis)
+```
+
+Run SCT, save
+```{r, echo = FALSE, include = FALSE}
+vis_rgc= SCTransform(vis_rgc, assay = 'Spatial.Polygons',
+                          conserve.memory = T,
+                          vst.flavor = "v2",
+                          ncells = 5000)
+  
+#saveRDS(vis_rgc,'/Users/ggraham/Desktop/Visium/vis_rgc.rds' )
+
+```
+
+Subset and subcluster ependymoglia
+```{r, echo = FALSE}
+obj = FindSubCluster(obj,
+                     1, 
+                     'harmony.wsnn',
+                     resolution = 0.2,
+                     subcluster.name = 'sub_res0.2')
+
+obj_rgc = subset(obj, final_clusters %in% c(1,
+                                            15,
+                                            26))
+
+obj_rgc$sub_res0.2 <- recode(obj_rgc$sub_res0.2,
+  "1_0" = "1_NP",
+  "1_1" = "1_NSC",
+  "1_2" = "1_shha",
+  "1_3" = "1_gfap",
+  "15" = 'Ependymal',
+  '26' = 'Dividing'
+)
+Idents(obj_rgc) = 'sub_res0.2'
+rm(obj)
+DimPlot(obj_rgc, label = T)
+```
+Perfect, now, label transfer time
+
+Balance object so that larger populations do not overwhelm the transfer
+```{r}
+cells_per_cluster <- 200
+
+set.seed(42)
+cells_keep <- obj_rgc@meta.data %>%
+  tibble::rownames_to_column("cell") %>%
+  group_by(sub_res0.2) %>%
+  group_modify(~ slice_sample(.x, n = min(cells_per_cluster, nrow(.x)))) %>%
+  pull(cell)
+
+
+obj_rgc_balanced <- subset(obj_rgc, cells = cells_keep)
+
+```
+
+
+```{r, echo = FALSE, include = FALSE}
+# Find Transfer anchors using SCT assay and transfer data
+DefaultAssay(obj_rgc_balanced)        <- "SCT"
+Idents(obj_rgc_balanced) = 'sub_res0.2'
+# now run transfer on balanced reference
+anchors <- FindTransferAnchors(
+  reference            = obj_rgc_balanced,
+  query                = vis_rgc,
+  normalization.method = "SCT",
+  reference.reduction  = "pca",
+  reduction            = "pcaproject",
+  dims                 = 1:30,
+    query.assay          = "SCT"      
+
+)
+
+
+vis_rgc <- TransferData(
+  anchorset        = anchors,
+  query            = vis_rgc,
+  reference        = obj_rgc_balanced,
+  refdata          = list(transferred_cluster = "sub_res0.2"),
+  weight.reduction = "pcaproject",
+  dims             = 1:30
+)
+
+```
+
+```{r}
+vis_rgc$seurat_clusters.projected0.4 = droplevels(vis_rgc$seurat_clusters.projected0.4 )
+# score distribution split by whether assignment was high confidence
+vis_rgc$transfer_confident <- 
+  vis_rgc$predicted.transferred_cluster.score > 0.5
+
+cat("\nHigh confidence assignments:", 
+    sum(vis_rgc$transfer_confident), "\n")
+cat("Low confidence assignments:", 
+    sum(!vis_rgc$transfer_confident), "\n")
+
+```
+Very good confidence
+
+Plot against visium clusters
+```{r}
+  vis_rgc$predicted.cluster=   vis_rgc$predicted.transferred_cluster[vis_rgc$transfer_confident==T]
+
+agreement = table(vis_rgc$predicted.cluster,
+                  vis_rgc$seurat_clusters.projected0.4)
+
+pheatmap(
+  agreement / rowSums(agreement),               # each region sums to 1
+  cluster_rows = F,
+  cluster_cols = F,
+  border_color = NA,
+  color        = colorRampPalette(c("grey95", "orange", "darkred"))(100)
+)
+
+```
+Ok so yeah they are overwhelmingly aligned to cluster 1 not a surprise, it looks
+like ependymal cells (15) are also a part of that cluster, dividing glia are kind of evenly divided.
+
+Is there a spatial difference
+
+```{r}
+renamed = c(
+  'could be nPPa'= 'What',
+  'could be nMMp' = 'nMMp',
+  'could be nPMP' = 'nPMp',
+  'dorsolateral nucleus' = 'Dln-r',
+  'dorsolateral nucleus caudal part' = 'Dln-c',
+  'Dl-v2 dorsal part' = 'Dl-v2d',
+  'TGn' = 'TGN'
+)
+
+renaming_col = ifelse(vis_rgc$anatomical %in% c(names(renamed)), renamed[vis_rgc$anatomical], vis_rgc$anatomical)  
+vis_rgc$anatomical_renamed = renaming_col
+
+  vis_rgc$predicted.cluster=   vis_rgc$predicted.transferred_cluster[vis_rgc$transfer_confident==T]
+
+agreement = table(vis_rgc$predicted.cluster,
+                  vis_rgc$anatomical_renamed)
+
+pheatmap(
+  t(agreement / rowSums(agreement)),               # each region sums to 1
+  cluster_rows = F,
+  cluster_cols = F,
+  border_color = NA,
+  color        = colorRampPalette(c("grey95", "orange", "darkred"))(100),
+  fontsize=4)
+
+
+```
+Visually, a lot of confidence for the rgcs in OT which isnt surprising because
+there is so many of them there that I guess it is much more confident. In POA,
+seems to be more ependymal cells and 1_2 which is 1_shha, lets just plot it though
+
+```{r}
+SpatialDimPlot(vis_rgc, group.by = 'predicted.cluster',
+               images = 's_6P17.polygons',
+               pt.size.factor = 0.7)
+```
+
+```{r}
+SpatialDimPlot(vis_rgc, group.by = 'predicted.cluster',
+               images = 's_4P10.polygons',
+               pt.size.factor = 0.7)
+```
+1_1 seems to be more posterior
+
+```{r}
+SpatialDimPlot(vis_rgc, group.by = 'predicted.cluster',
+               images = 's_3P5.polygons',               
+               pt.size.factor = 0.7)
+```
+
+```{r}
+SpatialDimPlot(vis_rgc, group.by = 'predicted.cluster',
+               images = 's_4P5.polygons',
+                              pt.size.factor = 0.7)
+```
+
+
+
