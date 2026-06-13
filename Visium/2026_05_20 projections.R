@@ -29,7 +29,7 @@ named_colors <- setNames(colors[1:length(clusters)], clusters)
 
 p =SpatialDimPlot(vis_neuron_subset%>%
                  subset(predicted.multiome_confidence_0.5%in%clusters), group.by = 'predicted.multiome_confidence_0.5',
-               pt.size.factor = 0.5,
+               #pt.size.factor = 0.5,
                images = 's_6P17.polygons',
                cols = named_colors)
 p
