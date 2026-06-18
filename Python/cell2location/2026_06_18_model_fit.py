@@ -170,13 +170,14 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------
     
     mod_sp.train(
-        max_epochs=30000,
+        max_epochs=1000,
         batch_size=2048,
         train_size=1,
         accelerator="gpu",
         datasplitter_kwargs={
             "num_workers": 8,
-            "persistent_workers": False,
+            "persistent_workers": True,
+            "pin_memory":True
         },
     )
     
@@ -187,8 +188,8 @@ if __name__ == '__main__':
     adata_vis = mod_sp.export_posterior(
         adata_vis,
         sample_kwargs={
-            "num_samples": 500,
-            "batch_size": 1024,
+            "num_samples": 100,
+            "batch_size": 512,
             "accelerator": "cpu",
         },
     )
