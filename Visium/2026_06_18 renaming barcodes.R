@@ -12,7 +12,7 @@ for(i in images){
 data = read.csv(paste0("Visium/Groupings/",i," Coltan DIssection.csv"))%>%
   subset(!is.na( Coltan.DIssection))
 data$Barcode_updated =paste0(data$Barcode, i)
-barcodes_included = rbind(data)
+barcodes_included = rbind(data, barcodes_included)
 }
 
 print(head(data$Barcode))
