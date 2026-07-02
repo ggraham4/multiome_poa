@@ -126,7 +126,7 @@ genes = c(
 
 p=DotPlot(obj, genes, 
           dot.min = 0.1,
-          dot.scale = 3)+
+          dot.scale = 2)+
   coord_flip()+
   scale_x_discrete(labels = c(
   # cell types
@@ -243,7 +243,17 @@ p=DotPlot(obj, genes,
   #26
   'cenpp',
   'top2a'
-))
+))+
+  theme(
+    axis.text.x = element_text(size = 6, angle =45),       # X-axis (feature) text size
+    axis.text.y = element_text(size = 6),       # Y-axis (cell identity) text size
+    axis.title = element_blank(), # Axis titles
+    legend.text = element_text(size = 6),       # Legend labels
+    legend.title = element_text(size=6),       # Legend title
+    legend.position = 'top',
+    legend.justification = "center"  
+    
+  )
 
 p     
 
@@ -251,9 +261,9 @@ ggsave(plot = p,
        file = 'marker dotplot.svg',
        device = "svg",
        units = "in",
-       width = 5.5,
-       height = 6.5,
-       path = '/Users/ggraham/Desktop/multiome_poa/Manuscript/Plots/Manuscript v1.2.3')
+       width = 3.6,
+       height = 5.64,
+       path = 'Manuscript/Plots/Manuscript v1.2.3')
 
 
 library(scCustomize)
