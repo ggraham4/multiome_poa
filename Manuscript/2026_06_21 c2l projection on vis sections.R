@@ -1,6 +1,7 @@
 library(Seurat)
 
 vis = readRDS("C:/Users/Gabe/Desktop/Visium/vis_better_barcodes_dissection_c2l05_projection_anatomical.rds")
+### this pathname has been changed, in the future use the 95 object which is better
 
 setwd('C:/Users/Gabe/Desktop/multiome_poa')
 
