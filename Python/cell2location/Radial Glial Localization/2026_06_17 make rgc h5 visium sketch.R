@@ -20,12 +20,25 @@ DotPlot(vis, features = c("LOC111577263",
 
 DotPlot(vis, features = c("LOC111577263",
                           "gfap",
-                          "gja1b"))
+                          "gja1b",
+                          'shha',
+                          'wnt8b',
+                          'elavl3',
+                          's100b',
+                          'crocc2',
+                          'p2ry12',
+                          'ptprc',
+                          'cspg4'))
 
-# I am going to only look at cluster 1
+marks_26 =FindMarkers(vis, 26, only.pos =T)
+marks_9 =FindMarkers(vis, 9, only.pos =T)
+marks_22 =FindMarkers(vis, 22, only.pos =T)
+
+
+# I am going to only look at cluster 1 and 26 and 9
 
 ### RGC Clusters
-vis = subset(vis,seurat_clusters.projected0.4==1 )
+vis = subset(vis,seurat_clusters.projected0.4%in%c(1,26, 9) )
 
 
 # --------------------------------------------------------------------------

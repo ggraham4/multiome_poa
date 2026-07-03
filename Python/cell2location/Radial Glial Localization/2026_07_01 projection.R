@@ -10,7 +10,7 @@ dir.create(plot_dir, showWarnings = FALSE)
 
 vis = readRDS("C:/Users/Gabe/Desktop/Visium/vis_better_barcodes_dissection_c2l05_projection_anatomical.rds")
 #have to perform this subsetting to make it run
-vis=subset(vis, seurat_clusters.projected0.4==1)
+vis = subset(vis,seurat_clusters.projected0.4%in%c(1,26, 9) )
 
 cat("Loading c2l high-confidence (q05) abundance...\n")
 abundance <- read.csv(
@@ -149,21 +149,33 @@ spatial_figure_function = function(slice = '6P17', clusters = c()) {
   
   # Tissue plot (with image)
   p = do.call(SpatialDimPlot, c(plot_args, image.alpha = 0.5))
+  
   ggsave(paste0(save_base, '_tissue.jpg'), p, 
          width = 10, height = 8, dpi = 300, device = 'jpeg')
-  
+  cat("File size:", file.info(outfile)$size, "bytes\n")
+  cat("Modified:", format(file.info(outfile)$mtime), "\n")
+  Sys.sleep(1)  # let any AV/OneDrive lock release
+  cat("Still says:", format(file.info(outfile)$mtime), "\n")
+  print(paste0('saved to ',save_base ))
   # Points-only plot (no image)
   d = do.call(SpatialDimPlot, c(plot_args, image.alpha = 0))
   ggsave(paste0(save_base, '_points.jpg'), d, 
          width = 10, height = 8, dpi = 300, device = 'jpeg')
 }
-
+setwd('C:/Users/Gabe/Desktop/multiome_poa')
 spatial_figure_function(clusters = unique(vis$Predicted_RGC))
 spatial_figure_function('4P5',clusters = unique(vis$Predicted_RGC))
 spatial_figure_function('3P5',clusters = unique(vis$Predicted_RGC))
 spatial_figure_function('4P10',clusters = unique(vis$Predicted_RGC))
 
 
+vis_sub = subset(vis, !is.na(Predicted_RGC) & 
+                   Predicted_RGC %in% unique(vis$Predicted_RGC))
 
+SpatialDimPlot( object   = vis_sub,
+                group.by = "Predicted_RGC",
+                images   = 's_6P17.polygons',
+                image.scale = 'hires',
+                crop =F)
 
 
