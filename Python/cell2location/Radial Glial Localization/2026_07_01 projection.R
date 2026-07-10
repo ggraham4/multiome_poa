@@ -121,11 +121,11 @@ p =pheatmap((heatmat/rowSums(heatmat))%>%scale(),
             number_color= 'black')
 p
 
-#svg(filename = 'C:/Users/Gabe/Desktop/multiome_poa/Manuscript/Plots/Manuscript v1.2.3/RGC heatmap.svg',
- #   width = 6.5,
-#    height = 4.5)
-#p
-#dev.off()
+svg(filename = 'C:/Users/Gabe/Desktop/multiome_poa/Manuscript/Plots/Manuscript v1.2.3/RGC heatmap.svg',
+   width = 4.25,
+    height = 1.22)
+p
+dev.off()
 
 spatial_figure_function = function(slice = '6P17', clusters = c()) {
   
