@@ -31,7 +31,7 @@ cdp =  function(sub_6, gene){
   if(!require(tidyverse)){library(tidyverse)}
   if(!require(emmeans)){library(emmeans)}
   
-  colors = c('#1965B0', '#4EB265', '#F7F056', '#7BAFDE', '#DC050C')
+  colors = c('#1965B0', '#4EB265', '#F7F056', '#DC050C')
   
   format_pval = function(p) {
     if (p >= 0.05) {
@@ -144,7 +144,7 @@ for(i in genes_interest){
          file = paste0(i, '_cyto_6.svg'),
          device = "svg",
          units = "in",
-         width = 3,
+         width = 2,
          height = 2,
          path = paste0("Manuscript/Plots/Manuscript v1.3/cyto_genes_6"))
   
