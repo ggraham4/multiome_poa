@@ -92,9 +92,7 @@ plotter_function_final = function(obj, deg, cluster_id,
     scale_y_continuous(limits = c(y_min, y_axis_max)) +
     scale_fill_manual(values = colors) +
     labs(x     = 'Phase',
-         y     = 'Normalized Expression',
-        # title = paste0(deg, '  |  cluster ', cluster_id)
-         ) +
+         y     = 'Normalized Expression') +
     theme(legend.position = 'none')
 
   # --- brackets only when a p-value is available ---
@@ -121,29 +119,9 @@ plotter_function_final = function(obj, deg, cluster_id,
 }
 saveRDS(plotter_function_final,'Functions/plotter_function_final.rds')
 
-gnrh1_6 = plotter_function_final(obj, 'LOC111571064', 6)
- ggsave(plot = gnrh1_6,
-       file = paste0('gnrh1_not_sig.svg'),
-       device = "svg",
-       units = "in",
-       width = 2,
-       height = 2,
-       path = paste0("Manuscript/Plots/Manuscript v1.2/6_NPO_degs"))
- 
- cckb_6 = plotter_function_final(obj, 'cckb', 6)
- ggsave(plot = cckb_6,
-       file = paste0('cckb_not_sig.svg'),
-       device = "svg",
-       units = "in",
-       width = 2,
-       height = 2,
-       path = paste0("Manuscript/Plots/Manuscript v1.3/6_degs"))
- 
-drd3_6 = plotter_function_final(obj, degs, 'drd3', cluster_id = 6)
-drd3_6
-
-for(i in degs_6$gene){
-  p = plotter_function_final(obj, degs, i, cluster_id = 6)
+for(i in c('drd3',
+           'tacr3a')){
+  p = plotter_function_final(obj, i, degs, cluster_id = 6)
   
     ggsave(plot = p,
        file = paste0(i,'.svg'),
@@ -151,12 +129,8 @@ for(i in degs_6$gene){
        units = "in",
        width = 2,
        height = 2,
-       path = paste0("Manuscript/Plots/Manuscript v1.2/6_NPO_degs"))
+       path = paste0("Manuscript/Plots/Manuscript v1.3/6_degs"))
 }
 
-obj$cyto = CytoTRACE(obj@assays$RNA$data%>%as.matrix())$CytoTRACE
-
-FeaturePlot(obj, 'cyto', reduction ='harmony_wnn.umap')
 
 
-marks_22 = FindMarkers(obj, 22)
