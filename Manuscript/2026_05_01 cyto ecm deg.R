@@ -29,7 +29,8 @@ degs_plasticity = c(
   'pcdh10b',
   'sdc2',
   'LOC111585095',
-  'bcan'
+  'bcan',
+  'LOC111568896'# CALPAIN 1
 )
 
 plasticity_positive = colSums(sub_6@assays$RNA$data[degs_plasticity, ]) > 0
@@ -97,11 +98,11 @@ y_axis_max   = y_max_global * 1.50
 make_panel = function(gpos, title_suffix) {
   dat     = subset(ind_summary, gene_pos == gpos)
   dat_box = subset(dat, Phase != 'NF')
-
+  
   p_mi = get_p('M', 'D', gpos)
   p_mf = get_p('M', 'F', gpos)
   p_if = get_p('D', 'F', gpos)
-
+  
   ggplot(dat, aes(x = Phase, y = mean_cyto)) +
     geom_boxplot(data = dat_box,
                  aes(x = Phase, y = mean_cyto, fill = Phase),
