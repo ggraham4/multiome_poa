@@ -86,7 +86,7 @@ plott =subset(data_with_dom_mean, cluster %in% confident_clusters)%>%
 
 plott$neurotransmitter = ifelse(plott$cluster %in% c(24,0, 6, 9), 'Mixed',NA)
 plott$neurotransmitter = ifelse(plott$cluster %in% c(1,2, 11, 13, 15, 20, 26), 'Glial',plott$neurotransmitter)
-plott$neurotransmitter = ifelse(plott$cluster %in% c(19, 3, 14, 25), 'GABAergic',plott$neurotransmitter)
+plott$neurotransmitter = ifelse(plott$cluster %in% c(19, 3, 14, 25,21), 'GABAergic',plott$neurotransmitter)
 plott$neurotransmitter = ifelse(is.na(plott$neurotransmitter), 'Glutamatergic', plott$neurotransmitter)
 
 
