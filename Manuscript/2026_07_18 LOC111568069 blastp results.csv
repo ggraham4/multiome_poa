@@ -1,0 +1,105 @@
+Description,Scientific Name,Max Score,Total Score,Query Cover,E value,Per. ident,Acc. Len,Accession  
+androgen receptor beta [Oryzias latipes],Oryzias latipes,1083,1083,100%,0,76.8,687,NP_001116383.2
+androgen receptor alpha [Oryzias latipes],Oryzias latipes,1080,1080,100%,0,76.66,687,BAI22839.1
+androgen receptor beta [Oryzias latipes],Oryzias latipes,1079,1079,100%,0,76.58,689,ABV55993.1
+androgen receptor alpha subtype [Oryzias latipes],Oryzias latipes,1070,1070,100%,0,76.22,687,BAI58983.1
+"androgen receptor b, partial [Oryzias latipes]",Oryzias latipes,1053,1053,95%,0,77.86,664,ABF50763.1
+unnamed protein product [Gasterosteus aculeatus],Gasterosteus aculeatus,1052,1052,100%,0,75.18,696,CAR0434527.1
+androgen receptor alpha [Gasterosteus aculeatus],Gasterosteus aculeatus,1051,1051,100%,0,74.58,699,AGZ02558.1
+androgen receptor alpha [Gasterosteus aculeatus],Gasterosteus aculeatus,1051,1051,100%,0,74.58,699,NP_001254620.1
+unnamed protein product [Gasterosteus aculeatus],Gasterosteus aculeatus,1040,1040,100%,0,75.47,687,CAR0434526.1
+androgen receptor beta 1 [Gasterosteus aculeatus],Gasterosteus aculeatus,523,523,62%,1.00E-176,59.95,682,AAO83573.1
+androgen receptor [Gasterosteus aculeatus],Gasterosteus aculeatus,524,524,62%,3.00E-176,59.68,728,NP_001254568.1
+unnamed protein product [Gasterosteus aculeatus],Gasterosteus aculeatus,524,524,62%,4.00E-176,59.68,728,CAR0462038.1
+"androgen receptor beta 2, partial [Gasterosteus aculeatus]",Gasterosteus aculeatus,524,524,62%,4.00E-176,59.68,735,AAO83572.1
+"androgen receptor, partial [Danio rerio]",Danio rerio,508,508,57%,5.00E-175,63.54,377,AAS80170.1
+androgen receptor beta subtype [Oryzias latipes],Oryzias latipes,520,520,62%,2.00E-174,58.81,744,BAI58984.1
+androgen receptor [Oryzias latipes],Oryzias latipes,520,520,62%,3.00E-174,58.35,744,NP_001098151.1
+androgen receptor isoform X1 [Danio rerio],Danio rerio,505,505,56%,3.00E-174,63.92,367,XP_073805683.1
+androgen receptor [Danio rerio],Danio rerio,518,518,62%,4.00E-172,60.23,868,NP_001076592.1
+androgen receptor [Danio rerio],Danio rerio,518,518,62%,4.00E-172,60.23,868,ACD86464.1
+androgen receptor [Danio rerio],Danio rerio,517,517,62%,9.00E-172,60.23,869,ABO47800.1
+androgen receptor [Danio rerio],Danio rerio,516,516,62%,2.00E-171,60,868,ABO21344.1
+"androgen receptor, partial [Homo sapiens]",Homo sapiens,449,449,62%,5.00E-151,53.99,452,AAA51774.1
+androgen receptor isoform 2 [Homo sapiens],Homo sapiens,444,444,58%,4.00E-150,56.68,388,NP_001011645.1
+androgen receptor [Homo sapiens],Homo sapiens,454,454,62%,3.00E-149,53.99,734,AAA51770.1
+androgen receptor [Homo sapiens],Homo sapiens,455,455,62%,2.00E-147,53.99,918,AAA51775.1
+AR protein [Homo sapiens],Homo sapiens,455,455,62%,4.00E-147,53.99,914,AAI32976.1
+androgen receptor [Homo sapiens],Homo sapiens,455,455,62%,4.00E-147,53.99,917,AAA51771.1
+androgen receptor [Homo sapiens],Homo sapiens,455,455,62%,4.00E-147,53.99,917,KAI2599822.1
+androgen receptor [Homo sapiens],Homo sapiens,455,455,62%,4.00E-147,53.99,919,AAA51729.1
+androgen receptor isoform 1 [Homo sapiens],Homo sapiens,455,455,62%,4.00E-147,53.99,920,NP_000035.2
+androgen receptor [Homo sapiens],Homo sapiens,455,455,62%,5.00E-147,53.99,925,KAI4000027.1
+"androgen receptor isoform A, partial [Homo sapiens]",Homo sapiens,454,454,62%,1.00E-146,53.99,919,AHW56411.1
+androgen receptor isoform 1 transcript variant 1 [Homo sapiens],Homo sapiens,453,453,62%,2.00E-146,53.76,920,ADD26780.1
+androgen receptor isoform 1 transcript variant 1 [Homo sapiens],Homo sapiens,453,453,62%,2.00E-146,53.76,920,ADB54358.1
+androgen receptor isoform 1 transcript variant 1 [Homo sapiens],Homo sapiens,453,453,62%,2.00E-146,53.76,920,ADD26778.1
+androgen receptor isoform 1 transcript variant 1 [Homo sapiens],Homo sapiens,453,453,62%,2.00E-146,53.76,920,ADD26777.1
+androgen receptor isoform 1 transcript variant 1 [Homo sapiens],Homo sapiens,453,453,62%,2.00E-146,53.76,920,ADD26781.1
+androgen receptor isoform 1 transcript variant 1 [Homo sapiens],Homo sapiens,452,452,62%,3.00E-146,53.76,920,ADD26779.1
+androgen-receptor [Homo sapiens],Homo sapiens,452,452,62%,4.00E-146,53.53,906,AAA51780.1
+androgen receptor [Homo sapiens],Homo sapiens,450,450,62%,2.00E-145,53.3,906,AAD45921.1
+androgen receptor [Homo sapiens],Homo sapiens,434,434,62%,3.00E-141,52.69,730,AAA51735.1
+progesterone receptor isoform A [Homo sapiens],Homo sapiens,406,406,56%,4.00E-130,49.35,769,NP_001189403.1
+progesterone receptor [Homo sapiens],Homo sapiens,408,408,56%,6.00E-129,49.35,933,KAI2562486.1
+unnamed protein product [Homo sapiens],Homo sapiens,408,408,56%,6.00E-129,49.35,933,CAA36018.1
+progesterone receptor isoform B [Homo sapiens],Homo sapiens,408,408,56%,6.00E-129,49.35,933,NP_000917.3
+progesterone receptor [Homo sapiens],Homo sapiens,408,408,56%,7.00E-129,49.35,933,AAD01587.1
+"novel protein similar to vertebrate nuclear receptor subfamily 3, group C, member 2 (NR3C2), partial [Danio rerio]",Danio rerio,370,370,55%,3.00E-121,47.81,372,CAM13426.1
+nuclear progestin receptor [Oryzias latipes],Oryzias latipes,380,380,57%,4.00E-121,45.06,667,BAN84406.1
+progesterone receptor isoform X1 [Oryzias latipes],Oryzias latipes,379,379,57%,5.00E-121,45.06,667,XP_023816983.1
+"PR, partial [Danio rerio]",Danio rerio,367,367,56%,3.00E-120,44.84,373,AAY85275.1
+progesterone receptor [Gasterosteus aculeatus],Gasterosteus aculeatus,377,377,57%,7.00E-120,45.2,675,XP_040031607.1
+progesterone receptor isoform X1 [Danio rerio],Danio rerio,373,373,57%,3.00E-119,44.78,617,XP_073785563.1
+nuclear progesterone receptor [Danio rerio],Danio rerio,371,371,57%,2.00E-118,44.53,617,ACQ90238.1
+progesterone receptor [Danio rerio],Danio rerio,370,370,57%,3.00E-118,44.53,617,NP_001159807.1
+mineralocorticoid receptor [Danio rerio],Danio rerio,375,375,56%,4.00E-116,47.83,970,NP_001093873.1
+"Chain C, Glucocorticoid receptor [Homo sapiens]",Homo sapiens,354,354,55%,3.00E-115,44.59,360,8FFV_C
+"Chain A, Glucocorticoid receptor [Homo sapiens]",Homo sapiens,354,354,55%,5.00E-115,44.59,393,7PRV_A
+unnamed protein product [Homo sapiens],Homo sapiens,353,353,55%,1.00E-114,44.59,380,BAH13618.1
+glucocorticoid receptor [Danio rerio],Danio rerio,365,365,55%,2.00E-114,46.89,746,NP_001018547.2
+glucocorticoid receptor isoform alpha-D2 [Homo sapiens],Homo sapiens,354,354,55%,4.00E-114,44.59,447,NP_001191192.1
+glucocorticoid receptor isoform alpha-D3 [Homo sapiens],Homo sapiens,354,354,55%,5.00E-114,44.59,442,NP_001191193.1
+glucocorticoid receptor isoform alpha-D1 [Homo sapiens],Homo sapiens,355,355,55%,5.00E-114,44.59,462,NP_001191191.1
+glucocorticoid receptor [Gasterosteus aculeatus],Gasterosteus aculeatus,363,363,55%,2.00E-113,46.11,780,XP_040028641.2
+glucocorticoid receptor [Oryzias latipes],Oryzias latipes,361,361,55%,1.00E-112,46.35,777,NP_001156605.1
+glucocorticoid receptor isoform X1 [Oryzias latipes],Oryzias latipes,361,361,55%,1.00E-112,46.35,788,XP_023814719.1
+glucocorticoid receptor isoform alpha-C3 [Homo sapiens],Homo sapiens,357,357,55%,4.00E-112,44.59,680,NP_001191190.1
+"Chain F, Glucocorticoid receptor [Homo sapiens]",Homo sapiens,359,359,55%,5.00E-112,44.59,777,7KW7_F
+glucocorticoid receptor isoform alpha-C2 [Homo sapiens],Homo sapiens,357,357,55%,5.00E-112,44.59,688,NP_001191189.1
+glucocorticoid receptor isoform alpha-C1 [Homo sapiens],Homo sapiens,357,357,55%,6.00E-112,44.59,692,NP_001191188.1
+progesterone receptor isoform D [Homo sapiens],Homo sapiens,344,344,51%,7.00E-112,47.75,339,NP_001258091.1
+nuclear receptor subfamily 3 group C member 1 variant NS-1 [Homo sapiens],Homo sapiens,358,358,55%,8.00E-112,44.85,777,AED99114.1
+mineralocorticoid receptor-like [Oryzias latipes],Oryzias latipes,364,364,55%,8.00E-112,47.07,994,XP_078799814.1
+mineralocorticoid receptor [Oryzias latipes],Oryzias latipes,364,364,55%,1.00E-111,47.07,994,NP_001156601.1
+glucocorticoid receptor isoform alpha-B [Homo sapiens],Homo sapiens,357,357,55%,1.00E-111,44.59,751,NP_001191187.1
+"nuclear receptor subfamily 3, group C, member 1 (glucocorticoid receptor) variant, partial [Homo sapiens]",Homo sapiens,358,358,55%,2.00E-111,44.59,777,BAD97314.1
+nuclear receptor subfamily 3 group C member 1 [Homo sapiens],Homo sapiens,358,358,55%,2.00E-111,44.59,777,QEG79395.1
+glucocorticoid receptor isoform alpha [Homo sapiens],Homo sapiens,358,358,55%,2.00E-111,44.59,777,NP_000167.1
+nuclear receptor subfamily 3 group C member 1 [Homo sapiens],Homo sapiens,357,357,55%,2.00E-111,44.59,751,KAI2539493.1
+hypothetical protein [Homo sapiens],Homo sapiens,358,358,55%,2.00E-111,44.59,777,CAE45716.1
+glucocorticoid receptor [Homo sapiens],Homo sapiens,357,357,55%,3.00E-111,44.59,777,BAH02307.1
+glucocorticoid receptor isoform gamma [Homo sapiens],Homo sapiens,355,355,55%,2.00E-110,44.73,778,NP_001019265.1
+"Chain B, Androgen receptor [Homo sapiens]",Homo sapiens,337,337,35%,3.00E-110,65.59,252,5JJM_B
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,337,337,35%,3.00E-110,65.59,250,4OEA_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,337,337,35%,4.00E-110,65.59,249,4K7A_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,336,336,35%,6.00E-110,65.59,250,3L3X_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,336,336,35%,7.00E-110,65.59,250,5VO4_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,8.00E-110,65.59,247,3RLJ_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,336,336,36%,8.00E-110,65.32,266,2AM9_A
+"Chain A, androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,8.00E-110,65.59,249,1XOW_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,9.00E-110,65.59,248,2Z4J_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,9.00E-110,65.59,249,7ZU2_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,9.00E-110,65.59,249,7ZU1_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,9.00E-110,65.59,249,5V8Q_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,336,336,36%,1.00E-109,65.32,259,4QL8_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,36%,1.00E-109,65.32,256,2AX9_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,336,336,35%,1.00E-109,65.59,258,5T8E_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,1.00E-109,65.59,252,5JJM_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,35%,1.00E-109,65.59,250,2HVC_A
+"Chain A, Androgen receptor [Homo sapiens]",Homo sapiens,335,335,36%,1.00E-109,65.32,257,1XJ7_A
+"Chain A, ANDROGEN RECEPTOR [Homo sapiens]",Homo sapiens,335,335,36%,1.00E-109,65.32,263,1E3G_A
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+"		",,,,,,,,
