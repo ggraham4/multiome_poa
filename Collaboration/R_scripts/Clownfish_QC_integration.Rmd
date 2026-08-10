@@ -1,0 +1,2096 @@
+---
+title: "Pre-processing Clownfish 10X Genomics multiome single cell RNA + ATAC sequencing
+  data"
+author: "Kathryn N. Leatherbury"
+date: "last updated: 09-11-2024"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+subtitle: "Adaptive quality control and data pre-processing"
+---
+
+## Load packages
+
+```{r setup, include=FALSE}
+# Required R package installation:
+# These will install packages if they are not already installed
+# Set the correct default repository
+r = getOption("repos")
+r["CRAN"] = "http://cran.rstudio.com"
+options(repos = r)
+if (!require("Seurat")) {
+    install.packages("Seurat")
+    library(Seurat)
+}
+if (!require("tidyverse")) {
+    install.packages("tidyverse")
+    library(tidyverse)
+}
+if (!require("plotly")) {
+    install.packages("plotly")
+    library(plotly)
+}
+if (!require("patchwork")) {
+  install.packages("patchwork")
+  library(patchwork)
+}
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)
+}
+if (!require("knitr")) {
+  install.packages("knitr")
+  library(knitr)
+}
+if (!require("tibble")) {
+    install.packages("tibble")
+    library(tibble)
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")
+    library(dplyr)
+}
+if (!require("tidyr")) {
+  install.packages("tidyr")
+  library(tidyr)
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")
+    library(ggridges)
+}
+if (!require('gprofiler2')) {
+    install.packages("gprofiler2")
+    library(gprofiler2)
+}
+if (!require('rrvgo')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("rrvgo")
+    library(rrvgo)
+ }
+if (!require('viridis')) {
+    install.packages("viridis")
+    library(viridis)
+}
+if (!require('scran')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("scran")
+    library(scran)
+ }
+if (!require('stringr')) {
+    install.packages("stringr")
+    library(stringr)
+}
+if (!require('sctransform')) {
+    install.packages("sctransform")
+    library(sctransform)
+}
+if (!require('glmGamPoi')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("glmGamPoi")
+    library(glmGamPoi)
+ }
+if (!require('GenomicFeatures')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("GenomicFeatures")
+    library(GenomicFeatures)
+ }
+if (!require('GenomicRanges')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("GenomicRanges")
+    library(GenomicRanges)
+ }
+if (!require('rtracklayer')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("rtracklayer")
+    library(rtracklayer)
+ }
+if (!require('HDF5Array')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("HDF5Array")
+    library(HDF5Array)
+ }
+if (!require('Signac')) {
+    install.packages("Signac")
+    library(Signac)
+}
+if (!require('multtest')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("multtest")
+    library(multtest)
+}
+if (!require('mutoss')) {
+  install.packages("mutoss")
+  library(mutoss)
+}
+if (!require('metap')) {
+  install.packages("metap")
+  library(metap)
+}
+if (!require('MuData')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("MuData")
+    library(MuData)
+ }
+if (!require('qlcMatrix')) {
+  install.packages("qlcMatrix")
+  library(qlcMatrix)
+}
+if (!require('ggExtra')) {
+  install.packages("ggExtra")
+  library(ggExtra)
+}
+if (!require('biomartr')) {
+    install.packages("biomartr")
+    library(biomartr)
+}
+if (!require('Biostrings')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("Biostrings")
+    library(Biostrings)
+ }
+if (!require("igraph")) {
+    install.packages("igraph")
+    library(igraph)
+}
+if (!require("MAST")) {
+    if (!requireNamespace("BiocManager", quietly=TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("MAST")
+    library(MAST)
+}
+if (!require('BiocNeighbors')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("BiocNeighbors")
+   library(BiocNeighbors)
+}
+if (!require("circlize")) {
+    install.packages("circlize")
+    library(circlize)
+}
+if (!require("ggrepel")) {
+    install.packages("ggrepel")
+    library(ggrepel)
+}
+if (!require("mosaic")) {
+    install.packages("mosaic")
+    library(mosaic)
+}
+if (!require("plotly")) {
+    install.packages("plotly")
+    library(plotly)
+}
+if (!require("SeuratWrappers")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github('satijalab/seurat-wrappers')
+    library(SeuratWrappers)
+}
+if (!require("speckle")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github("Oshlack/speckle")
+    library(speckle)
+}
+if (!require("wesanderson")) {
+    install.packages("wesanderson")
+    library(wesanderson)
+}
+if (!require("kableExtra")) {
+    install.packages("kableExtra")
+    library(kableExtra)
+}
+if (!require("RColorBrewer")) {
+    install.packages("RColorBrewer")
+    library(RColorBrewer)
+}
+if (!require("scCustomize")) {
+    install.packages("scCustomize")
+    library(scCustomize)
+}
+if (!require("presto")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github("immunogenomics/presto")
+    library(presto)
+}
+if (!require('DropletUtils')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletUtils")
+   library(DropletUtils)
+}
+if (!require('DropletTestFiles')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletTestFiles")
+   library(DropletTestFiles)
+}
+if (!require("scclusteval")) {
+     if (!require(devtools)) {
+         install.packages("devtools")}
+    devtools::install_github("crazyhottommy/scclusteval")
+    library(scclusteval)
+}
+if (!require("DropletUtils")) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletUtils")
+   library(DropletUtils)
+}
+if (!require("EmptyDropsMultiome")) {
+     if (!require(devtools)) {
+         install.packages("devtools")}
+    devtools::install_github("MarioniLab/emptyDrops_multiome", ref="main")
+    library(EmptyDropsMultiome)
+}
+if (!require('hdf5r')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("hdf5r")
+    library(hdf5r)
+}
+if (!require("future")) {
+    install.packages("future")
+    library(future)
+}
+if (!require("parallel")) {
+    install.packages("parallel")
+    library(parallel)
+}
+if (!require("parallelly")) {
+    install.packages("parallelly")
+    library(parallelly)
+}
+if (!require("paletteer")) {
+    install.packages("paletteer")
+    library(paletteer)
+}
+
+options(future.globals.maxSize = 20000 * 1024^2)
+mem.maxVSize(250000000)
+
+knitr::opts_chunk$set(root.dir = "/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/R_markdowns/")
+
+```
+
+
+```{r}
+
+annotations <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/clownfish_genome_files/clownfish_genome_annotations.rds')
+nemo_gene.table <- as.data.frame(annotations)
+
+nemo_fasta <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/clownfish_genome_files/clownfish_fasta.rds')
+
+nemo_id_info <- read_csv('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/clownfish_experiment_id_info.csv')
+
+ambient_markers <- read_csv('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/Katie/MZ_genome_files/M_zebra_UMD2a/ambient_markers_E.Caglayan2022.csv')
+
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s1 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_clownfish_gex.atac_common.peaks.rds')
+DefaultAssay(s1) <- 'RNA'
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+rownames(s1@assays$ATAC@data)   = stringr::str_replace(rownames(s1@assays$ATAC@data),   "_", "-")
+rownames(s1@assays$ATAC@counts) = stringr::str_replace(rownames(s1@assays$ATAC@counts), "_", "-")
+rownames(s1@assays$ATAC@meta.features) = stringr::str_replace(rownames(s1@assays$ATAC@meta.features), "_", "-")
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+s1_rna.counts <- s1[['RNA']]$counts
+s1_atac.assay <- s1[['ATAC']]
+meta <- s1@meta.data
+meta$nCount_ATAC <- NULL
+meta$nFeature_ATAC <- NULL
+meta$nCount_RNA <- NULL
+meta$nFeature_RNA <- NULL
+
+s1 <- CreateSeuratObject(counts = s1_rna.counts)
+s1[['ATAC']] <- s1_atac.assay
+DefaultAssay(s1) <- 'RNA'
+Idents(s1) <- 'individual'
+s1 <- AddMetaData(s1, metadata = meta)
+
+mito <- rownames(s1)[grep('^KEG47-', rownames(s1))]
+s1[['pct.mt']] <- PercentageFeatureSet(s1, pattern = '^KEG47-')
+
+ribogenes <- c(rownames(s1)[grep('^rpl', rownames(s1))], rownames(s1)[grep('^rps', rownames(s1))])
+ribogenes <- rownames(s1)[rownames(s1) %in% ribogenes]
+s1[['pct.rb']] <- PercentageFeatureSet(s1, features = ribogenes)
+
+ribosomal_mito_genes <- c(rownames(s1)[grep('^mrpl', rownames(s1))], rownames(s1)[grep('^mrps', rownames(s1))])
+ribosomal_mito_genes <- rownames(s1)[rownames(s1) %in% ribosomal_mito_genes]
+s1[['pct.mt.rb']] <- PercentageFeatureSet(s1, features = ribosomal_mito_genes)
+
+coding <- unique(nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'protein_coding'])
+coding <- coding[which(! coding %in% c(mito, ribosomal_mito_genes, ribogenes))]
+cgenes <- rownames(s1)[rownames(s1) %in% coding]
+s1[['pct.cd']] <- PercentageFeatureSet(s1, features = cgenes)
+
+lncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'lncRNA']
+snRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snRNA']
+snoRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snoRNA']
+ncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'ncRNA']
+nuclear <- unique(c(lncRNA, snRNA, snoRNA, ncRNA))
+nuclear <- rownames(s1)[rownames(s1) %in% nuclear]
+s1[['pct.nuclear']] <- PercentageFeatureSet(s1, features = nuclear)
+
+ambient_markers$Gene <- tolower(ambient_markers$Gene)
+ambient_markers$s1_homolog <- annotations$gene_id[match(ambient_markers$Gene, annotations$human_greatest_homolog, incomparables = T)]
+ambient <- ambient_markers %>% dplyr::filter(PValue < 1e-3)
+known_ambient <- rownames(s1)[which(ambient$s1_homolog %in% rownames(s1))]
+ambient <- unique(c(known_ambient))
+s1[['pct.ambient']] <- PercentageFeatureSet(s1, features = ambient)
+
+s1 <- Add_Cell_Complexity(object = s1, assay = 'RNA', overwrite = T)
+s1$log10PeaksPerUMI <- log10(s1$nFeature_ATAC)/log10(s1$nCount_ATAC)
+s1$genes_per_umi <- s1$nFeature_RNA/s1$nCount_RNA
+s1$peaks_per_umi <- s1$nFeature_ATAC/s1$nCount_ATAC
+
+s.genes <- tolower(cc.genes$s.genes)
+g2m.genes <- tolower(cc.genes$g2m.genes)
+
+s_genes <- nemo_gene.table$gene[which(s.genes %in% nemo_gene.table$gene)]
+nomatch_s.genes <- nemo_gene.table$gene[which(! s.genes %in% nemo_gene.table$gene)]
+g2m_genes <- nemo_gene.table$gene[which(g2m.genes %in% nemo_gene.table$gene)]
+nomatch_g2m.genes <- nemo_gene.table$gene[which(! g2m.genes %in% nemo_gene.table$gene)]
+
+s1[['pct_s.genes']] <- PercentageFeatureSet(s1, features = s_genes)
+s1[['pct_g2m.genes']] <- PercentageFeatureSet(s1, features = g2m_genes)
+
+s1 <- Add_Top_Gene_Pct_Seurat(seurat_object = s1, num_top_genes = 50, assay = 'RNA', meta_col_name = 'percent_top50_genes', overwrite = T)
+s1 <- Add_Top_Gene_Pct_Seurat(seurat_object = s1, num_top_genes = 100, assay = 'RNA', meta_col_name = 'percent_top100_genes', overwrite = T)
+
+s1$nuc_prep_batch <- 'day_1'
+
+same_ids <- unique(s1@meta.data$individual[which(s1@meta.data$individual %in% nemo_id_info$Fish)])
+nemo_id_info <- nemo_id_info %>% dplyr::filter(Fish %in% same_ids)
+
+s1$Tank <- nemo_id_info$Tank[match(s1$individual, nemo_id_info$Fish)]
+s1$Trigger <- nemo_id_info$Trigger[match(s1$individual, nemo_id_info$Fish)]
+s1$Prev_tank <- nemo_id_info$Prev_tank[match(s1$individual, nemo_id_info$Fish)]
+s1$Condition <- nemo_id_info$Condition[match(s1$individual, nemo_id_info$Fish)]
+s1$Status <- nemo_id_info$Status[match(s1$individual, nemo_id_info$Fish)]
+s1$Status_Long <- nemo_id_info$Status_Long[match(s1$individual, nemo_id_info$Fish)]
+s1$Time_Day_2 <- nemo_id_info$Time_Day_2[match(s1$individual, nemo_id_info$Fish)]
+s1$Behaviors_Day_2 <- nemo_id_info$Behaviors_Day_2[match(s1$individual, nemo_id_info$Fish)]
+s1$Change_Length <- nemo_id_info$Change_Length[match(s1$individual, nemo_id_info$Fish)]
+s1$Change_Mass <- nemo_id_info$Change_Mass[match(s1$individual, nemo_id_info$Fish)]
+s1$Log_11KT <- nemo_id_info$Log_11KT[match(s1$individual, nemo_id_info$Fish)]
+s1$Log_E2 <- nemo_id_info$Log_E2[match(s1$individual, nemo_id_info$Fish)]
+s1$Average_Area_2.5x <- nemo_id_info$Average_Area_2.5x[match(s1$individual, nemo_id_info$Fish)]
+s1$Total_Slides_With_Gonad <- nemo_id_info$Total_Slides_With_Gonad[match(s1$individual, nemo_id_info$Fish)]
+s1$Estimated_Volume_2.5x <- nemo_id_info$Estimated_Volume_2.5x[match(s1$individual, nemo_id_info$Fish)]
+s1$Log10_Volume <- nemo_id_info$Log10_Volume[match(s1$individual, nemo_id_info$Fish)]
+s1$Percent_Testicular <- nemo_id_info$Percent_Testicular[match(s1$individual, nemo_id_info$Fish)]
+s1$Testicular_Estimate <- nemo_id_info$Testicular_Estimate[match(s1$individual, nemo_id_info$Fish)]
+s1$Log10_Testicular_Estimate <- nemo_id_info$Log10_Testicular_Estimate[match(s1$individual, nemo_id_info$Fish)]
+
+
+var_feats_df <- FindVariableFeatures(s1, 
+                                     nfeatures = 28004, 
+                                     verbose = T, 
+                                     assay = 'RNA',
+                                     mean.cutoff = c(0, Inf),
+                                     dispersion.cutoff = c(0, Inf))
+var_feats_df <- var_feats_df@assays[["RNA"]]@meta.data
+rownames(var_feats_df) <- var_feats_df$var.features
+
+
+var_feats_df$log_variance <- log10(var_feats_df$vf_vst_counts_variance)
+var_feats_df$log_variance.expected <- log10(var_feats_df$vf_vst_counts_variance.expected)
+
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'vf_vst_counts_variance.expected', pct.2_name = 'vf_vst_counts_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'variance_pct.diff'
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'log_variance.expected', pct.2_name = 'log_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'log.variance_pct.diff'
+
+good_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 0 & vf_vst_counts_variance < 5)
+good_nuc <- good_nuc$var.features
+good_nuc <- good_nuc[which(! good_nuc %in% c(mito, ribogenes, ribosomal_mito_genes))]
+
+bad_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 5)
+bad_nuc <- bad_nuc$var.features
+bad_nuc <- bad_nuc[which(! bad_nuc %in% good_nuc)]
+
+s1[['pct.bad_nuc']] <- PercentageFeatureSet(s1, features = bad_nuc)
+good_nuc <- good_nuc[which(! good_nuc %in% bad_nuc)]
+s1[['pct.good_nuc']] <- PercentageFeatureSet(s1, features = good_nuc)
+
+a <- QC_Plot_UMIvsGene(seurat_object = s1, meta_gradient_name = "pct.good_nuc", meta_gradient_low_cutoff = 55, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S1: Percentage of Variable "good" Genes per Nuc')
+
+b <- QC_Plot_UMIvsGene(seurat_object = s1, meta_gradient_name = "pct.bad_nuc", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S1: Percentage of Variable Ambient Genes per Nuc')
+
+p3 <- wrap_plots(a,b,ncol=1)
+
+c <- QC_Plot_UMIvsGene(seurat_object = s1, meta_gradient_name = "percent_top50_genes", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S1: Percentage of Top 50 Genes per Nuc')
+d <- QC_Plot_UMIvsGene(seurat_object = s1, meta_gradient_name = "percent_top100_genes", meta_gradient_low_cutoff = 60,low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S1: Percentage of Top 100 Genes per Nuc')
+p4 <- wrap_plots(c, d, ncol=1)
+
+p5 <- wrap_plots(p3,p4, ncol = 2)
+p5 
+
+
+cells <- WhichCells(s1, expression = pct.bad_nuc < 50 & 
+                      pct.good_nuc > 55 & 
+                      percent_top50_genes < 50 &
+                      percent_top100_genes < 60 )
+s1 <- subset(s1, cells = cells)
+
+
+s1@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S1 QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+s1@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S1 QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+s1 <- subset(s1, subset = pct.mt < 20)
+
+saveRDS(s1, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s1_nemo_gex.atac_postVF.rds')
+
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s2 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_clownfish_gex.atac_common.peaks.rds')
+DefaultAssay(s2) <- 'RNA'
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+rownames(s2@assays$ATAC@data)   = stringr::str_replace(rownames(s2@assays$ATAC@data),   "_", "-")
+rownames(s2@assays$ATAC@counts) = stringr::str_replace(rownames(s2@assays$ATAC@counts), "_", "-")
+rownames(s2@assays$ATAC@meta.features) = stringr::str_replace(rownames(s2@assays$ATAC@meta.features), "_", "-")
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+s2_rna.counts <- s2[['RNA']]$counts
+s2_atac.assay <- s2[['ATAC']]
+meta <- s2@meta.data
+meta$nCount_ATAC <- NULL
+meta$nFeature_ATAC <- NULL
+meta$nCount_RNA <- NULL
+meta$nFeature_RNA <- NULL
+
+s2 <- CreateSeuratObject(counts = s2_rna.counts)
+s2[['ATAC']] <- s2_atac.assay
+DefaultAssay(s2) <- 'RNA'
+Idents(s2) <- 'individual'
+s2 <- AddMetaData(s2, metadata = meta)
+
+mito <- rownames(s2)[grep('^KEG47-', rownames(s2))]
+s2[['pct.mt']] <- PercentageFeatureSet(s2, pattern = '^KEG47-')
+
+ribogenes <- c(rownames(s2)[grep('^rpl', rownames(s2))], rownames(s2)[grep('^rps', rownames(s2))])
+ribogenes <- rownames(s2)[rownames(s2) %in% ribogenes]
+s2[['pct.rb']] <- PercentageFeatureSet(s2, features = ribogenes)
+
+ribosomal_mito_genes <- c(rownames(s2)[grep('^mrpl', rownames(s2))], rownames(s2)[grep('^mrps', rownames(s2))])
+ribosomal_mito_genes <- rownames(s2)[rownames(s2) %in% ribosomal_mito_genes]
+s2[['pct.mt.rb']] <- PercentageFeatureSet(s2, features = ribosomal_mito_genes)
+
+coding <- unique(nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'protein_coding'])
+coding <- coding[which(! coding %in% c(mito, ribosomal_mito_genes, ribogenes))]
+cgenes <- rownames(s2)[rownames(s2) %in% coding]
+s2[['pct.cd']] <- PercentageFeatureSet(s2, features = cgenes)
+
+lncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'lncRNA']
+snRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snRNA']
+snoRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snoRNA']
+ncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'ncRNA']
+nuclear <- unique(c(lncRNA, snRNA, snoRNA, ncRNA))
+nuclear <- rownames(s2)[rownames(s2) %in% nuclear]
+s2[['pct.nuclear']] <- PercentageFeatureSet(s2, features = nuclear)
+
+ambient_markers$Gene <- tolower(ambient_markers$Gene)
+ambient_markers$s2_homolog <- annotations$gene_id[match(ambient_markers$Gene, annotations$human_greatest_homolog, incomparables = T)]
+ambient <- ambient_markers %>% dplyr::filter(PValue < 1e-3)
+known_ambient <- rownames(s2)[which(ambient$s2_homolog %in% rownames(s2))]
+ambient <- unique(c(known_ambient))
+s2[['pct.ambient']] <- PercentageFeatureSet(s2, features = ambient)
+
+s2 <- Add_Cell_Complexity(object = s2, assay = 'RNA', overwrite = T)
+s2$log10PeaksPerUMI <- log10(s2$nFeature_ATAC)/log10(s2$nCount_ATAC)
+s2$genes_per_umi <- s2$nFeature_RNA/s2$nCount_RNA
+s2$peaks_per_umi <- s2$nFeature_ATAC/s2$nCount_ATAC
+
+s.genes <- tolower(cc.genes$s.genes)
+g2m.genes <- tolower(cc.genes$g2m.genes)
+
+s_genes <- nemo_gene.table$gene[which(s.genes %in% nemo_gene.table$gene)]
+nomatch_s.genes <- nemo_gene.table$gene[which(! s.genes %in% nemo_gene.table$gene)]
+g2m_genes <- nemo_gene.table$gene[which(g2m.genes %in% nemo_gene.table$gene)]
+nomatch_g2m.genes <- nemo_gene.table$gene[which(! g2m.genes %in% nemo_gene.table$gene)]
+
+s2[['pct_s.genes']] <- PercentageFeatureSet(s2, features = s_genes)
+s2[['pct_g2m.genes']] <- PercentageFeatureSet(s2, features = g2m_genes)
+
+s2 <- Add_Top_Gene_Pct_Seurat(seurat_object = s2, num_top_genes = 50, assay = 'RNA', meta_col_name = 'percent_top50_genes', overwrite = T)
+s2 <- Add_Top_Gene_Pct_Seurat(seurat_object = s2, num_top_genes = 100, assay = 'RNA', meta_col_name = 'percent_top100_genes', overwrite = T)
+
+s2$nuc_prep_batch <- 'day_1'
+
+same_ids <- unique(s2@meta.data$individual[which(s2@meta.data$individual %in% nemo_id_info$Fish)])
+nemo_id_info <- nemo_id_info %>% dplyr::filter(Fish %in% same_ids)
+
+s2$Tank <- nemo_id_info$Tank[match(s2$individual, nemo_id_info$Fish)]
+s2$Trigger <- nemo_id_info$Trigger[match(s2$individual, nemo_id_info$Fish)]
+s2$Prev_tank <- nemo_id_info$Prev_tank[match(s2$individual, nemo_id_info$Fish)]
+s2$Condition <- nemo_id_info$Condition[match(s2$individual, nemo_id_info$Fish)]
+s2$Status <- nemo_id_info$Status[match(s2$individual, nemo_id_info$Fish)]
+s2$Status_Long <- nemo_id_info$Status_Long[match(s2$individual, nemo_id_info$Fish)]
+s2$Time_Day_2 <- nemo_id_info$Time_Day_2[match(s2$individual, nemo_id_info$Fish)]
+s2$Behaviors_Day_2 <- nemo_id_info$Behaviors_Day_2[match(s2$individual, nemo_id_info$Fish)]
+s2$Change_Length <- nemo_id_info$Change_Length[match(s2$individual, nemo_id_info$Fish)]
+s2$Change_Mass <- nemo_id_info$Change_Mass[match(s2$individual, nemo_id_info$Fish)]
+s2$Log_11KT <- nemo_id_info$Log_11KT[match(s2$individual, nemo_id_info$Fish)]
+s2$Log_E2 <- nemo_id_info$Log_E2[match(s2$individual, nemo_id_info$Fish)]
+s2$Average_Area_2.5x <- nemo_id_info$Average_Area_2.5x[match(s2$individual, nemo_id_info$Fish)]
+s2$Total_Slides_With_Gonad <- nemo_id_info$Total_Slides_With_Gonad[match(s2$individual, nemo_id_info$Fish)]
+s2$Estimated_Volume_2.5x <- nemo_id_info$Estimated_Volume_2.5x[match(s2$individual, nemo_id_info$Fish)]
+s2$Log10_Volume <- nemo_id_info$Log10_Volume[match(s2$individual, nemo_id_info$Fish)]
+s2$Percent_Testicular <- nemo_id_info$Percent_Testicular[match(s2$individual, nemo_id_info$Fish)]
+s2$Testicular_Estimate <- nemo_id_info$Testicular_Estimate[match(s2$individual, nemo_id_info$Fish)]
+s2$Log10_Testicular_Estimate <- nemo_id_info$Log10_Testicular_Estimate[match(s2$individual, nemo_id_info$Fish)]
+
+
+var_feats_df <- FindVariableFeatures(s2, 
+                                     nfeatures = 28004, 
+                                     verbose = T, 
+                                     assay = 'RNA',
+                                     mean.cutoff = c(0, Inf),
+                                     dispersion.cutoff = c(0, Inf))
+var_feats_df <- var_feats_df@assays[["RNA"]]@meta.data
+rownames(var_feats_df) <- var_feats_df$var.features
+
+
+var_feats_df$log_variance <- log10(var_feats_df$vf_vst_counts_variance)
+var_feats_df$log_variance.expected <- log10(var_feats_df$vf_vst_counts_variance.expected)
+
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'vf_vst_counts_variance.expected', pct.2_name = 'vf_vst_counts_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'variance_pct.diff'
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'log_variance.expected', pct.2_name = 'log_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'log.variance_pct.diff'
+
+good_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 0 & vf_vst_counts_variance < 5)
+good_nuc <- good_nuc$var.features
+good_nuc <- good_nuc[which(! good_nuc %in% c(mito, ribogenes, ribosomal_mito_genes))]
+
+bad_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 5)
+bad_nuc <- bad_nuc$var.features
+bad_nuc <- bad_nuc[which(! bad_nuc %in% good_nuc)]
+
+s2[['pct.bad_nuc']] <- PercentageFeatureSet(s2, features = bad_nuc)
+good_nuc <- good_nuc[which(! good_nuc %in% bad_nuc)]
+s2[['pct.good_nuc']] <- PercentageFeatureSet(s2, features = good_nuc)
+
+a <- QC_Plot_UMIvsGene(seurat_object = s2, meta_gradient_name = "pct.good_nuc", meta_gradient_low_cutoff = 55, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S1: Percentage of Variable "good" Genes per Nuc')
+
+b <- QC_Plot_UMIvsGene(seurat_object = s2, meta_gradient_name = "pct.bad_nuc", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S2: Percentage of Variable Ambient Genes per Nuc')
+
+p3 <- wrap_plots(a,b,ncol=1)
+
+c <- QC_Plot_UMIvsGene(seurat_object = s2, meta_gradient_name = "percent_top50_genes", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S2: Percentage of Top 50 Genes per Nuc')
+d <- QC_Plot_UMIvsGene(seurat_object = s2, meta_gradient_name = "percent_top100_genes", meta_gradient_low_cutoff = 60,low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S2: Percentage of Top 100 Genes per Nuc')
+p4 <- wrap_plots(c, d, ncol=1)
+
+p5 <- wrap_plots(p3,p4, ncol = 2)
+p5 
+
+
+cells <- WhichCells(s2, expression = pct.bad_nuc < 50 & 
+                      pct.good_nuc > 55 & 
+                      percent_top50_genes < 50 &
+                      percent_top100_genes < 60 )
+s2 <- subset(s2, cells = cells)
+
+
+s2@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S2 QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+s2@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S2 QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+s2 <- subset(s2, subset = pct.mt < 20)
+
+saveRDS(s2, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s2_nemo_gex.atac_postVF.rds')
+
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s3 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_clownfish_gex.atac_common.peaks.rds')
+DefaultAssay(s3) <- 'RNA'
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+rownames(s3@assays$ATAC@data)   = stringr::str_replace(rownames(s3@assays$ATAC@data),   "_", "-")
+rownames(s3@assays$ATAC@counts) = stringr::str_replace(rownames(s3@assays$ATAC@counts), "_", "-")
+rownames(s3@assays$ATAC@meta.features) = stringr::str_replace(rownames(s3@assays$ATAC@meta.features), "_", "-")
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+s3_rna.counts <- s3[['RNA']]$counts
+s3_atac.assay <- s3[['ATAC']]
+meta <- s3@meta.data
+meta$nCount_ATAC <- NULL
+meta$nFeature_ATAC <- NULL
+meta$nCount_RNA <- NULL
+meta$nFeature_RNA <- NULL
+
+s3 <- CreateSeuratObject(counts = s3_rna.counts)
+s3[['ATAC']] <- s3_atac.assay
+DefaultAssay(s3) <- 'RNA'
+Idents(s3) <- 'individual'
+s3 <- AddMetaData(s3, metadata = meta)
+
+mito <- rownames(s3)[grep('^KEG47-', rownames(s3))]
+s3[['pct.mt']] <- PercentageFeatureSet(s3, pattern = '^KEG47-')
+
+ribogenes <- c(rownames(s3)[grep('^rpl', rownames(s3))], rownames(s3)[grep('^rps', rownames(s3))])
+ribogenes <- rownames(s3)[rownames(s3) %in% ribogenes]
+s3[['pct.rb']] <- PercentageFeatureSet(s3, features = ribogenes)
+
+ribosomal_mito_genes <- c(rownames(s3)[grep('^mrpl', rownames(s3))], rownames(s3)[grep('^mrps', rownames(s3))])
+ribosomal_mito_genes <- rownames(s3)[rownames(s3) %in% ribosomal_mito_genes]
+s3[['pct.mt.rb']] <- PercentageFeatureSet(s3, features = ribosomal_mito_genes)
+
+coding <- unique(nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'protein_coding'])
+coding <- coding[which(! coding %in% c(mito, ribosomal_mito_genes, ribogenes))]
+cgenes <- rownames(s3)[rownames(s3) %in% coding]
+s3[['pct.cd']] <- PercentageFeatureSet(s3, features = cgenes)
+
+lncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'lncRNA']
+snRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snRNA']
+snoRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snoRNA']
+ncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'ncRNA']
+nuclear <- unique(c(lncRNA, snRNA, snoRNA, ncRNA))
+nuclear <- rownames(s3)[rownames(s3) %in% nuclear]
+s3[['pct.nuclear']] <- PercentageFeatureSet(s3, features = nuclear)
+
+ambient_markers$Gene <- tolower(ambient_markers$Gene)
+ambient_markers$s3_homolog <- annotations$gene_id[match(ambient_markers$Gene, annotations$human_greatest_homolog, incomparables = T)]
+ambient <- ambient_markers %>% dplyr::filter(PValue < 1e-3)
+known_ambient <- rownames(s3)[which(ambient$s3_homolog %in% rownames(s3))]
+ambient <- unique(c(known_ambient))
+s3[['pct.ambient']] <- PercentageFeatureSet(s3, features = ambient)
+
+s3 <- Add_Cell_Complexity(object = s3, assay = 'RNA', overwrite = T)
+s3$log10PeaksPerUMI <- log10(s3$nFeature_ATAC)/log10(s3$nCount_ATAC)
+s3$genes_per_umi <- s3$nFeature_RNA/s3$nCount_RNA
+s3$peaks_per_umi <- s3$nFeature_ATAC/s3$nCount_ATAC
+
+s.genes <- tolower(cc.genes$s.genes)
+g2m.genes <- tolower(cc.genes$g2m.genes)
+
+s_genes <- nemo_gene.table$gene[which(s.genes %in% nemo_gene.table$gene)]
+nomatch_s.genes <- nemo_gene.table$gene[which(! s.genes %in% nemo_gene.table$gene)]
+g2m_genes <- nemo_gene.table$gene[which(g2m.genes %in% nemo_gene.table$gene)]
+nomatch_g2m.genes <- nemo_gene.table$gene[which(! g2m.genes %in% nemo_gene.table$gene)]
+
+s3[['pct_s.genes']] <- PercentageFeatureSet(s3, features = s_genes)
+s3[['pct_g2m.genes']] <- PercentageFeatureSet(s3, features = g2m_genes)
+
+s3 <- Add_Top_Gene_Pct_Seurat(seurat_object = s3, num_top_genes = 50, assay = 'RNA', meta_col_name = 'percent_top50_genes', overwrite = T)
+s3 <- Add_Top_Gene_Pct_Seurat(seurat_object = s3, num_top_genes = 100, assay = 'RNA', meta_col_name = 'percent_top100_genes', overwrite = T)
+
+s3$nuc_prep_batch <- 'day_1'
+
+same_ids <- unique(s3@meta.data$individual[which(s3@meta.data$individual %in% nemo_id_info$Fish)])
+nemo_id_info <- nemo_id_info %>% dplyr::filter(Fish %in% same_ids)
+
+s3$Tank <- nemo_id_info$Tank[match(s3$individual, nemo_id_info$Fish)]
+s3$Trigger <- nemo_id_info$Trigger[match(s3$individual, nemo_id_info$Fish)]
+s3$Prev_tank <- nemo_id_info$Prev_tank[match(s3$individual, nemo_id_info$Fish)]
+s3$Condition <- nemo_id_info$Condition[match(s3$individual, nemo_id_info$Fish)]
+s3$Status <- nemo_id_info$Status[match(s3$individual, nemo_id_info$Fish)]
+s3$Status_Long <- nemo_id_info$Status_Long[match(s3$individual, nemo_id_info$Fish)]
+s3$Time_Day_2 <- nemo_id_info$Time_Day_2[match(s3$individual, nemo_id_info$Fish)]
+s3$Behaviors_Day_2 <- nemo_id_info$Behaviors_Day_2[match(s3$individual, nemo_id_info$Fish)]
+s3$Change_Length <- nemo_id_info$Change_Length[match(s3$individual, nemo_id_info$Fish)]
+s3$Change_Mass <- nemo_id_info$Change_Mass[match(s3$individual, nemo_id_info$Fish)]
+s3$Log_11KT <- nemo_id_info$Log_11KT[match(s3$individual, nemo_id_info$Fish)]
+s3$Log_E2 <- nemo_id_info$Log_E2[match(s3$individual, nemo_id_info$Fish)]
+s3$Average_Area_2.5x <- nemo_id_info$Average_Area_2.5x[match(s3$individual, nemo_id_info$Fish)]
+s3$Total_Slides_With_Gonad <- nemo_id_info$Total_Slides_With_Gonad[match(s3$individual, nemo_id_info$Fish)]
+s3$Estimated_Volume_2.5x <- nemo_id_info$Estimated_Volume_2.5x[match(s3$individual, nemo_id_info$Fish)]
+s3$Log10_Volume <- nemo_id_info$Log10_Volume[match(s3$individual, nemo_id_info$Fish)]
+s3$Percent_Testicular <- nemo_id_info$Percent_Testicular[match(s3$individual, nemo_id_info$Fish)]
+s3$Testicular_Estimate <- nemo_id_info$Testicular_Estimate[match(s3$individual, nemo_id_info$Fish)]
+s3$Log10_Testicular_Estimate <- nemo_id_info$Log10_Testicular_Estimate[match(s3$individual, nemo_id_info$Fish)]
+
+
+var_feats_df <- FindVariableFeatures(s3, 
+                                     nfeatures = 28004, 
+                                     verbose = T, 
+                                     assay = 'RNA',
+                                     mean.cutoff = c(0, Inf),
+                                     dispersion.cutoff = c(0, Inf))
+var_feats_df <- var_feats_df@assays[["RNA"]]@meta.data
+rownames(var_feats_df) <- var_feats_df$var.features
+
+
+var_feats_df$log_variance <- log10(var_feats_df$vf_vst_counts_variance)
+var_feats_df$log_variance.expected <- log10(var_feats_df$vf_vst_counts_variance.expected)
+
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'vf_vst_counts_variance.expected', pct.2_name = 'vf_vst_counts_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'variance_pct.diff'
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'log_variance.expected', pct.2_name = 'log_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'log.variance_pct.diff'
+
+good_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 0 & vf_vst_counts_variance < 5)
+good_nuc <- good_nuc$var.features
+good_nuc <- good_nuc[which(! good_nuc %in% c(mito, ribogenes, ribosomal_mito_genes))]
+
+bad_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 5)
+bad_nuc <- bad_nuc$var.features
+bad_nuc <- bad_nuc[which(! bad_nuc %in% good_nuc)]
+
+s3[['pct.bad_nuc']] <- PercentageFeatureSet(s3, features = bad_nuc)
+good_nuc <- good_nuc[which(! good_nuc %in% bad_nuc)]
+s3[['pct.good_nuc']] <- PercentageFeatureSet(s3, features = good_nuc)
+
+a <- QC_Plot_UMIvsGene(seurat_object = s3, meta_gradient_name = "pct.good_nuc", meta_gradient_low_cutoff = 55, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S3: Percentage of Variable "good" Genes per Nuc')
+
+b <- QC_Plot_UMIvsGene(seurat_object = s3, meta_gradient_name = "pct.bad_nuc", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S3: Percentage of Variable Ambient Genes per Nuc')
+
+p3 <- wrap_plots(a,b,ncol=1)
+
+c <- QC_Plot_UMIvsGene(seurat_object = s3, meta_gradient_name = "percent_top50_genes", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S3: Percentage of Top 50 Genes per Nuc')
+d <- QC_Plot_UMIvsGene(seurat_object = s3, meta_gradient_name = "percent_top100_genes", meta_gradient_low_cutoff = 60,low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S3: Percentage of Top 100 Genes per Nuc')
+p4 <- wrap_plots(c, d, ncol=1)
+
+p5 <- wrap_plots(p3,p4, ncol = 2)
+p5 
+
+
+cells <- WhichCells(s3, expression = pct.bad_nuc < 50 & 
+                      pct.good_nuc > 55 & 
+                      percent_top50_genes < 50 &
+                      percent_top100_genes < 60 )
+s3 <- subset(s3, cells = cells)
+
+
+s3@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S3 QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+s3@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S3 QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+s3 <- subset(s3, subset = pct.mt < 20)
+
+saveRDS(s3, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s3_nemo_gex.atac_postVF.rds')
+
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s4 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_clownfish_gex.atac_common.peaks.rds')
+DefaultAssay(s4) <- 'RNA'
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+rownames(s4@assays$ATAC@data)   = stringr::str_replace(rownames(s4@assays$ATAC@data),   "_", "-")
+rownames(s4@assays$ATAC@counts) = stringr::str_replace(rownames(s4@assays$ATAC@counts), "_", "-")
+rownames(s4@assays$ATAC@meta.features) = stringr::str_replace(rownames(s4@assays$ATAC@meta.features), "_", "-")
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+s4_rna.counts <- s4[['RNA']]$counts
+s4_atac.assay <- s4[['ATAC']]
+meta <- s4@meta.data
+meta$nCount_ATAC <- NULL
+meta$nFeature_ATAC <- NULL
+meta$nCount_RNA <- NULL
+meta$nFeature_RNA <- NULL
+
+s4 <- CreateSeuratObject(counts = s4_rna.counts)
+s4[['ATAC']] <- s4_atac.assay
+DefaultAssay(s4) <- 'RNA'
+Idents(s4) <- 'individual'
+s4 <- AddMetaData(s4, metadata = meta)
+
+mito <- rownames(s4)[grep('^KEG47-', rownames(s4))]
+s4[['pct.mt']] <- PercentageFeatureSet(s4, pattern = '^KEG47-')
+
+ribogenes <- c(rownames(s4)[grep('^rpl', rownames(s4))], rownames(s4)[grep('^rps', rownames(s4))])
+ribogenes <- rownames(s4)[rownames(s4) %in% ribogenes]
+s4[['pct.rb']] <- PercentageFeatureSet(s4, features = ribogenes)
+
+ribosomal_mito_genes <- c(rownames(s4)[grep('^mrpl', rownames(s4))], rownames(s4)[grep('^mrps', rownames(s4))])
+ribosomal_mito_genes <- rownames(s4)[rownames(s4) %in% ribosomal_mito_genes]
+s4[['pct.mt.rb']] <- PercentageFeatureSet(s4, features = ribosomal_mito_genes)
+
+coding <- unique(nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'protein_coding'])
+coding <- coding[which(! coding %in% c(mito, ribosomal_mito_genes, ribogenes))]
+cgenes <- rownames(s4)[rownames(s4) %in% coding]
+s4[['pct.cd']] <- PercentageFeatureSet(s4, features = cgenes)
+
+lncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'lncRNA']
+snRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snRNA']
+snoRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snoRNA']
+ncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'ncRNA']
+nuclear <- unique(c(lncRNA, snRNA, snoRNA, ncRNA))
+nuclear <- rownames(s4)[rownames(s4) %in% nuclear]
+s4[['pct.nuclear']] <- PercentageFeatureSet(s4, features = nuclear)
+
+ambient_markers$Gene <- tolower(ambient_markers$Gene)
+ambient_markers$s4_homolog <- annotations$gene_id[match(ambient_markers$Gene, annotations$human_greatest_homolog, incomparables = T)]
+ambient <- ambient_markers %>% dplyr::filter(PValue < 1e-3)
+known_ambient <- rownames(s4)[which(ambient$s4_homolog %in% rownames(s4))]
+ambient <- unique(c(known_ambient))
+s4[['pct.ambient']] <- PercentageFeatureSet(s4, features = ambient)
+
+s4 <- Add_Cell_Complexity(object = s4, assay = 'RNA', overwrite = T)
+s4$log10PeaksPerUMI <- log10(s4$nFeature_ATAC)/log10(s4$nCount_ATAC)
+s4$genes_per_umi <- s4$nFeature_RNA/s4$nCount_RNA
+s4$peaks_per_umi <- s4$nFeature_ATAC/s4$nCount_ATAC
+
+s.genes <- tolower(cc.genes$s.genes)
+g2m.genes <- tolower(cc.genes$g2m.genes)
+
+s_genes <- nemo_gene.table$gene[which(s.genes %in% nemo_gene.table$gene)]
+nomatch_s.genes <- nemo_gene.table$gene[which(! s.genes %in% nemo_gene.table$gene)]
+g2m_genes <- nemo_gene.table$gene[which(g2m.genes %in% nemo_gene.table$gene)]
+nomatch_g2m.genes <- nemo_gene.table$gene[which(! g2m.genes %in% nemo_gene.table$gene)]
+
+s4[['pct_s.genes']] <- PercentageFeatureSet(s4, features = s_genes)
+s4[['pct_g2m.genes']] <- PercentageFeatureSet(s4, features = g2m_genes)
+
+s4 <- Add_Top_Gene_Pct_Seurat(seurat_object = s4, num_top_genes = 50, assay = 'RNA', meta_col_name = 'percent_top50_genes', overwrite = T)
+s4 <- Add_Top_Gene_Pct_Seurat(seurat_object = s4, num_top_genes = 100, assay = 'RNA', meta_col_name = 'percent_top100_genes', overwrite = T)
+
+s4$nuc_prep_batch <- 'day_1'
+
+same_ids <- unique(s4@meta.data$individual[which(s4@meta.data$individual %in% nemo_id_info$Fish)])
+nemo_id_info <- nemo_id_info %>% dplyr::filter(Fish %in% same_ids)
+
+s4$Tank <- nemo_id_info$Tank[match(s4$individual, nemo_id_info$Fish)]
+s4$Trigger <- nemo_id_info$Trigger[match(s4$individual, nemo_id_info$Fish)]
+s4$Prev_tank <- nemo_id_info$Prev_tank[match(s4$individual, nemo_id_info$Fish)]
+s4$Condition <- nemo_id_info$Condition[match(s4$individual, nemo_id_info$Fish)]
+s4$Status <- nemo_id_info$Status[match(s4$individual, nemo_id_info$Fish)]
+s4$Status_Long <- nemo_id_info$Status_Long[match(s4$individual, nemo_id_info$Fish)]
+s4$Time_Day_2 <- nemo_id_info$Time_Day_2[match(s4$individual, nemo_id_info$Fish)]
+s4$Behaviors_Day_2 <- nemo_id_info$Behaviors_Day_2[match(s4$individual, nemo_id_info$Fish)]
+s4$Change_Length <- nemo_id_info$Change_Length[match(s4$individual, nemo_id_info$Fish)]
+s4$Change_Mass <- nemo_id_info$Change_Mass[match(s4$individual, nemo_id_info$Fish)]
+s4$Log_11KT <- nemo_id_info$Log_11KT[match(s4$individual, nemo_id_info$Fish)]
+s4$Log_E2 <- nemo_id_info$Log_E2[match(s4$individual, nemo_id_info$Fish)]
+s4$Average_Area_2.5x <- nemo_id_info$Average_Area_2.5x[match(s4$individual, nemo_id_info$Fish)]
+s4$Total_Slides_With_Gonad <- nemo_id_info$Total_Slides_With_Gonad[match(s4$individual, nemo_id_info$Fish)]
+s4$Estimated_Volume_2.5x <- nemo_id_info$Estimated_Volume_2.5x[match(s4$individual, nemo_id_info$Fish)]
+s4$Log10_Volume <- nemo_id_info$Log10_Volume[match(s4$individual, nemo_id_info$Fish)]
+s4$Percent_Testicular <- nemo_id_info$Percent_Testicular[match(s4$individual, nemo_id_info$Fish)]
+s4$Testicular_Estimate <- nemo_id_info$Testicular_Estimate[match(s4$individual, nemo_id_info$Fish)]
+s4$Log10_Testicular_Estimate <- nemo_id_info$Log10_Testicular_Estimate[match(s4$individual, nemo_id_info$Fish)]
+
+
+var_feats_df <- FindVariableFeatures(s4, 
+                                     nfeatures = 28004, 
+                                     verbose = T, 
+                                     assay = 'RNA',
+                                     mean.cutoff = c(0, Inf),
+                                     dispersion.cutoff = c(0, Inf))
+var_feats_df <- var_feats_df@assays[["RNA"]]@meta.data
+rownames(var_feats_df) <- var_feats_df$var.features
+
+
+var_feats_df$log_variance <- log10(var_feats_df$vf_vst_counts_variance)
+var_feats_df$log_variance.expected <- log10(var_feats_df$vf_vst_counts_variance.expected)
+
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'vf_vst_counts_variance.expected', pct.2_name = 'vf_vst_counts_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'variance_pct.diff'
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'log_variance.expected', pct.2_name = 'log_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'log.variance_pct.diff'
+
+good_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 0 & vf_vst_counts_variance < 5)
+good_nuc <- good_nuc$var.features
+good_nuc <- good_nuc[which(! good_nuc %in% c(mito, ribogenes, ribosomal_mito_genes))]
+
+bad_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 5)
+bad_nuc <- bad_nuc$var.features
+bad_nuc <- bad_nuc[which(! bad_nuc %in% good_nuc)]
+
+s4[['pct.bad_nuc']] <- PercentageFeatureSet(s4, features = bad_nuc)
+good_nuc <- good_nuc[which(! good_nuc %in% bad_nuc)]
+s4[['pct.good_nuc']] <- PercentageFeatureSet(s4, features = good_nuc)
+
+a <- QC_Plot_UMIvsGene(seurat_object = s4, meta_gradient_name = "pct.good_nuc", meta_gradient_low_cutoff = 55, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S4: Percentage of Variable "good" Genes per Nuc')
+
+b <- QC_Plot_UMIvsGene(seurat_object = s4, meta_gradient_name = "pct.bad_nuc", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S4: Percentage of Variable Ambient Genes per Nuc')
+
+p3 <- wrap_plots(a,b,ncol=1)
+
+c <- QC_Plot_UMIvsGene(seurat_object = s4, meta_gradient_name = "percent_top50_genes", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S4: Percentage of Top 50 Genes per Nuc')
+d <- QC_Plot_UMIvsGene(seurat_object = s4, meta_gradient_name = "percent_top100_genes", meta_gradient_low_cutoff = 60,low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S4: Percentage of Top 100 Genes per Nuc')
+p4 <- wrap_plots(c, d, ncol=1)
+
+p5 <- wrap_plots(p3,p4, ncol = 2)
+p5 
+
+
+cells <- WhichCells(s4, expression = pct.bad_nuc < 50 & 
+                      pct.good_nuc > 55 & 
+                      percent_top50_genes < 50 &
+                      percent_top100_genes < 60 )
+s4 <- subset(s4, cells = cells)
+
+
+s4@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S4 QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+s4@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S4 QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+s4 <- subset(s4, subset = pct.mt < 20)
+
+saveRDS(s4, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s4_nemo_gex.atac_postVF.rds')
+
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s5 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s5_clownfish_gex.atac_common.peaks.rds')
+DefaultAssay(s5) <- 'RNA'
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+rownames(s5@assays$ATAC@data)   = stringr::str_replace(rownames(s5@assays$ATAC@data),   "_", "-")
+rownames(s5@assays$ATAC@counts) = stringr::str_replace(rownames(s5@assays$ATAC@counts), "_", "-")
+rownames(s5@assays$ATAC@meta.features) = stringr::str_replace(rownames(s5@assays$ATAC@meta.features), "_", "-")
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+s5_rna.counts <- s5[['RNA']]$counts
+s5_atac.assay <- s5[['ATAC']]
+meta <- s5@meta.data
+meta$nCount_ATAC <- NULL
+meta$nFeature_ATAC <- NULL
+meta$nCount_RNA <- NULL
+meta$nFeature_RNA <- NULL
+
+s5 <- CreateSeuratObject(counts = s5_rna.counts)
+s5[['ATAC']] <- s5_atac.assay
+DefaultAssay(s5) <- 'RNA'
+Idents(s5) <- 'individual'
+s5 <- AddMetaData(s5, metadata = meta)
+
+mito <- rownames(s5)[grep('^KEG47-', rownames(s5))]
+s5[['pct.mt']] <- PercentageFeatureSet(s5, pattern = '^KEG47-')
+
+ribogenes <- c(rownames(s5)[grep('^rpl', rownames(s5))], rownames(s5)[grep('^rps', rownames(s5))])
+ribogenes <- rownames(s5)[rownames(s5) %in% ribogenes]
+s5[['pct.rb']] <- PercentageFeatureSet(s5, features = ribogenes)
+
+ribosomal_mito_genes <- c(rownames(s5)[grep('^mrpl', rownames(s5))], rownames(s5)[grep('^mrps', rownames(s5))])
+ribosomal_mito_genes <- rownames(s5)[rownames(s5) %in% ribosomal_mito_genes]
+s5[['pct.mt.rb']] <- PercentageFeatureSet(s5, features = ribosomal_mito_genes)
+
+coding <- unique(nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'protein_coding'])
+coding <- coding[which(! coding %in% c(mito, ribosomal_mito_genes, ribogenes))]
+cgenes <- rownames(s5)[rownames(s5) %in% coding]
+s5[['pct.cd']] <- PercentageFeatureSet(s5, features = cgenes)
+
+lncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'lncRNA']
+snRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snRNA']
+snoRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snoRNA']
+ncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'ncRNA']
+nuclear <- unique(c(lncRNA, snRNA, snoRNA, ncRNA))
+nuclear <- rownames(s5)[rownames(s5) %in% nuclear]
+s5[['pct.nuclear']] <- PercentageFeatureSet(s5, features = nuclear)
+
+ambient_markers$Gene <- tolower(ambient_markers$Gene)
+ambient_markers$s5_homolog <- annotations$gene_id[match(ambient_markers$Gene, annotations$human_greatest_homolog, incomparables = T)]
+ambient <- ambient_markers %>% dplyr::filter(PValue < 1e-3)
+known_ambient <- rownames(s5)[which(ambient$s5_homolog %in% rownames(s5))]
+ambient <- unique(c(known_ambient))
+s5[['pct.ambient']] <- PercentageFeatureSet(s5, features = ambient)
+
+s5 <- Add_Cell_Complexity(object = s5, assay = 'RNA', overwrite = T)
+s5$log10PeaksPerUMI <- log10(s5$nFeature_ATAC)/log10(s5$nCount_ATAC)
+s5$genes_per_umi <- s5$nFeature_RNA/s5$nCount_RNA
+s5$peaks_per_umi <- s5$nFeature_ATAC/s5$nCount_ATAC
+
+s.genes <- tolower(cc.genes$s.genes)
+g2m.genes <- tolower(cc.genes$g2m.genes)
+
+s_genes <- nemo_gene.table$gene[which(s.genes %in% nemo_gene.table$gene)]
+nomatch_s.genes <- nemo_gene.table$gene[which(! s.genes %in% nemo_gene.table$gene)]
+g2m_genes <- nemo_gene.table$gene[which(g2m.genes %in% nemo_gene.table$gene)]
+nomatch_g2m.genes <- nemo_gene.table$gene[which(! g2m.genes %in% nemo_gene.table$gene)]
+
+s5[['pct_s.genes']] <- PercentageFeatureSet(s5, features = s_genes)
+s5[['pct_g2m.genes']] <- PercentageFeatureSet(s5, features = g2m_genes)
+
+s5 <- Add_Top_Gene_Pct_Seurat(seurat_object = s5, num_top_genes = 50, assay = 'RNA', meta_col_name = 'percent_top50_genes', overwrite = T)
+s5 <- Add_Top_Gene_Pct_Seurat(seurat_object = s5, num_top_genes = 100, assay = 'RNA', meta_col_name = 'percent_top100_genes', overwrite = T)
+
+s5$nuc_prep_batch <- 'day_2'
+
+same_ids <- unique(s5@meta.data$individual[which(s5@meta.data$individual %in% nemo_id_info$Fish)])
+nemo_id_info <- nemo_id_info %>% dplyr::filter(Fish %in% same_ids)
+
+s5$Tank <- nemo_id_info$Tank[match(s5$individual, nemo_id_info$Fish)]
+s5$Trigger <- nemo_id_info$Trigger[match(s5$individual, nemo_id_info$Fish)]
+s5$Prev_tank <- nemo_id_info$Prev_tank[match(s5$individual, nemo_id_info$Fish)]
+s5$Condition <- nemo_id_info$Condition[match(s5$individual, nemo_id_info$Fish)]
+s5$Status <- nemo_id_info$Status[match(s5$individual, nemo_id_info$Fish)]
+s5$Status_Long <- nemo_id_info$Status_Long[match(s5$individual, nemo_id_info$Fish)]
+s5$Time_Day_2 <- nemo_id_info$Time_Day_2[match(s5$individual, nemo_id_info$Fish)]
+s5$Behaviors_Day_2 <- nemo_id_info$Behaviors_Day_2[match(s5$individual, nemo_id_info$Fish)]
+s5$Change_Length <- nemo_id_info$Change_Length[match(s5$individual, nemo_id_info$Fish)]
+s5$Change_Mass <- nemo_id_info$Change_Mass[match(s5$individual, nemo_id_info$Fish)]
+s5$Log_11KT <- nemo_id_info$Log_11KT[match(s5$individual, nemo_id_info$Fish)]
+s5$Log_E2 <- nemo_id_info$Log_E2[match(s5$individual, nemo_id_info$Fish)]
+s5$Average_Area_2.5x <- nemo_id_info$Average_Area_2.5x[match(s5$individual, nemo_id_info$Fish)]
+s5$Total_Slides_With_Gonad <- nemo_id_info$Total_Slides_With_Gonad[match(s5$individual, nemo_id_info$Fish)]
+s5$Estimated_Volume_2.5x <- nemo_id_info$Estimated_Volume_2.5x[match(s5$individual, nemo_id_info$Fish)]
+s5$Log10_Volume <- nemo_id_info$Log10_Volume[match(s5$individual, nemo_id_info$Fish)]
+s5$Percent_Testicular <- nemo_id_info$Percent_Testicular[match(s5$individual, nemo_id_info$Fish)]
+s5$Testicular_Estimate <- nemo_id_info$Testicular_Estimate[match(s5$individual, nemo_id_info$Fish)]
+s5$Log10_Testicular_Estimate <- nemo_id_info$Log10_Testicular_Estimate[match(s5$individual, nemo_id_info$Fish)]
+
+
+var_feats_df <- FindVariableFeatures(s5, 
+                                     nfeatures = 28004, 
+                                     verbose = T, 
+                                     assay = 'RNA',
+                                     mean.cutoff = c(0, Inf),
+                                     dispersion.cutoff = c(0, Inf))
+var_feats_df <- var_feats_df@assays[["RNA"]]@meta.data
+rownames(var_feats_df) <- var_feats_df$var.features
+
+
+var_feats_df$log_variance <- log10(var_feats_df$vf_vst_counts_variance)
+var_feats_df$log_variance.expected <- log10(var_feats_df$vf_vst_counts_variance.expected)
+
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'vf_vst_counts_variance.expected', pct.2_name = 'vf_vst_counts_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'variance_pct.diff'
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'log_variance.expected', pct.2_name = 'log_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'log.variance_pct.diff'
+
+good_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 0 & vf_vst_counts_variance < 5)
+good_nuc <- good_nuc$var.features
+good_nuc <- good_nuc[which(! good_nuc %in% c(mito, ribogenes, ribosomal_mito_genes))]
+
+bad_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 5)
+bad_nuc <- bad_nuc$var.features
+bad_nuc <- bad_nuc[which(! bad_nuc %in% good_nuc)]
+
+s5[['pct.bad_nuc']] <- PercentageFeatureSet(s5, features = bad_nuc)
+good_nuc <- good_nuc[which(! good_nuc %in% bad_nuc)]
+s5[['pct.good_nuc']] <- PercentageFeatureSet(s5, features = good_nuc)
+
+a <- QC_Plot_UMIvsGene(seurat_object = s5, meta_gradient_name = "pct.good_nuc", meta_gradient_low_cutoff = 55, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S5: Percentage of Variable "good" Genes per Nuc')
+
+b <- QC_Plot_UMIvsGene(seurat_object = s5, meta_gradient_name = "pct.bad_nuc", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S5: Percentage of Variable Ambient Genes per Nuc')
+
+p3 <- wrap_plots(a,b,ncol=1)
+
+c <- QC_Plot_UMIvsGene(seurat_object = s5, meta_gradient_name = "percent_top50_genes", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S5: Percentage of Top 50 Genes per Nuc')
+d <- QC_Plot_UMIvsGene(seurat_object = s5, meta_gradient_name = "percent_top100_genes", meta_gradient_low_cutoff = 60,low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S5: Percentage of Top 100 Genes per Nuc')
+p4 <- wrap_plots(c, d, ncol=1)
+
+p5 <- wrap_plots(p3,p4, ncol = 2)
+p5 
+
+
+cells <- WhichCells(s5, expression = pct.bad_nuc < 50 & 
+                      pct.good_nuc > 55 & 
+                      percent_top50_genes < 50 &
+                      percent_top100_genes < 60 )
+s5 <- subset(s5, cells = cells)
+
+
+s5@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S5 QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+s5@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S5 QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+s5 <- subset(s5, subset = pct.mt < 20)
+
+saveRDS(s5, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s5_nemo_gex.atac_postVF.rds')
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s6 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_clownfish_gex.atac_common.peaks.rds')
+DefaultAssay(s6) <- 'RNA'
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+rownames(s6@assays$ATAC@data)   = stringr::str_replace(rownames(s6@assays$ATAC@data),   "_", "-")
+rownames(s6@assays$ATAC@counts) = stringr::str_replace(rownames(s6@assays$ATAC@counts), "_", "-")
+rownames(s6@assays$ATAC@meta.features) = stringr::str_replace(rownames(s6@assays$ATAC@meta.features), "_", "-")
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+s6_rna.counts <- s6[['RNA']]$counts
+s6_atac.assay <- s6[['ATAC']]
+meta <- s6@meta.data
+meta$nCount_ATAC <- NULL
+meta$nFeature_ATAC <- NULL
+meta$nCount_RNA <- NULL
+meta$nFeature_RNA <- NULL
+
+s6 <- CreateSeuratObject(counts = s6_rna.counts)
+s6[['ATAC']] <- s6_atac.assay
+DefaultAssay(s6) <- 'RNA'
+Idents(s6) <- 'individual'
+s6 <- AddMetaData(s6, metadata = meta)
+
+mito <- rownames(s6)[grep('^KEG47-', rownames(s6))]
+s6[['pct.mt']] <- PercentageFeatureSet(s6, pattern = '^KEG47-')
+
+ribogenes <- c(rownames(s6)[grep('^rpl', rownames(s6))], rownames(s6)[grep('^rps', rownames(s6))])
+ribogenes <- rownames(s6)[rownames(s6) %in% ribogenes]
+s6[['pct.rb']] <- PercentageFeatureSet(s6, features = ribogenes)
+
+ribosomal_mito_genes <- c(rownames(s6)[grep('^mrpl', rownames(s6))], rownames(s6)[grep('^mrps', rownames(s6))])
+ribosomal_mito_genes <- rownames(s6)[rownames(s6) %in% ribosomal_mito_genes]
+s6[['pct.mt.rb']] <- PercentageFeatureSet(s6, features = ribosomal_mito_genes)
+
+coding <- unique(nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'protein_coding'])
+coding <- coding[which(! coding %in% c(mito, ribosomal_mito_genes, ribogenes))]
+cgenes <- rownames(s6)[rownames(s6) %in% coding]
+s6[['pct.cd']] <- PercentageFeatureSet(s6, features = cgenes)
+
+lncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'lncRNA']
+snRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snRNA']
+snoRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'snoRNA']
+ncRNA <- nemo_gene.table$gene_id[nemo_gene.table$gene_biotype == 'ncRNA']
+nuclear <- unique(c(lncRNA, snRNA, snoRNA, ncRNA))
+nuclear <- rownames(s6)[rownames(s6) %in% nuclear]
+s6[['pct.nuclear']] <- PercentageFeatureSet(s6, features = nuclear)
+
+ambient_markers$Gene <- tolower(ambient_markers$Gene)
+ambient_markers$s6_homolog <- annotations$gene_id[match(ambient_markers$Gene, annotations$human_greatest_homolog, incomparables = T)]
+ambient <- ambient_markers %>% dplyr::filter(PValue < 1e-3)
+known_ambient <- rownames(s6)[which(ambient$s6_homolog %in% rownames(s6))]
+ambient <- unique(c(known_ambient))
+s6[['pct.ambient']] <- PercentageFeatureSet(s6, features = ambient)
+
+s6 <- Add_Cell_Complexity(object = s6, assay = 'RNA', overwrite = T)
+s6$log10PeaksPerUMI <- log10(s6$nFeature_ATAC)/log10(s6$nCount_ATAC)
+s6$genes_per_umi <- s6$nFeature_RNA/s6$nCount_RNA
+s6$peaks_per_umi <- s6$nFeature_ATAC/s6$nCount_ATAC
+
+s.genes <- tolower(cc.genes$s.genes)
+g2m.genes <- tolower(cc.genes$g2m.genes)
+
+s_genes <- nemo_gene.table$gene[which(s.genes %in% nemo_gene.table$gene)]
+nomatch_s.genes <- nemo_gene.table$gene[which(! s.genes %in% nemo_gene.table$gene)]
+g2m_genes <- nemo_gene.table$gene[which(g2m.genes %in% nemo_gene.table$gene)]
+nomatch_g2m.genes <- nemo_gene.table$gene[which(! g2m.genes %in% nemo_gene.table$gene)]
+
+s6[['pct_s.genes']] <- PercentageFeatureSet(s6, features = s_genes)
+s6[['pct_g2m.genes']] <- PercentageFeatureSet(s6, features = g2m_genes)
+
+s6 <- Add_Top_Gene_Pct_Seurat(seurat_object = s6, num_top_genes = 50, assay = 'RNA', meta_col_name = 'percent_top50_genes', overwrite = T)
+s6 <- Add_Top_Gene_Pct_Seurat(seurat_object = s6, num_top_genes = 100, assay = 'RNA', meta_col_name = 'percent_top100_genes', overwrite = T)
+
+s6$nuc_prep_batch <- 'day_2'
+
+same_ids <- unique(s6@meta.data$individual[which(s6@meta.data$individual %in% nemo_id_info$Fish)])
+nemo_id_info <- nemo_id_info %>% dplyr::filter(Fish %in% same_ids)
+
+s6$Tank <- nemo_id_info$Tank[match(s6$individual, nemo_id_info$Fish)]
+s6$Trigger <- nemo_id_info$Trigger[match(s6$individual, nemo_id_info$Fish)]
+s6$Prev_tank <- nemo_id_info$Prev_tank[match(s6$individual, nemo_id_info$Fish)]
+s6$Condition <- nemo_id_info$Condition[match(s6$individual, nemo_id_info$Fish)]
+s6$Status <- nemo_id_info$Status[match(s6$individual, nemo_id_info$Fish)]
+s6$Status_Long <- nemo_id_info$Status_Long[match(s6$individual, nemo_id_info$Fish)]
+s6$Time_Day_2 <- nemo_id_info$Time_Day_2[match(s6$individual, nemo_id_info$Fish)]
+s6$Behaviors_Day_2 <- nemo_id_info$Behaviors_Day_2[match(s6$individual, nemo_id_info$Fish)]
+s6$Change_Length <- nemo_id_info$Change_Length[match(s6$individual, nemo_id_info$Fish)]
+s6$Change_Mass <- nemo_id_info$Change_Mass[match(s6$individual, nemo_id_info$Fish)]
+s6$Log_11KT <- nemo_id_info$Log_11KT[match(s6$individual, nemo_id_info$Fish)]
+s6$Log_E2 <- nemo_id_info$Log_E2[match(s6$individual, nemo_id_info$Fish)]
+s6$Average_Area_2.5x <- nemo_id_info$Average_Area_2.5x[match(s6$individual, nemo_id_info$Fish)]
+s6$Total_Slides_With_Gonad <- nemo_id_info$Total_Slides_With_Gonad[match(s6$individual, nemo_id_info$Fish)]
+s6$Estimated_Volume_2.5x <- nemo_id_info$Estimated_Volume_2.5x[match(s6$individual, nemo_id_info$Fish)]
+s6$Log10_Volume <- nemo_id_info$Log10_Volume[match(s6$individual, nemo_id_info$Fish)]
+s6$Percent_Testicular <- nemo_id_info$Percent_Testicular[match(s6$individual, nemo_id_info$Fish)]
+s6$Testicular_Estimate <- nemo_id_info$Testicular_Estimate[match(s6$individual, nemo_id_info$Fish)]
+s6$Log10_Testicular_Estimate <- nemo_id_info$Log10_Testicular_Estimate[match(s6$individual, nemo_id_info$Fish)]
+
+
+var_feats_df <- FindVariableFeatures(s6, 
+                                     nfeatures = 28004, 
+                                     verbose = T, 
+                                     assay = 'RNA',
+                                     mean.cutoff = c(0, Inf),
+                                     dispersion.cutoff = c(0, Inf))
+var_feats_df <- var_feats_df@assays[["RNA"]]@meta.data
+rownames(var_feats_df) <- var_feats_df$var.features
+
+
+var_feats_df$log_variance <- log10(var_feats_df$vf_vst_counts_variance)
+var_feats_df$log_variance.expected <- log10(var_feats_df$vf_vst_counts_variance.expected)
+
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'vf_vst_counts_variance.expected', pct.2_name = 'vf_vst_counts_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'variance_pct.diff'
+var_feats_df <- Add_Pct_Diff(var_feats_df, pct.1_name = 'log_variance.expected', pct.2_name = 'log_variance', overwrite = T)
+colnames(var_feats_df)[colnames(var_feats_df) == 'pct_diff'] = 'log.variance_pct.diff'
+
+good_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 0 & vf_vst_counts_variance < 5)
+good_nuc <- good_nuc$var.features
+good_nuc <- good_nuc[which(! good_nuc %in% c(mito, ribogenes, ribosomal_mito_genes))]
+
+bad_nuc <- var_feats_df %>% dplyr::filter(vf_vst_counts_variance > 5)
+bad_nuc <- bad_nuc$var.features
+bad_nuc <- bad_nuc[which(! bad_nuc %in% good_nuc)]
+
+s6[['pct.bad_nuc']] <- PercentageFeatureSet(s6, features = bad_nuc)
+good_nuc <- good_nuc[which(! good_nuc %in% bad_nuc)]
+s6[['pct.good_nuc']] <- PercentageFeatureSet(s6, features = good_nuc)
+
+a <- QC_Plot_UMIvsGene(seurat_object = s6, meta_gradient_name = "pct.good_nuc", meta_gradient_low_cutoff = 55, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S6: Percentage of Variable "good" Genes per Nuc')
+
+b <- QC_Plot_UMIvsGene(seurat_object = s6, meta_gradient_name = "pct.bad_nuc", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S6: Percentage of Variable Ambient Genes per Nuc')
+
+p3 <- wrap_plots(a,b,ncol=1)
+
+c <- QC_Plot_UMIvsGene(seurat_object = s6, meta_gradient_name = "percent_top50_genes", meta_gradient_low_cutoff = 50, low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S6: Percentage of Top 50 Genes per Nuc')
+d <- QC_Plot_UMIvsGene(seurat_object = s6, meta_gradient_name = "percent_top100_genes", meta_gradient_low_cutoff = 60,low_cutoff_gene = 200, low_cutoff_UMI = 200) +
+  scale_x_log10() + 
+  scale_y_log10() + labs(title = 'S6: Percentage of Top 100 Genes per Nuc')
+p4 <- wrap_plots(c, d, ncol=1)
+
+p5 <- wrap_plots(p3,p4, ncol = 2)
+p5 
+
+
+cells <- WhichCells(s6, expression = pct.bad_nuc < 50 & 
+                      pct.good_nuc > 55 & 
+                      percent_top50_genes < 50 &
+                      percent_top100_genes < 60 )
+s6 <- subset(s6, cells = cells)
+
+
+s6@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S6 QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+s6@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("S6 QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+s6 <- subset(s6, subset = pct.mt < 20)
+
+saveRDS(s6, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s6_nemo_gex.atac_postVF.rds')
+
+```
+
+
+```{r}
+nemo <- merge(x=s1, y=c(s2,s3,s4,s5,s6), merge.data = TRUE)
+nemo[['RNA']] <- JoinLayers(nemo[['RNA']])
+
+DefaultAssay(nemo) <- 'RNA'
+Idents(nemo) <- 'orig.ident'
+
+dim(nemo)
+table(nemo$orig.ident)
+table(nemo$individual)
+
+perPool_colorPallet <- paletteer_d("ggthemes::excel_Parallax")
+
+perIndividual_colorPallet <- c('blue', '#1170AA', '#1BA3C6FF', '#2CB5C0FF', '#30BCADFF', '#21B087FF', '#5FBB68', '#57A337FF', '#A2B627FF', '#F4DE3A', '#F8B620FF', '#F89217FF', '#E76618', 'red2', '#C8133B', '#F64971FF', '#FC719EFF', '#EB73B3FF', '#CE69BEFF', "#8A5082", '#A26DC2FF', '#7873C0FF', "#6F5F90")
+
+# saveRDS(nemo, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/nemo_merged.pools_gex.atac_preQC_NEW.rds')
+
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+nemo_qc.metrics <- as_tibble(
+  nemo[[]],
+  rownames="Cell.Barcode"
+)
+
+nemo_qc.metrics %>%
+  ggplot(aes(pct.mt)) + 
+  geom_histogram(binwidth = 0.5, fill="darkorange", colour="black") +
+  ggtitle("Distribution of Percentage Mitochondrion") +
+  geom_vline(xintercept = 20, color = 'red3')
+nemo_qc.metrics %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("QC metrics: Clownfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+nemo_qc.metrics %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("QC metrics: Clownfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+nemo_qc.metrics %>%
+  arrange(pct.mt.rb) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt.rb)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("QC metrics: Clownfish POA % ribosomal genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+nemo_qc.metrics %>%
+  arrange(pct.nuclear) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.nuclear)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("QC metrics: Clownfish POA % nuclear genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+
+a <- VlnPlot(nemo, 
+             features = c('pct.mt'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = F, 
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 20, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('pct.cd'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = F,  
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 65, color = 'red')
+c <- VlnPlot(nemo, 
+             features = c('pct.rb'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = F,  
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 4, color = 'red')
+d <- VlnPlot(nemo, 
+             features = c('pct.mt.rb'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = F,  
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 0.5, color = 'red')
+p2 <- wrap_plots(a,b,c,d, ncol =2)
+p2
+
+nemo <- subset(nemo, subset = pct.mt < 20 &
+                 pct.cd > 75 &
+                 pct.rb < 5 &
+                 pct.mt.rb < 0.6)
+
+a <- VlnPlot(nemo, 
+             features = c('nCount_RNA'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = T, 
+             pt.size = 0.1,
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 25000, color = 'red') +
+  geom_hline(yintercept = 200, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('nFeature_RNA'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = T, 
+             pt.size = 0.1, 
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 9000, color = 'red') +
+  geom_hline(yintercept = 200, color = 'red')
+c <- VlnPlot(nemo, 
+             features = c('nCount_ATAC'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = T, 
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 25000, color = 'red')
+d <- VlnPlot(nemo, 
+             features = c('nFeature_ATAC'), 
+             group.by = "orig.ident", 
+             ncol = 1,
+             log = T, 
+             cols = paletteer_d("ggthemes::excel_Parallax"),
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 16000, color = 'red') 
+p1 <- wrap_plots(a,b,c,d, ncol =2)
+p1
+
+nemo <- subset(nemo, subset = nCount_RNA < 25000 &
+                 nCount_RNA > 200 &
+                 nFeature_RNA < 9000 &
+                 nFeature_RNA > 200 &
+                 nCount_ATAC < 25000 &
+                 nFeature_ATAC < 16000)
+table(nemo$individual)
+
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+nemo@meta.data %>%
+  arrange(pct.mt) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.mt)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("Lognormalized QC metrics: testfish POA % MT genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+nemo@meta.data %>%
+  arrange(pct.cd) %>%
+  ggplot(aes(nCount_RNA,nFeature_RNA,colour=pct.cd)) + 
+  geom_point(size=0.7) + 
+  scale_color_gradientn(colors=wes_palette("Zissou1", 100, type = "continuous")) +
+  ggtitle("Lognormalized QC metrics: testfish POA % coding genes highlighted") +
+  geom_hline(yintercept = 300) +
+  geom_hline(yintercept = 30000) +
+  geom_vline(xintercept = 300) +
+  geom_vline(xintercept = 30000) +
+  stat_smooth(method="lm", color = 'blue3') +
+  scale_x_log10() + scale_y_log10()
+
+
+a <- VlnPlot(nemo, 
+             features = c('pct.mt'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F, 
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 20, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('pct.cd'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F,  
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 65, color = 'red')
+c <- VlnPlot(nemo, 
+             features = c('pct.rb'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F,  
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 4, color = 'red')
+d <- VlnPlot(nemo, 
+             features = c('pct.mt.rb'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F,  
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 0.5, color = 'red')
+p4 <- wrap_plots(a,b,c,d, ncol =2)
+p4
+
+
+nemo <- subset(nemo, subset = pct.mt < 15 &
+                 pct.cd > 85 &
+                 pct.rb < 3 &
+                 pct.mt.rb < 0.4)
+table(nemo$individual)
+
+
+a <- VlnPlot(nemo, 
+             features = c('nCount_RNA'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = T, 
+             pt.size = 0.1,
+             cols = perIndividual_colorPallet,
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 25000, color = 'red') +
+  geom_hline(yintercept = 200, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('nFeature_RNA'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = T, 
+             pt.size = 0.1, 
+             cols = perIndividual_colorPallet,
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 8500, color = 'red') +
+  geom_hline(yintercept = 200, color = 'red')
+c <- VlnPlot(nemo, 
+             features = c('nCount_ATAC'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = T, 
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 25000, color = 'red')
+d <- VlnPlot(nemo, 
+             features = c('nFeature_ATAC'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = T, 
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.05) + NoLegend() + 
+  geom_hline(yintercept = 16000, color = 'red') 
+p5 <- wrap_plots(a,b,c,d, ncol =2)
+p5
+
+a <- VlnPlot(nemo, 
+             features = c('pct.mt'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F, 
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 20, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('pct.cd'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F,  
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 65, color = 'red')
+c <- VlnPlot(nemo, 
+             features = c('pct.rb'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F,  
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 4, color = 'red')
+d <- VlnPlot(nemo, 
+             features = c('pct.mt.rb'), 
+             group.by = "individual", 
+             ncol = 1,
+             log = F,  
+             cols = perIndividual_colorPallet,
+             pt.size = 0.1, 
+             alpha = 0.1) + NoLegend() + 
+  geom_hline(yintercept = 0.5, color = 'red')
+p6 <- wrap_plots(a,b,c,d, ncol =2)
+p6
+
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+VlnPlot(nemo, 
+        features = c('pct.mt'), 
+        group.by = "orig.ident", 
+        ncol = 1,log = F, 
+        pt.size = 0.1, alpha = 0.1) + NoLegend() + geom_hline(yintercept = 12, color = 'red')
+nemo <- subset(nemo, subset = pct.mt < 12)
+VlnPlot(nemo, 
+        features = c('pct.mt', 'pct.cd'), 
+        group.by = "orig.ident", 
+        ncol = 2,log = F, 
+        pt.size = 0.1, alpha = 0.1) + NoLegend()
+table(nemo$individual)
+
+
+
+density_nCountATAC_tss <- DensityScatter(nemo, x = 'nCount_ATAC', y = 'TSS.enrichment', log_x = TRUE, quantiles = c(1,5,95,99)) + 
+  scale_color_viridis(option = "B", 
+                      breaks = c(0.05, 0.15, 0.3, 0.5, 0.7, 1.0), 
+                      labels = c(0.05, 0.15, 0.3, 0.5, 0.7, 1.0))
+density_nCountATAC_tss <- density_nCountATAC_tss + labs(title = 'Quantiles: Density of Cells by TSS Enrichment')
+density_nCountATAC_tss
+
+a <- VlnPlot(nemo, 
+             features = c('TSS.enrichment'), 
+             group.by = "orig.ident", 
+             ncol = 1,log = F, 
+             pt.size = 0.1, alpha = 0.1) + NoLegend() + geom_hline(yintercept = 0.8, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('nucleosome_signal'), 
+             group.by = "orig.ident", 
+             ncol = 1,log = F, 
+             pt.size = 0.1, alpha = 0.1) + NoLegend() + geom_hline(yintercept = 2, color = 'red')
+wrap_plots(a,b)
+
+nemo <- subset(nemo, subset = TSS.enrichment > 0.8 &
+                 TSS.enrichment < 2 &
+                 nucleosome_signal < 2)
+a <- VlnPlot(nemo, 
+             features = c('TSS.enrichment'), 
+             group.by = "orig.ident", 
+             ncol = 1,log = F, 
+             pt.size = 0.1, alpha = 0.1) + NoLegend() + geom_hline(yintercept = 1, color = 'red')
+b <- VlnPlot(nemo, 
+             features = c('nucleosome_signal'), 
+             group.by = "orig.ident", 
+             ncol = 1,log = F, 
+             pt.size = 0.1, alpha = 0.1) + NoLegend() + geom_hline(yintercept = 2, color = 'red')
+wrap_plots(a,b)
+
+dim(nemo)
+table(nemo$individual)
+
+
+tmp_nemo <- nemo
+
+gc()
+gc()
+
+tmp_nemo <- NormalizeData(tmp_nemo, assay = 'RNA')
+tmp_nemo <- FindVariableFeatures(tmp_nemo, nfeatures = 4000)
+tmp_nemo <- ScaleData(tmp_nemo, vars.to.regress = 'nuc_prep_batch')
+
+gc()
+gc()
+
+tmp_nemo <- RunPCA(tmp_nemo, 
+                   npcs = 50, 
+                   features = rownames(tmp_nemo[['RNA']]))
+nemo <- CellCycleScoring(tmp_nemo, s.features = s_genes, g2m.features = g2m_genes)
+
+saveRDS(nemo, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/nemo_postQC_testing_10.18.24_v2.rds')
+
+```
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+gc()
+gc()
+
+nemo.tmp = nemo
+
+table(nemo$individual)
+clown_median_stats <- Median_Stats(seurat_object = nemo, group_by_var = "individual", median_var = c('pct.mt', 'pct.cd', 'nCount_RNA', 'nFeature_RNA', 'nCount_ATAC', 'nFeature_ATAC'))
+clown_median_stats
+nemo$median_UMI_count <- clown_median_stats$Median_nCount_RNA[match(nemo$individual, clown_median_stats$individual)]
+nemo$median_gene_count <- clown_median_stats$Median_nFeature_RNA[match(nemo$individual, clown_median_stats$individual)]
+nemo$median_peak_count <- clown_median_stats$Median_nCount_ATAC[match(nemo$individual, clown_median_stats$individual)]
+nemo$median_fragment_count <- clown_median_stats$Median_nFeature_ATAC[match(nemo$individual, clown_median_stats$individual)]
+nemo$median_pct.mt <- clown_median_stats$Median_pct.mt[match(nemo$individual, clown_median_stats$individual)]
+
+nemo[["RNA"]] <- split(nemo[["RNA"]], f = nemo$orig.ident)
+
+Idents(nemo) <- 'orig.ident'
+
+gc()
+gc()
+
+DefaultAssay(nemo) <- 'RNA'
+nemo <- NormalizeData(nemo)
+nemo <- FindVariableFeatures(nemo, nfeatures = 4000)
+
+gc()
+gc()
+
+nemo <- ScaleData(nemo, 
+                       vars.to.regress = 'nuc_prep_batch',
+                       scale.max = 50,
+                       assay = 'RNA')
+
+nemo <- RunPCA(nemo, dim = 50, verbose = TRUE, assay = 'RNA', features = rownames(nemo[['RNA']]), reduction.name = 'rnaPCA', reduction.key = 'rnaPCA_')
+
+
+ElbowPlot(nemo, ndims = ncol(Embeddings(nemo, "rnaPCA")), reduction = 'rnaPCA')
+DepthCor(nemo, reduction = 'rnaPCA', assay = 'RNA', n=50)
+
+p1 <- DimPlot(object = nemo, reduction = "rnaPCA", pt.size = .1, group.by = "orig.ident", shuffle = T)
+p2 <- VlnPlot(object = nemo, features = "rnaPCA_1", group.by = "orig.ident", pt.size = .1)
+p1 + p2
+
+gc()
+gc()
+
+# integration with Harmony
+nemo <- IntegrateLayers(
+  object = nemo, method = HarmonyIntegration,
+  orig.reduction = "rnaPCA", new.reduction = "harmony.rna",
+  verbose = TRUE, assay = 'RNA'
+)
+
+
+harmony.rna <- DimPlot(object = nemo, reduction = "harmony.rna", pt.size = .1, group.by = "orig.ident", shuffle = T)
+harmony.rna
+
+gc()
+gc()
+
+# integration with reciprocal PCA
+nemo <- IntegrateLayers(
+  object = nemo, method = RPCAIntegration,
+  orig.reduction = "rnaPCA", new.reduction = "rpca.rna",
+  verbose = TRUE
+)
+
+
+rpca.rna <- DimPlot(object = nemo, reduction = "rpca.rna", pt.size = .1, group.by = "orig.ident", shuffle = T)
+rpca.rna 
+
+gc()
+gc()
+
+# integration with CCA
+nemo <- IntegrateLayers(
+  object = nemo, method = CCAIntegration,
+  normalization.method = "LogNormalize",
+  orig.reduction = "rnaPCA", new.reduction = "cca.rna",
+  verbose = TRUE
+)
+
+
+cca.rna <- DimPlot(object = nemo, reduction = "cca.rna", pt.size = .1, group.by = "orig.ident", shuffle = T)
+cca.rna
+
+gc()
+gc()
+
+rna_integration <- wrap_plots(harmony.rna, rpca.rna, cca.rna, ncol = 3)
+rna_integration
+
+nemo <- JoinLayers(nemo)
+
+saveRDS(nemo, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/clown.tmp_integration_testing_10.18.24.rds')
+
+```
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.height = 9, fig.width = 13}
+
+s1.atac <- s1
+DefaultAssay(s1.atac) <- 'ATAC'
+s1.atac[['RNA']] <- NULL
+
+# compute LSI
+DefaultAssay(s1.atac) <- "ATAC"
+s1.atac <- FindTopFeatures(s1.atac, min.cutoff = 10)
+s1.atac <- RunTFIDF(s1.atac)
+s1.atac <- RunSVD(s1.atac, 
+                  n= 50,
+                  features = VariableFeatures(s1.atac))
+
+gc()
+gc()
+
+s2.atac <- s2
+DefaultAssay(s2.atac) <- 'ATAC'
+s2.atac[['RNA']] <- NULL
+
+# compute LSI
+DefaultAssay(s2.atac) <- "ATAC"
+s2.atac <- FindTopFeatures(s2.atac, min.cutoff = 10)
+s2.atac <- RunTFIDF(s2.atac)
+s2.atac <- RunSVD(s2.atac, 
+                  n= 50,
+                  features = VariableFeatures(s2.atac))
+
+gc()
+gc()
+
+s3.atac <- s3
+DefaultAssay(s3.atac) <- 'ATAC'
+s3.atac[['RNA']] <- NULL
+
+# compute LSI
+DefaultAssay(s3.atac) <- "ATAC"
+s3.atac <- FindTopFeatures(s3.atac, min.cutoff = 10)
+s3.atac <- RunTFIDF(s3.atac)
+s3.atac <- RunSVD(s3.atac, 
+                  n= 50,
+                  features = VariableFeatures(s3.atac))
+
+gc()
+gc()
+
+s4.atac <- s4
+DefaultAssay(s4.atac) <- 'ATAC'
+s4.atac[['RNA']] <- NULL
+
+# compute LSI
+DefaultAssay(s4.atac) <- "ATAC"
+s4.atac <- FindTopFeatures(s4.atac, min.cutoff = 10)
+s4.atac <- RunTFIDF(s4.atac)
+s4.atac <- RunSVD(s4.atac, 
+                  n= 50,
+                  features = VariableFeatures(s4.atac))
+
+gc()
+gc()
+
+s5.atac <- s5
+DefaultAssay(s5.atac) <- 'ATAC'
+s5.atac[['RNA']] <- NULL
+
+# compute LSI
+DefaultAssay(s5.atac) <- "ATAC"
+s5.atac <- FindTopFeatures(s5.atac, min.cutoff = 10)
+s5.atac <- RunTFIDF(s5.atac)
+s5.atac <- RunSVD(s5.atac, 
+                  n= 50,
+                  features = VariableFeatures(s5.atac))
+
+gc()
+gc()
+
+s6.atac <- s6
+DefaultAssay(s6.atac) <- 'ATAC'
+s6.atac[['RNA']] <- NULL
+
+# compute LSI
+DefaultAssay(s6.atac) <- "ATAC"
+s6.atac <- FindTopFeatures(s6.atac, min.cutoff = 10)
+s6.atac <- RunTFIDF(s6.atac)
+s6.atac <- RunSVD(s6.atac, 
+                  n= 50,
+                  features = VariableFeatures(s6.atac))
+
+gc()
+gc()
+
+# merge
+nemo.atac <- merge(x=s1.atac, y=c(s2.atac, s3.atac, s4.atac. s5.atac, s6.atac))
+
+
+```
+

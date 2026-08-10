@@ -1,0 +1,223 @@
+---
+title: 'Using EmptyDropsMultiome called barcodes in souporcell, then cross-referencing with demuxlet sample calls'
+author: Jenny Drnevich and Jessica Holmes, HPCBio, Roy J. Carver Biotechnology Center, University of Illinois,
+  Urbana-Champaign
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    self_contained: yes
+  word_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
+
+```
+
+## Load packages
+
+```{r libs, message = FALSE, warning = FALSE}
+if (!require("dplyr")) {
+    install.packages("dplyr")
+    library(dplyr)
+}
+```
+
+
+## Read in demuxlet and souporcell for pool 1
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+s1.d <- read.csv("demuxlet/Pool_1/s1_gex.best", sep ="\t", header = T)
+s1.s <- read.csv("EmptyDropsMultiome/s1/clusters.tsv", sep ="\t", header = T)
+
+# First lowercase the demuxlet columns
+colnames(s1.d) <- tolower(colnames(s1.d))
+
+# Add prefixes for each column, except for barcode
+colnames(s1.d)[-2] <- paste("dm",colnames(s1.d)[-2], sep = "_")
+colnames(s1.s)[-1] <- paste("sc",colnames(s1.s)[-1], sep = "_")
+
+# Join by barcodes
+s1.m <- left_join(s1.d, s1.s)
+
+# check overlaps of singlet/doublet calls
+
+table(s1.m$dm_droplet.type)
+table(s1.m$sc_status)
+
+table(s1.m$dm_droplet.type, s1.m$sc_status)
+
+```
+
+
+## Cut down to only souporcell singlets
+
+We are going to use souporcell's singlet calls only, so remove all other cell barcodes
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+s1.m <- s1.m[s1.m$sc_status == "singlet",]
+
+temp1 <- table(s1.m$dm_sng.best.guess, s1.m$sc_assignment)
+temp1
+
+
+```
+
+
+Extremely good overlap between souporcell's assignment to clusters 0-3 and demuxlet's sample assignment! Use this information to assign sample IDs to each barcode (note: souporcell's cluster assignment overrides demuxlet's )
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+temp2 <- as.data.frame(temp1)
+temp2 <- slice_max(temp2, order_by =  Freq, n = 4, with_ties = FALSE) %>% arrange(Var2)
+temp <- s1.m[,c("barcode", "sc_assignment")]
+names(temp)[2] <- "Sample"
+temp$Sample <- factor(temp$Sample)
+levels(temp$Sample) <- as.character(temp2$Var1)
+
+write.csv(temp, "EmptyDropsMultiome/s1_barcodes_sampleIDs.csv")
+
+table(temp$Sample)
+
+```
+
+## Repeat for pools 2, 3, 5 & 6
+
+Pool 4 is the one where one of the 4 individuals did not get DNA sequenced, so demuxlet did not have it's variants to be able to assign cells to it. The other pools can follow the same codes as pool 1
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+for (i in c(2,3,5,6)){
+  dm <- read.csv(paste0("demuxlet/Pool_", i,"/s",i, "_gex.best"), sep ="\t", header = T)
+  sc <- read.csv(paste("EmptyDropsMultiome/s", i,"/clusters.tsv", sep = ""), sep ="\t", header = T)
+  colnames(dm) <- tolower(colnames(dm))
+  colnames(dm)[-2] <- paste("dm",colnames(dm)[-2], sep = "_")
+  colnames(sc)[-1] <- paste("sc",colnames(sc)[-1], sep = "_")
+  dm.sc <- left_join(dm, sc)
+
+  sx.m <- dm.sc[dm.sc$sc_status == "singlet",]
+  temp1 <- table(sx.m$dm_sng.best.guess, sx.m$sc_assignment)
+  print(paste("pool", i))
+  print(temp1)
+  temp2 <- as.data.frame(temp1)
+  temp2 <- slice_max(temp2, order_by =  Freq, n = 4, with_ties = FALSE) %>% arrange(Var2)
+  temp <- sx.m[,c("barcode", "sc_assignment")]
+  names(temp)[2] <- "Sample"
+  temp$Sample <- factor(temp$Sample)
+  levels(temp$Sample) <- as.character(temp2$Var1)
+  write.csv(temp, paste0("EmptyDropsMultiome/s",i,"_barcodes_sampleIDs.csv"))
+  
+  print(paste("pool", i))
+  print(table(temp$Sample))
+  }
+
+```
+
+## Modify for pool 4
+
+Pool 4 contains B21F, T13D, T5D and GH. GH was the one that did not get it's DNA sequenced. Demuxlet had a much harder time with the pool and called a much higher percentage of doublets than the other pools. 
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+s4.d <- read.csv("demuxlet/Pool_4/s4_gex.best", sep ="\t", header = T)
+s4.s <- read.csv("EmptyDropsMultiome/s4/clusters.tsv", sep ="\t", header = T)
+
+# First lowercase the demuxlet columns
+colnames(s4.d) <- tolower(colnames(s4.d))
+
+# Add prefixes for each column, except for barcode
+colnames(s4.d)[-2] <- paste("dm",colnames(s4.d)[-2], sep = "_")
+colnames(s4.s)[-1] <- paste("sc",colnames(s4.s)[-1], sep = "_")
+
+s4.m <- left_join(s4.d, s4.s)
+
+# check overlaps
+
+table(s4.m$dm_droplet.type)
+table(s4.m$sc_status)
+
+table(s4.m$dm_droplet.type, s4.m$sc_status)
+
+
+table(s4.m$dm_droplet.type, s4.m$dm_sng.best.guess)
+
+# All have many doublets that are likely the 4th sample
+
+# Cut down to only souporcell singlets
+s4.m <- s4.m[s4.m$sc_status == "singlet",]
+
+temp1 <- table(s4.m$dm_sng.best.guess, s4.m$sc_assignment)
+temp1
+
+
+```
+
+
+Looks like souporcell's cluster 3 is the missing GH sample. What does this look like if we only use demuxlet's singlet calls as well?
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+s4.m2 <- s4.m[s4.m$dm_droplet.type == "SNG",]
+table(s4.m2$dm_sng.best.guess, s4.m2$sc_assignment)
+
+```
+
+
+I feel very comfortable calling cluster 3 as the GH sample. 
+
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+
+temp2 <- as.data.frame(temp1)
+temp2 <- slice_max(temp2, order_by =  Freq, n = 4, with_ties = FALSE) %>% arrange(Var2)
+temp2
+
+temp2$Var1 <- as.character(temp2$Var1)
+temp2$Var1[4] <- "GH"
+
+temp <- s4.m[,c("barcode", "sc_assignment")]
+names(temp)[2] <- "Sample"
+temp$Sample <- factor(temp$Sample)
+levels(temp$Sample) <- as.character(temp2$Var1)
+
+write.csv(temp, "EmptyDropsMultiome/s4_barcodes_sampleIDs.csv")
+
+table(temp$Sample)
+
+```
+
+## Final tallies
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+i <- 1
+allcells <- read.csv(paste0("EmptyDropsMultiome/s",i,"_barcodes_sampleIDs.csv"))
+allcells$pool <- i
+
+for(i in 2:6){
+  temp <- read.csv(paste0("EmptyDropsMultiome/s",i,"_barcodes_sampleIDs.csv"))
+  temp$pool <- i
+  allcells <- rbind(allcells, temp)
+}
+
+# Total number of cells
+nrow(allcells)
+
+# Number of cells per pool
+
+table(allcells$pool)
+
+# Number of cells per sample
+
+table(allcells$Sample)
+
+```
+

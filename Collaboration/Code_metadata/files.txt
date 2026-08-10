@@ -1,0 +1,5 @@
+JTS08_Female1	JTS08_Female1	/home/groups/hpcbio/RNA-Seq/projects/rhodes/2025Nov-scRNASeq/data/raw-seq/Unaligned_Rhodes/JTS08
+JTS08_Female2	JTS08_Female2	/home/groups/hpcbio/RNA-Seq/projects/rhodes/2025Nov-scRNASeq/data/raw-seq/Unaligned_Rhodes/JTS08
+JTS08_Male1	JTS08_Male1	/home/groups/hpcbio/RNA-Seq/projects/rhodes/2025Nov-scRNASeq/data/raw-seq/Unaligned_Rhodes/JTS08
+JTS08_male2	JTS08_male2	/home/groups/hpcbio/RNA-Seq/projects/rhodes/2025Nov-scRNASeq/data/raw-seq/Unaligned_Rhodes/JTS08
+

@@ -1,0 +1,1034 @@
+---
+title: "Calling Peaks with MACS3 and Creating a Common Peak Set - Clownfish Multiome"
+author: "Kathryn N. Leatherbury"
+date: "last updated: 09-30-2024"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+subtitle: "Adaptive quality control and data pre-processing"
+---
+
+```{r setup, include=FALSE}
+# Required R package installation:
+# These will install packages if they are not already installed
+# Set the correct default repository
+r = getOption("repos")
+r["CRAN"] = "http://cran.rstudio.com"
+options(repos = r)
+if (!require("Seurat")) {
+    install.packages("Seurat")
+    library(Seurat)
+}
+if (!require("tidyverse")) {
+    install.packages("tidyverse")
+    library(tidyverse)
+}
+if (!require("plotly")) {
+    install.packages("plotly")
+    library(plotly)
+}
+if (!require("patchwork")) {
+  install.packages("patchwork")
+  library(patchwork)
+}
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)
+}
+if (!require("knitr")) {
+  install.packages("knitr")
+  library(knitr)
+}
+if (!require("tibble")) {
+    install.packages("tibble")
+    library(tibble)
+}
+if (!require("dplyr")) {
+    install.packages("dplyr")
+    library(dplyr)
+}
+if (!require("tidyr")) {
+  install.packages("tidyr")
+  library(tidyr)
+}
+if (!require("ggridges")) {
+    install.packages("ggridges")
+    library(ggridges)
+}
+if (!require('gprofiler2')) {
+    install.packages("gprofiler2")
+    library(gprofiler2)
+}
+if (!require('rrvgo')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("rrvgo")
+    library(rrvgo)
+ }
+if (!require('viridis')) {
+    install.packages("viridis")
+    library(viridis)
+}
+if (!require('scran')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("scran")
+    library(scran)
+ }
+if (!require('stringr')) {
+    install.packages("stringr")
+    library(stringr)
+}
+if (!require('sctransform')) {
+    install.packages("sctransform")
+    library(sctransform)
+}
+if (!require('glmGamPoi')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("glmGamPoi")
+    library(glmGamPoi)
+ }
+if (!require('GenomicFeatures')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("GenomicFeatures")
+    library(GenomicFeatures)
+ }
+if (!require('GenomicRanges')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("GenomicRanges")
+    library(GenomicRanges)
+ }
+if (!require('rtracklayer')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("rtracklayer")
+    library(rtracklayer)
+ }
+if (!require('HDF5Array')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("HDF5Array")
+    library(HDF5Array)
+ }
+if (!require('Signac')) {
+    install.packages("Signac")
+    library(Signac)
+}
+if (!require('multtest')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("multtest")
+    library(multtest)
+}
+if (!require('mutoss')) {
+  install.packages("mutoss")
+  library(mutoss)
+}
+if (!require('metap')) {
+  install.packages("metap")
+  library(metap)
+}
+if (!require('MuData')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("MuData")
+    library(MuData)
+ }
+if (!require('qlcMatrix')) {
+  install.packages("qlcMatrix")
+  library(qlcMatrix)
+}
+if (!require('ggExtra')) {
+  install.packages("ggExtra")
+  library(ggExtra)
+}
+if (!require('biomartr')) {
+    install.packages("biomartr")
+    library(biomartr)
+}
+if (!require('Biostrings')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("Biostrings")
+    library(Biostrings)
+ }
+if (!require("igraph")) {
+    install.packages("igraph")
+    library(igraph)
+}
+if (!require("MAST")) {
+    if (!requireNamespace("BiocManager", quietly=TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("MAST")
+    library(MAST)
+}
+if (!require('BiocNeighbors')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("BiocNeighbors")
+   library(BiocNeighbors)
+}
+if (!require("circlize")) {
+    install.packages("circlize")
+    library(circlize)
+}
+if (!require("ggrepel")) {
+    install.packages("ggrepel")
+    library(ggrepel)
+}
+if (!require("mosaic")) {
+    install.packages("mosaic")
+    library(mosaic)
+}
+if (!require("plotly")) {
+    install.packages("plotly")
+    library(plotly)
+}
+if (!require("SeuratWrappers")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github('satijalab/seurat-wrappers')
+    library(SeuratWrappers)
+}
+if (!require("speckle")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github("Oshlack/speckle")
+    library(speckle)
+}
+if (!require("wesanderson")) {
+    install.packages("wesanderson")
+    library(wesanderson)
+}
+if (!require("kableExtra")) {
+    install.packages("kableExtra")
+    library(kableExtra)
+}
+if (!require("RColorBrewer")) {
+    install.packages("RColorBrewer")
+    library(RColorBrewer)
+}
+if (!require("scCustomize")) {
+    install.packages("scCustomize")
+    library(scCustomize)
+}
+if (!require("presto")) {
+    if (!require(remotes)) {
+    install.packages("remotes")}
+    remotes::install_github("immunogenomics/presto")
+    library(presto)
+}
+if (!require('DropletUtils')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletUtils")
+   library(DropletUtils)
+}
+if (!require('DropletTestFiles')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletTestFiles")
+   library(DropletTestFiles)
+}
+if (!require("scclusteval")) {
+     if (!require(devtools)) {
+         install.packages("devtools")}
+    devtools::install_github("crazyhottommy/scclusteval")
+    library(scclusteval)
+}
+if (!require("DropletUtils")) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+   BiocManager::install("DropletUtils")
+   library(DropletUtils)
+}
+if (!require("EmptyDropsMultiome")) {
+     if (!require(devtools)) {
+         install.packages("devtools")}
+    devtools::install_github("MarioniLab/emptyDrops_multiome", ref="main")
+    library(EmptyDropsMultiome)
+}
+if (!require('hdf5r')) {
+    if (!require("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+    BiocManager::install("hdf5r")
+    library(hdf5r)
+}
+if (!require("future")) {
+    install.packages("future")
+    library(future)
+}
+if (!require("parallel")) {
+    install.packages("parallel")
+    library(parallel)
+}
+if (!require("parallelly")) {
+    install.packages("parallelly")
+    library(parallelly)
+}
+
+knitr::opts_chunk$set(root.dir = "/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/", echo = TRUE)
+```
+
+```{r}
+
+annotations <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/clownfish_genome_files/clownfish_genome_annotations.rds')
+clown_gene.table <- as.data.frame(annotations)
+
+clown_fasta <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/clownfish_genome_files/clownfish_fasta.rds')
+
+```
+
+### Calling peaks with `MACS3`
+
+For the ATAC-seq assay, there is the peak calling step to look for genomic regions with significantly more accumulative reads covered than the surrounding background regions. This step is a part of the `Cell Ranger ARC` pipeline, and it usually returns tens of thousands of peaks for one sample. After that, it counts the number of reads or fragments overlapping with each of those regions to generate an ATAC fragment count matrix. After running Cell Ranger ARC, one would therefore obtain two different count matrices with the same number of columns (cells) but different numbers of rows (genes or peaks).
+
+Since we are using the raw feature-by-barcode data, i.e., not filtered and and no peaks called, We will need to do the peak calling step. We use `MACS3: Model-based Analysis of ChIP-Seq`, the commonly used peak calling algorithm that originally designed for ChIP-seq data, to de novo call peaks. By default, it pools all the fragments of all cells to do it; but it also has the option to call peaks given a grouping column in the metadata, so that it calls peaks for each group separately first and then combine the called peaks of different groups to get the unified peak list.
+
+**MACS3 Download instructions:**
+
+<https://macs3-project.github.io/MACS/docs/INSTALL.html>
+
+Download macs3 with pip in the command line/terminal and add path into shell rc file (.bashrc or .zshrc)
+
+-   NOTE: macs2 can be difficult to install so make sure you have all the requirements installed beforehand
+
+```{r}
+
+macs3PATH = '/Users/kathrynleatherbury/MACS3/bin/macs3'
+
+gc()
+gc()
+
+s1 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s1_clownfish_gex.atac_raw.rds')
+
+DefaultAssay(s1) <- 'ATAC'
+s1_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s1/atac_fragments.tsv.gz'
+s1@assays[["ATAC"]]@fragments[[1]]@path <- s1_frag.path
+
+DefaultAssay(s1) <- 'ATAC'
+Idents(s1) <- 'orig.ident'
+dim(s1) 
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+rownames(s1@assays$ATAC@data)   = stringr::str_replace(rownames(s1@assays$ATAC@data),   "-", "_")
+rownames(s1@assays$ATAC@counts) = stringr::str_replace(rownames(s1@assays$ATAC@counts), "-", "_")
+rownames(s1@assays$ATAC@meta.features) = stringr::str_replace(rownames(s1@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+s1.peaks <- CallPeaks(s1, macs2.path = macs3PATH, assay = 'ATAC', effective.genome.size = 0.86e9, combine.peaks	= T, group.by = 'individual')
+s1.peaks.fm <- FeatureMatrix(fragments = Fragments(s1), features = s1.peaks, cells = colnames(s1))
+s1[["peaks"]] <- CreateChromatinAssay(counts = s1.peaks.fm, fragments = Fragments(s1), annotation = annotations)
+DefaultAssay(s1) <- 'peaks'
+s1[['ATAC']] <- NULL
+s1[["ATAC"]] <- CreateChromatinAssay(counts = s1.peaks.fm, fragments = Fragments(s1), annotation = annotations)
+DefaultAssay(s1) <- 'ATAC'
+s1[['peaks']] <- NULL
+dim(s1[['ATAC']])
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+rownames(s1@assays$ATAC@data)   = stringr::str_replace(rownames(s1@assays$ATAC@data),   "-", "_")
+rownames(s1@assays$ATAC@counts) = stringr::str_replace(rownames(s1@assays$ATAC@counts), "-", "_")
+rownames(s1@assays$ATAC@meta.features) = stringr::str_replace(rownames(s1@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+saveRDS(s1, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_clown_peaks_assay.rds')
+```
+
+```{r}
+s2 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s2_clownfish_gex.atac_raw.rds')
+
+DefaultAssay(s2) <- 'ATAC'
+s2_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s2/atac_fragments.tsv.gz'
+s2@assays[["ATAC"]]@fragments[[1]]@path <- s2_frag.path
+
+DefaultAssay(s2) <- 'ATAC'
+Idents(s2) <- 'orig.ident'
+dim(s2) 
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+rownames(s2@assays$ATAC@data)   = stringr::str_replace(rownames(s2@assays$ATAC@data),   "-", "_")
+rownames(s2@assays$ATAC@counts) = stringr::str_replace(rownames(s2@assays$ATAC@counts), "-", "_")
+rownames(s2@assays$ATAC@meta.features) = stringr::str_replace(rownames(s2@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+s2.peaks <- CallPeaks(s2, macs2.path = macs3PATH, assay = 'ATAC', effective.genome.size = 0.86e9, combine.peaks	= T, group.by = 'individual')
+s2.peaks.fm <- FeatureMatrix(fragments = Fragments(s2), features = s2.peaks, cells = colnames(s2))
+s2[["peaks"]] <- CreateChromatinAssay(counts = s2.peaks.fm, fragments = Fragments(s2), annotation = annotations)
+DefaultAssay(s2) <- 'peaks'
+s2[['ATAC']] <- NULL
+s2[["ATAC"]] <- CreateChromatinAssay(counts = s2.peaks.fm, fragments = Fragments(s2), annotation = annotations)
+DefaultAssay(s2) <- 'ATAC'
+s2[['peaks']] <- NULL
+dim(s2[['ATAC']])
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+rownames(s2@assays$ATAC@data)   = stringr::str_replace(rownames(s2@assays$ATAC@data),   "-", "_")
+rownames(s2@assays$ATAC@counts) = stringr::str_replace(rownames(s2@assays$ATAC@counts), "-", "_")
+rownames(s2@assays$ATAC@meta.features) = stringr::str_replace(rownames(s2@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+saveRDS(s2, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_clown_peaks_assay.rds')
+
+gc()
+gc()
+```
+
+```{r}
+s3 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s3_clownfish_gex.atac_raw.rds')
+
+DefaultAssay(s3) <- 'ATAC'
+s3_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s3/atac_fragments.tsv.gz'
+s3@assays[["ATAC"]]@fragments[[1]]@path <- s3_frag.path
+
+DefaultAssay(s3) <- 'ATAC'
+Idents(s3) <- 'orig.ident'
+dim(s3) 
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+rownames(s3@assays$ATAC@data)   = stringr::str_replace(rownames(s3@assays$ATAC@data),   "-", "_")
+rownames(s3@assays$ATAC@counts) = stringr::str_replace(rownames(s3@assays$ATAC@counts), "-", "_")
+rownames(s3@assays$ATAC@meta.features) = stringr::str_replace(rownames(s3@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+s3.peaks <- CallPeaks(s3, macs2.path = macs3PATH, assay = 'ATAC', effective.genome.size = 0.86e9, combine.peaks	= T, group.by = 'individual')
+s3.peaks.fm <- FeatureMatrix(fragments = Fragments(s3), features = s3.peaks, cells = colnames(s3))
+s3[["peaks"]] <- CreateChromatinAssay(counts = s3.peaks.fm, fragments = Fragments(s3), annotation = annotations)
+DefaultAssay(s3) <- 'peaks'
+s3[['ATAC']] <- NULL
+s3[["ATAC"]] <- CreateChromatinAssay(counts = s3.peaks.fm, fragments = Fragments(s3), annotation = annotations)
+DefaultAssay(s3) <- 'ATAC'
+s3[['peaks']] <- NULL
+dim(s3[['ATAC']])
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+rownames(s3@assays$ATAC@data)   = stringr::str_replace(rownames(s3@assays$ATAC@data),   "-", "_")
+rownames(s3@assays$ATAC@counts) = stringr::str_replace(rownames(s3@assays$ATAC@counts), "-", "_")
+rownames(s3@assays$ATAC@meta.features) = stringr::str_replace(rownames(s3@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+saveRDS(s3, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_clown_peaks_assay.rds')
+
+gc()
+gc()
+
+```
+
+```{r}
+s4 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s4_clownfish_gex.atac_raw.rds')
+
+DefaultAssay(s4) <- 'ATAC'
+s4_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s4/atac_fragments.tsv.gz'
+s4@assays[["ATAC"]]@fragments[[1]]@path <- s4_frag.path
+
+DefaultAssay(s4) <- 'ATAC'
+Idents(s4) <- 'orig.ident'
+dim(s4) 
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+rownames(s4@assays$ATAC@data)   = stringr::str_replace(rownames(s4@assays$ATAC@data),   "-", "_")
+rownames(s4@assays$ATAC@counts) = stringr::str_replace(rownames(s4@assays$ATAC@counts), "-", "_")
+rownames(s4@assays$ATAC@meta.features) = stringr::str_replace(rownames(s4@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+s4.peaks <- CallPeaks(s4, macs2.path = macs3PATH, assay = 'ATAC', effective.genome.size = 0.86e9, combine.peaks	= T, group.by = 'individual')
+s4.peaks.fm <- FeatureMatrix(fragments = Fragments(s4), features = s4.peaks, cells = colnames(s4))
+s4[["peaks"]] <- CreateChromatinAssay(counts = s4.peaks.fm, fragments = Fragments(s4), annotation = annotations)
+DefaultAssay(s4) <- 'peaks'
+s4[['ATAC']] <- NULL
+s4[["ATAC"]] <- CreateChromatinAssay(counts = s4.peaks.fm, fragments = Fragments(s4), annotation = annotations)
+DefaultAssay(s4) <- 'ATAC'
+s4[['peaks']] <- NULL
+dim(s4[['ATAC']])
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+rownames(s4@assays$ATAC@data)   = stringr::str_replace(rownames(s4@assays$ATAC@data),   "-", "_")
+rownames(s4@assays$ATAC@counts) = stringr::str_replace(rownames(s4@assays$ATAC@counts), "-", "_")
+rownames(s4@assays$ATAC@meta.features) = stringr::str_replace(rownames(s4@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+saveRDS(s4, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_clown_peaks_assay.rds')
+
+gc()
+gc()
+```
+
+```{r}
+s5 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s5_clownfish_gex.atac_raw.rds')
+
+DefaultAssay(s5) <- 'ATAC'
+s5_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s5/atac_fragments.tsv.gz'
+s5@assays[["ATAC"]]@fragments[[1]]@path <- s5_frag.path
+
+DefaultAssay(s5) <- 'ATAC'
+Idents(s5) <- 'orig.ident'
+dim(s5) 
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+rownames(s5@assays$ATAC@data)   = stringr::str_replace(rownames(s5@assays$ATAC@data),   "-", "_")
+rownames(s5@assays$ATAC@counts) = stringr::str_replace(rownames(s5@assays$ATAC@counts), "-", "_")
+rownames(s5@assays$ATAC@meta.features) = stringr::str_replace(rownames(s5@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+s5.peaks <- CallPeaks(s5, macs2.path = macs3PATH, assay = 'ATAC', effective.genome.size = 0.86e9, combine.peaks	= T, group.by = 'individual')
+s5.peaks.fm <- FeatureMatrix(fragments = Fragments(s5), features = s5.peaks, cells = colnames(s5))
+s5[["peaks"]] <- CreateChromatinAssay(counts = s5.peaks.fm, fragments = Fragments(s5), annotation = annotations)
+DefaultAssay(s5) <- 'peaks'
+s5[['ATAC']] <- NULL
+s5[["ATAC"]] <- CreateChromatinAssay(counts = s5.peaks.fm, fragments = Fragments(s5), annotation = annotations)
+DefaultAssay(s5) <- 'ATAC'
+s5[['peaks']] <- NULL
+dim(s5[['ATAC']])
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+rownames(s5@assays$ATAC@data)   = stringr::str_replace(rownames(s5@assays$ATAC@data),   "-", "_")
+rownames(s5@assays$ATAC@counts) = stringr::str_replace(rownames(s5@assays$ATAC@counts), "-", "_")
+rownames(s5@assays$ATAC@meta.features) = stringr::str_replace(rownames(s5@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+saveRDS(s5, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s5_clown_peaks_assay.rds')
+
+gc()
+gc()
+
+```
+
+```{r}
+s6 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s6_clownfish_gex.atac_raw.rds')
+
+DefaultAssay(s6) <- 'ATAC'
+s6_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s6/atac_fragments.tsv.gz'
+s6@assays[["ATAC"]]@fragments[[1]]@path <- s6_frag.path
+
+DefaultAssay(s6) <- 'ATAC'
+Idents(s6) <- 'orig.ident'
+dim(s6) 
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+rownames(s6@assays$ATAC@data)   = stringr::str_replace(rownames(s6@assays$ATAC@data),   "-", "_")
+rownames(s6@assays$ATAC@counts) = stringr::str_replace(rownames(s6@assays$ATAC@counts), "-", "_")
+rownames(s6@assays$ATAC@meta.features) = stringr::str_replace(rownames(s6@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+s6.peaks <- CallPeaks(s6, macs2.path = macs3PATH, assay = 'ATAC', effective.genome.size = 0.86e9, combine.peaks	= T, group.by = 'individual')
+s6.peaks.fm <- FeatureMatrix(fragments = Fragments(s6), features = s6.peaks, cells = colnames(s6))
+s6[["peaks"]] <- CreateChromatinAssay(counts = s6.peaks.fm, fragments = Fragments(s6), annotation = annotations)
+DefaultAssay(s6) <- 'peaks'
+s6[['ATAC']] <- NULL
+s6[["ATAC"]] <- CreateChromatinAssay(counts = s6.peaks.fm, fragments = Fragments(s6), annotation = annotations)
+DefaultAssay(s6) <- 'ATAC'
+s6[['peaks']] <- NULL
+dim(s6[['ATAC']])
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+rownames(s6@assays$ATAC@data)   = stringr::str_replace(rownames(s6@assays$ATAC@data),   "-", "_")
+rownames(s6@assays$ATAC@counts) = stringr::str_replace(rownames(s6@assays$ATAC@counts), "-", "_")
+rownames(s6@assays$ATAC@meta.features) = stringr::str_replace(rownames(s6@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+saveRDS(s6, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_clown_peaks_assay.rds')
+
+gc()
+gc()
+```
+
+### Creating A Common Peak set
+
+peak calling is required in the pre-processing to identify regions with detected accessibility in the sample. This step, however, is applied to different samples separately, and therefore generates different peak list for different samples. This simply makes the merging failed.
+
+To properly combine the ATAC assay, the critical steps are to firstly obtain a unified peak list for all samples, and then redo fragment counting based on the new peak list. To do that, there are several options.
+
+We can union the peak lists of different samples called by Cell Ranger ARC to get the unified peak list, and then do the fragment counting again for all cells in all samples. Here the union means also to merge peaks from different samples which are partially overlapping with each other. Signac uses an GRanges object, which is a commonly used class defined in the GenomicRanges package as a critical part of Bioconductor for genomic analysis. The package also has methods to manipulate the GRanges objects in the way we need. Here, we can use the reduce function which collapses all the overlapping regions into one so that there is no overlap between any pair of region in the final list.
+
+```{r}
+
+s1 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_clown_peaks_assay.rds')
+s2 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_clown_peaks_assay.rds')
+s3 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_clown_peaks_assay.rds')
+s4 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_clown_peaks_assay.rds')
+s5 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s5_clown_peaks_assay.rds')
+s6 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_clown_peaks_assay.rds')
+
+# Create a unified set of peaks to quantify in each dataset
+s1.granges <- s1@assays[["ATAC"]]@ranges
+s2.granges <- s2@assays[["ATAC"]]@ranges
+s3.granges <- s3@assays[["ATAC"]]@ranges
+s4.granges <- s4@assays[["ATAC"]]@ranges
+s5.granges <- s5@assays[["ATAC"]]@ranges
+s6.granges <- s6@assays[["ATAC"]]@ranges
+
+genome.seqs <- seqlevels(clown_fasta)
+
+seqlevels(s1.granges) <- genome.seqs
+seqlengths(s1.granges) <- seqlengths(clown_fasta)
+idx <- GenomicRanges:::get_out_of_bound_index(s1.granges)
+if (length(idx) != 0L)
+  s1.granges <- s1.granges[-idx]
+seqlengths(s1.granges) <- seqlengths(clown_fasta)
+
+seqlevels(s2.granges) <- genome.seqs
+seqlengths(s2.granges) <- seqlengths(clown_fasta)
+idx <- GenomicRanges:::get_out_of_bound_index(s2.granges)
+if (length(idx) != 0L)
+  s2.granges <- s2.granges[-idx]
+seqlengths(s2.granges) <- seqlengths(clown_fasta)
+
+seqlevels(s3.granges) <- genome.seqs
+seqlengths(s3.granges) <- seqlengths(clown_fasta)
+idx <- GenomicRanges:::get_out_of_bound_index(s3.granges)
+if (length(idx) != 0L)
+  s3.granges <- s3.granges[-idx]
+
+seqlevels(s4.granges) <- genome.seqs
+seqlengths(s4.granges) <- seqlengths(clown_fasta)
+idx <- GenomicRanges:::get_out_of_bound_index(s4.granges)
+if (length(idx) != 0L)
+  s4.granges <- s4.granges[-idx]
+
+seqlevels(s5.granges) <- genome.seqs
+seqlengths(s5.granges) <- seqlengths(clown_fasta)
+idx <- GenomicRanges:::get_out_of_bound_index(s5.granges)
+if (length(idx) != 0L)
+  s5.granges <- s5.granges[-idx]
+
+seqlevels(s6.granges) <- genome.seqs
+seqlengths(s6.granges) <- seqlengths(clown_fasta)
+idx <- GenomicRanges:::get_out_of_bound_index(s6.granges)
+if (length(idx) != 0L)
+  s6.granges <- s6.granges[-idx]
+
+# combined.peaks <- reduce(x = c(s1.granges, s2.granges, s3.granges, s4.granges, s5.granges, s6.granges))
+
+combined.peaks <- reduce(x = c(s1.granges, s2.granges, s3.granges, s4.granges, s5.granges, s6.granges), min.gapwidth = 0L, with.revmap = TRUE, drop.empty.ranges=FALSE)
+
+# Filter out bad peaks based on length
+peakwidths <- width(combined.peaks)
+combined.peaks <- combined.peaks[peakwidths  < 10000 & peakwidths > 10]
+combined.peaks
+idx <- GenomicRanges:::get_out_of_bound_index(combined.peaks)
+if (length(idx) != 0L)
+  combined.peaks <- combined.peaks[-idx]
+seqlengths <- seqlengths(combined.peaks)
+
+saveRDS(combined.peaks, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/clown_combined.peak.set_peaks_granges.rds')
+
+gc()
+gc()
+
+```
+
+```{r}
+s1.counts <- FeatureMatrix(
+  fragments = Fragments(s1),
+  features = combined.peaks,
+  cells = colnames(s1@assays$ATAC)
+)
+saveRDS(s1.counts, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_common.peak_counts.rds')
+
+gc()
+s2.counts <- FeatureMatrix(
+  fragments = Fragments(s2),
+  features = combined.peaks,
+  cells = colnames(s2@assays$ATAC)
+)
+saveRDS(s2.counts, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_common.peak_counts.rds')
+
+gc()
+s5.counts <- FeatureMatrix(
+  fragments = Fragments(s5),
+  features = combined.peaks,
+  cells = colnames(s5@assays$ATAC)
+)
+gc()
+s6.counts <- FeatureMatrix(
+  fragments = Fragments(s6),
+  features = combined.peaks,
+  cells = colnames(s6@assays$ATAC)
+)
+saveRDS(s6.counts, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_common.peak_counts.rds')
+
+gc()
+s3.counts <- FeatureMatrix(
+  fragments = Fragments(s3),
+  features = combined.peaks,
+  cells = colnames(s3@assays$ATAC)
+)
+saveRDS(s3.counts, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_common.peak_counts.rds')
+
+gc()
+s4.counts <- FeatureMatrix(
+  fragments = Fragments(s4),
+  features = combined.peaks,
+  cells = colnames(s4@assays$ATAC)
+)
+saveRDS(s4.counts, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_common.peak_counts.rds')
+
+gc()
+gc()
+```
+
+```{r}
+s1_peaks.assay <- CreateChromatinAssay(s1.counts, fragments = Fragments(s1), annotation = annotations)
+s1 <- CreateSeuratObject(s1_peaks.assay, assay = 'ATAC')
+s2_peaks.assay <- CreateChromatinAssay(s2.counts, fragments = Fragments(s2), annotation = annotations)
+s2 <- CreateSeuratObject(s2_peaks.assay, assay = 'ATAC')
+s5_peaks.assay <- CreateChromatinAssay(s5.counts, fragments = Fragments(s5), annotation = annotations)
+s5 <- CreateSeuratObject(s5_peaks.assay, assay = 'ATAC')
+s6_peaks.assay <- CreateChromatinAssay(s6.counts, fragments = Fragments(s6), annotation = annotations)
+s6 <- CreateSeuratObject(s6_peaks.assay, assay = 'ATAC')
+s3_peaks.assay <- CreateChromatinAssay(s3.counts, fragments = Fragments(s3), annotation = annotations)
+s3 <- CreateSeuratObject(s3_peaks.assay, assay = 'ATAC')
+s4_peaks.assay <- CreateChromatinAssay(s4.counts, fragments = Fragments(s4), annotation = annotations)
+s4 <- CreateSeuratObject(s4_peaks.assay, assay = 'ATAC')
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+rownames(s1@assays$ATAC@data)   = stringr::str_replace(rownames(s1@assays$ATAC@data),   "-", "_")
+rownames(s1@assays$ATAC@counts) = stringr::str_replace(rownames(s1@assays$ATAC@counts), "-", "_")
+rownames(s1@assays$ATAC@meta.features) = stringr::str_replace(rownames(s1@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s1@assays$ATAC@data))
+head(rownames(s1@assays$ATAC@counts))
+head(rownames(s1@assays$ATAC@meta.features))
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+rownames(s2@assays$ATAC@data)   = stringr::str_replace(rownames(s2@assays$ATAC@data),   "-", "_")
+rownames(s2@assays$ATAC@counts) = stringr::str_replace(rownames(s2@assays$ATAC@counts), "-", "_")
+rownames(s2@assays$ATAC@meta.features) = stringr::str_replace(rownames(s2@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s2@assays$ATAC@data))
+head(rownames(s2@assays$ATAC@counts))
+head(rownames(s2@assays$ATAC@meta.features))
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+rownames(s3@assays$ATAC@data)   = stringr::str_replace(rownames(s3@assays$ATAC@data),   "-", "_")
+rownames(s3@assays$ATAC@counts) = stringr::str_replace(rownames(s3@assays$ATAC@counts), "-", "_")
+rownames(s3@assays$ATAC@meta.features) = stringr::str_replace(rownames(s3@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s3@assays$ATAC@data))
+head(rownames(s3@assays$ATAC@counts))
+head(rownames(s3@assays$ATAC@meta.features))
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+rownames(s4@assays$ATAC@data)   = stringr::str_replace(rownames(s4@assays$ATAC@data),   "-", "_")
+rownames(s4@assays$ATAC@counts) = stringr::str_replace(rownames(s4@assays$ATAC@counts), "-", "_")
+rownames(s4@assays$ATAC@meta.features) = stringr::str_replace(rownames(s4@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s4@assays$ATAC@data))
+head(rownames(s4@assays$ATAC@counts))
+head(rownames(s4@assays$ATAC@meta.features))
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+rownames(s5@assays$ATAC@data)   = stringr::str_replace(rownames(s5@assays$ATAC@data),   "-", "_")
+rownames(s5@assays$ATAC@counts) = stringr::str_replace(rownames(s5@assays$ATAC@counts), "-", "_")
+rownames(s5@assays$ATAC@meta.features) = stringr::str_replace(rownames(s5@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s5@assays$ATAC@data))
+head(rownames(s5@assays$ATAC@counts))
+head(rownames(s5@assays$ATAC@meta.features))
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+rownames(s6@assays$ATAC@data)   = stringr::str_replace(rownames(s6@assays$ATAC@data),   "-", "_")
+rownames(s6@assays$ATAC@counts) = stringr::str_replace(rownames(s6@assays$ATAC@counts), "-", "_")
+rownames(s6@assays$ATAC@meta.features) = stringr::str_replace(rownames(s6@assays$ATAC@meta.features), "-", "_")
+
+head(rownames(s6@assays$ATAC@data))
+head(rownames(s6@assays$ATAC@counts))
+head(rownames(s6@assays$ATAC@meta.features))
+
+```
+
+### Computing QC Metrics
+
+-   Nucleosome banding pattern: The histogram of DNA fragment sizes (determined from the paired-end sequencing reads) should exhibit a strong nucleosome banding pattern corresponding to the length of DNA wrapped around a single nucleosome. We calculate this per single cell, and quantify the approximate ratio of mononucleosomal to nucleosome-free fragments (stored as `nucleosome_signal`).
+
+-   The obtained scores in this data set range from 0 to 3. As a rule of thumb, previous analysis projects chose a threshold between 2 and 4 to label low quality cells.
+
+-   Transcriptional start site (TSS) enrichment score. The [\color{blue}{\text{ENCODE project}}](https://www.encodeproject.org/data-standards/terms/) has defined an ATAC-seq targeting score based on the ratio of fragments centered at the TSS to fragments in TSS-flanking regions. Poor ATAC-seq experiments typically will have a low TSS enrichment score. We can compute this metric for each cell with the `TSSEnrichment()` function, and the results are stored in metadata under the column name `TSS.enrichment`.
+
+-   The relationship between variables stored in the object metadata can be visualized using the `DensityScatter()` function. This can also be used to quickly find suitable cutoff values for different QC metrics by setting `quantiles=TRUE`.
+
+-   We can compute per-cell quality control metrics using the DNA accessibility data and remove cells that are outliers for these metrics, as well as cells with low or unusually high counts for either the RNA or ATAC assay.
+
+```{r}
+
+s1 <- TSSEnrichment(s1, cells = colnames(s1), assay = 'ATAC', 
+                     verbose = T, tss.positions = annotations, region_extension = 2000)
+s2 <- TSSEnrichment(s2, cells = colnames(s2), assay = 'ATAC', 
+                    verbose = T, tss.positions = annotations, region_extension = 2000)
+s3 <- TSSEnrichment(s3, cells = colnames(s3), assay = 'ATAC', 
+                    verbose = T, tss.positions = annotations, region_extension = 2000)
+s4 <- TSSEnrichment(s4, cells = colnames(s4), assay = 'ATAC', 
+                    verbose = T, tss.positions = annotations, region_extension = 2000)
+s5 <- TSSEnrichment(s5, cells = colnames(s5), assay = 'ATAC', 
+                    verbose = T, tss.positions = annotations, region_extension = 2000)
+s6 <- TSSEnrichment(s6, cells = colnames(s6), assay = 'ATAC', 
+                    verbose = T, tss.positions = annotations, region_extension = 2000)
+
+saveRDS(s1, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_common.peak.set_peaks.assay.rds')
+saveRDS(s2, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_common.peak.set_peaks.assay.rds')
+saveRDS(s3, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_common.peak.set_peaks.assay.rds')
+saveRDS(s4, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_common.peak.set_peaks.assay.rds')
+saveRDS(s5, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s5_common.peak.set_peaks.assay.rds')
+saveRDS(s6, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_common.peak.set_peaks.assay.rds')
+
+gc()
+```
+
+```{r}
+s1 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_common.peak.set_peaks.assay.rds')
+s1_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s1/atac_fragments.tsv.gz'
+s1@assays[["ATAC"]]@fragments[[1]]@path <- s1_frag.path
+DefaultAssay(s1) <- 'ATAC'
+frags <- Fragments(s1) 
+fpath <- GetFragmentData(object = frags[[1]], slot = "path")
+total_fragments <- CountFragments(fpath)
+rownames(total_fragments) <- total_fragments$CB
+s1$peak_region_fragments <- total_fragments[colnames(s1), "frequency_count"]
+s1$log10nfragments <- log10(s1$peak_region_fragments) 
+
+s1 <- FRiP(
+  object = s1,
+  assay = 'ATAC',
+  total.fragments = 'peak_region_fragments',
+  col.name = 'pct_reads_in_peaks'
+)
+
+s1 <- NucleosomeSignal(object = s1, assay = "ATAC")
+
+s2 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_common.peak.set_peaks.assay.rds')
+s2_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s2/atac_fragments.tsv.gz'
+s2@assays[["ATAC"]]@fragments[[1]]@path <- s2_frag.path
+DefaultAssay(s2) <- 'ATAC'
+frags <- Fragments(s2) 
+fpath <- GetFragmentData(object = frags[[1]], slot = "path")
+total_fragments <- CountFragments(fpath)
+rownames(total_fragments) <- total_fragments$CB
+s2$peak_region_fragments <- total_fragments[colnames(s2), "frequency_count"]
+s2$log10nfragments <- log10(s2$peak_region_fragments) 
+
+s2 <- FRiP(
+  object = s2,
+  assay = 'ATAC',
+  total.fragments = 'peak_region_fragments',
+  col.name = 'pct_reads_in_peaks'
+)
+
+s2 <- NucleosomeSignal(object = s2, assay = "ATAC")
+
+s3 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_common.peak.set_peaks.assay.rds')
+s3_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s3/atac_fragments.tsv.gz'
+s3@assays[["ATAC"]]@fragments[[1]]@path <- s3_frag.path
+DefaultAssay(s3) <- 'ATAC'
+frags <- Fragments(s3) 
+fpath <- GetFragmentData(object = frags[[1]], slot = "path")
+total_fragments <- CountFragments(fpath)
+rownames(total_fragments) <- total_fragments$CB
+s3$peak_region_fragments <- total_fragments[colnames(s3), "frequency_count"]
+s3$log10nfragments <- log10(s3$peak_region_fragments) 
+
+s3 <- FRiP(
+  object = s3,
+  assay = 'ATAC',
+  total.fragments = 'peak_region_fragments',
+  col.name = 'pct_reads_in_peaks'
+)
+
+s3 <- NucleosomeSignal(object = s3, assay = "ATAC")
+
+s4 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_common.peak.set_peaks.assay.rds')
+s4_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s4/atac_fragments.tsv.gz'
+s4@assays[["ATAC"]]@fragments[[1]]@path <- s4_frag.path
+DefaultAssay(s4) <- 'ATAC'
+frags <- Fragments(s4) 
+fpath <- GetFragmentData(object = frags[[1]], slot = "path")
+total_fragments <- CountFragments(fpath)
+rownames(total_fragments) <- total_fragments$CB
+s4$peak_region_fragments <- total_fragments[colnames(s4), "frequency_count"]
+s4$log10nfragments <- log10(s4$peak_region_fragments) 
+
+s4 <- FRiP(
+  object = s4,
+  assay = 'ATAC',
+  total.fragments = 'peak_region_fragments',
+  col.name = 'pct_reads_in_peaks'
+)
+
+s4 <- NucleosomeSignal(object = s4, assay = "ATAC")
+
+s5 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s5_common.peak.set_peaks.assay.rds')
+s5_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s5/atac_fragments.tsv.gz'
+s5@assays[["ATAC"]]@fragments[[1]]@path <- s5_frag.path
+DefaultAssay(s5) <- 'ATAC'
+frags <- Fragments(s5) 
+fpath <- GetFragmentData(object = frags[[1]], slot = "path")
+total_fragments <- CountFragments(fpath)
+rownames(total_fragments) <- total_fragments$CB
+s5$peak_region_fragments <- total_fragments[colnames(s5), "frequency_count"]
+s5$log10nfragments <- log10(s5$peak_region_fragments) 
+
+s5 <- FRiP(
+  object = s5,
+  assay = 'ATAC',
+  total.fragments = 'peak_region_fragments',
+  col.name = 'pct_reads_in_peaks'
+)
+
+s5 <- NucleosomeSignal(object = s5, assay = "ATAC")
+
+s6 <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_common.peak.set_peaks.assay.rds')
+s6_frag.path <- '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/cellranger_outs/cellranger_seurat_files/s6/atac_fragments.tsv.gz'
+s6@assays[["ATAC"]]@fragments[[1]]@path <- s6_frag.path
+DefaultAssay(s6) <- 'ATAC'
+frags <- Fragments(s6) 
+fpath <- GetFragmentData(object = frags[[1]], slot = "path")
+total_fragments <- CountFragments(fpath)
+rownames(total_fragments) <- total_fragments$CB
+s6$peak_region_fragments <- total_fragments[colnames(s6), "frequency_count"]
+s6$log10nfragments <- log10(s6$peak_region_fragments) 
+
+s6 <- FRiP(
+  object = s6,
+  assay = 'ATAC',
+  total.fragments = 'peak_region_fragments',
+  col.name = 'pct_reads_in_peaks'
+)
+
+s6 <- NucleosomeSignal(object = s6, assay = "ATAC")
+
+
+
+rna <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s1_clownfish_gex.atac_raw.rds')
+s1[['RNA']] <- rna[['RNA']]
+s1$individual <- rna[["individual"]]
+s1 <- RenameCells(s1, paste0(s1$individual))
+s1$orig.ident <- 'pool_1'
+rna <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s2_clownfish_gex.atac_raw.rds')
+s2[['RNA']] <- rna[['RNA']]
+s2$individual <- rna[["individual"]]
+s2$orig.ident <- 'pool_2'
+s2 <- RenameCells(s2, paste0(s2$individual))
+rna <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s3_clownfish_gex.atac_raw.rds')
+s3[['RNA']] <- rna[['RNA']]
+s3$individual <- rna[["individual"]]
+s3$orig.ident <- 'pool_3'
+s3 <- RenameCells(s3, paste0(s3$individual))
+rna <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s4_clownfish_gex.atac_raw.rds')
+s4[['RNA']] <- rna[['RNA']]
+s4$individual <- rna[["individual"]]
+s4$orig.ident <- 'pool_4'
+s4 <- RenameCells(s4, paste0(s4$individual))
+rna <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s5_clownfish_gex.atac_raw.rds')
+s5[['RNA']] <- rna[['RNA']]
+s5$individual <- rna[["individual"]]
+s5$orig.ident <- 'pool_5'
+s5 <- RenameCells(s5, paste0(s5$individual))
+rna <- readRDS('/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/QC/qc_gex.atac_outs/s6_clownfish_gex.atac_raw.rds')
+s6[['RNA']] <- rna[['RNA']]
+s6$individual <- rna[["individual"]]
+s6$orig.ident <- 'pool_6'
+s6 <- RenameCells(s6, paste0(s6$individual))
+
+saveRDS(s1, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s1_clownfish_gex.atac_common.peaks.rds')
+saveRDS(s2, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s2_clownfish_gex.atac_common.peaks.rds')
+saveRDS(s3, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s3_clownfish_gex.atac_common.peaks.rds')
+saveRDS(s4, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s4_clownfish_gex.atac_common.peaks.rds')
+saveRDS(s5, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s5_clownfish_gex.atac_common.peaks.rds')
+saveRDS(s6, '/Users/kathrynleatherbury/GaTech Dropbox/CoS/BioSci/BioSci-Streelman/MultiomeProjects/clownfish/peaks_assay/s6_clownfish_gex.atac_common.peaks.rds')
+
+gc()
+gc()
+```
