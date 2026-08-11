@@ -11,7 +11,7 @@ from cell2location.models import RegressionModel
 import torch
 
 
-results_folder =    "C:/Users/Gabe/Desktop/Visium/Parker Object"
+results_folder =    "C:/Users/Gabe/Desktop/Visium/parker_clusters_20"
 ref_run_name   = f"{results_folder}/reference_signatures"
 os.makedirs(ref_run_name, exist_ok=True)
 
