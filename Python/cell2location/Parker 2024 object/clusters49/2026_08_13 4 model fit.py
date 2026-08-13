@@ -24,7 +24,7 @@ if __name__ == "__main__":
     visium_dir = "C:/Users/Gabe/Desktop/Visium/Parker Object"
     
     results_folder = (
-       "C:/Users/Gabe/Desktop/Visium/parker_clusers_20"
+       "C:/Users/Gabe/Desktop/Visium/parker_clusters_49"
     )
     
     ref_run_name = f"{results_folder}/reference_signatures"
