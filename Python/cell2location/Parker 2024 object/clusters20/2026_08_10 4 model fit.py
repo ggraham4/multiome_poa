@@ -1,7 +1,4 @@
-"""
-In the previous iteration of this code, I used cell2location to map all visium
-spots to the multiome clusters. Now, I will subset to JUST poa
-"""
+
 import os
 import matplotlib
 matplotlib.use("Agg")
