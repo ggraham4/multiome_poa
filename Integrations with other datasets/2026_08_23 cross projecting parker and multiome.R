@@ -9,6 +9,11 @@ parker_2024 <- NormalizeData(parker_2024, assay = 'RNA')
 parker_2024 =FindVariableFeatures(parker_2024)
 multiome = FindVariableFeatures(multiome)
 
+my_colors <- c("gray", 'white', "orange", "red")
+color_func <- colorRampPalette(my_colors)
+continuous_palette <- color_func(50)
+
+
 parker_anchors = FindTransferAnchors(reference = parker_2024,
                                      query = multiome,
                                      dims = 1:30,
@@ -69,7 +74,10 @@ child_tab = table(multiome$res0.8_50nn_40PC_45LSI,
 
 child_to_multiome_prop_heatmap =pheatmap((child_tab/rowSums(child_tab)),
          cluster.rows = T,
-         cluster.cols = T)
+         cluster.cols = T,
+         color = continuous_palette,
+         angle_col = 90
+)
 
 
 svg(filename = 'C:/Users/Gabe/Desktop/multiome_poa/Manuscript/Plots/child_to_multiome_prop_heatmap.svg',
@@ -83,8 +91,11 @@ parent_tab = table(multiome$res0.8_50nn_40PC_45LSI,
   as.data.frame.matrix()
 
 parent_to_multiome_prop_heatmap =pheatmap((parent_tab/rowSums(parent_tab)),
-         cluster.rows = T,
-         cluster.cols = T)
+                                          cluster.rows = T,
+                                          cluster.cols = T,
+                                          color = continuous_palette,
+                                          angle_col = 90
+)
 
 svg(filename = 'C:/Users/Gabe/Desktop/multiome_poa/Manuscript/Plots/parent_to_multiome_prop_heatmap.svg',
     width = 8,
@@ -130,8 +141,11 @@ mult_tab = table(multiome$Predicted_Parent_Cluster,
   as.data.frame.matrix()
 
 mult_tab_prop_heatmap =pheatmap((mult_tab/rowSums(mult_tab)),
-                                         cluster.rows = T,
-                                         cluster.cols = T)
+                                cluster.rows = T,
+                                cluster.cols = T,
+                                color = continuous_palette,
+                                angle_col = 90
+)
 mult_tab_prop_heatmap
 
 svg(filename = 'C:/Users/Gabe/Desktop/multiome_poa/Manuscript/Plots/multiome_to_parent_prop_heatmap.svg',
@@ -145,8 +159,11 @@ mult_tab_ch = table(multiome$Predicted_Child_Cluster,
   as.data.frame.matrix()
 
 mult_tab_child_prop_heatmap =pheatmap((mult_tab_ch/rowSums(mult_tab_ch)),
-                                cluster.rows = T,
-                                cluster.cols = T)
+                                      cluster.rows = T,
+                                      cluster.cols = T,
+                                      color = continuous_palette,
+                                      angle_col = 90
+)
 mult_tab_child_prop_heatmap
 
 svg(filename = 'C:/Users/Gabe/Desktop/multiome_poa/Manuscript/Plots/multiome_to_child_prop_heatmap.svg',
