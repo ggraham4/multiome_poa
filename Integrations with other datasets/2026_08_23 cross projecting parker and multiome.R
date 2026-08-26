@@ -30,7 +30,7 @@ multiome$Predicted_Parent_Cluster = multiome$predicted.id
 parent_on_multiome=DimPlot(multiome, 
         group.by ='Predicted_Parent_Cluster',
         reduction = 'harmony_wnn.umap',
-        label =F,
+        label =T,
         raster =T,
         pt.size = 6,
         raster.dpi = c(2400,2400))
@@ -44,6 +44,24 @@ ggsave(plot = parent_on_multiome,
        height = 8,
        path = "Manuscript/Plots")
 
+multiome_native=DimPlot(multiome, 
+                           group.by ='res0.8_50nn_40PC_45LSI',
+                           reduction = 'harmony_wnn.umap',
+                           label =T,
+                           raster =T,
+                           pt.size = 6,
+                           raster.dpi = c(2400,2400))
+multiome_native
+
+ggsave(plot = multiome_native,
+       file = paste0('multiome_native.svg'),
+       device = "svg",
+       units = "in",
+       width =8,
+       height = 8,
+       path = "Manuscript/Plots")
+
+
 predictions2 <- TransferData(anchorset = parker_anchors,
                             refdata = parker_2024$child_clusters,
                             dims = 1:30)
@@ -51,13 +69,39 @@ predictions2 <- TransferData(anchorset = parker_anchors,
 multiome <- AddMetaData(multiome, metadata = predictions2)
 multiome$Predicted_Child_Cluster = multiome$predicted.id
 
+library(colorspace)
+
+generate_nonadjacent_palette <- function(n, seed = 1) {
+  set.seed(seed)
+  
+  # 1. Base colors: full hue circle, cycling chroma/luminance so
+  #    it's not just hue doing the work of differentiating clusters
+  hues    <- seq(15, 375, length.out = n + 1)[1:n]
+  lum_cyc <- rep(c(60, 45, 80, 55), length.out = n)
+  chr_cyc <- rep(c(100, 75, 55, 90), length.out = n)
+  base_colors <- hcl(h = hues, c = chr_cyc, l = lum_cyc)
+  
+  # 2. Coprime-stride permutation: pick k with gcd(k, n) == 1
+  gcd <- function(a, b) if (b == 0) a else gcd(b, a %% b)
+  k <- floor(n / 2)
+  while (gcd(k, n) != 1) k <- k - 1
+  
+  perm <- ((seq(0, n - 1) * k) %% n) + 1
+  base_colors[perm]
+}
+
+my_49_colors <- generate_nonadjacent_palette(49)
+
 child_on_multiome=DimPlot(multiome, 
         group.by ='Predicted_Child_Cluster',
         reduction = 'harmony_wnn.umap',
-        label =F,
+        label =T,
         raster =T,
         pt.size = 6,
-        raster.dpi = c(2400,2400))
+        raster.dpi = c(2400,2400),
+        cols = my_49_colors)
+
+child_on_multiome
 
 ggsave(plot = child_on_multiome,
        file = paste0('child_on_multiome.svg'),
@@ -122,7 +166,7 @@ parker_2024$Predicted_Cluster = parker_2024$predicted.id
 
 multiome_on_parker = DimPlot(parker_2024,
                              group.by ='Predicted_Cluster',
-                             label =F,
+                             label =T,
                              raster =T,
                              pt.size = 6,
                              raster.dpi = c(2400,2400))
@@ -135,6 +179,40 @@ ggsave(plot = multiome_on_parker,
        width =8,
        height = 8,
        path = "Manuscript/Plots")
+
+parker_parent = DimPlot(parker_2024,
+                             group.by ='parent_clusters',
+                             label =T,
+                             raster =T,
+                             pt.size = 6,
+                             raster.dpi = c(2400,2400))
+parker_parent
+
+ggsave(plot = parker_parent,
+       file = paste0('parker_parent.svg'),
+       device = "svg",
+       units = "in",
+       width =8,
+       height = 8,
+       path = "Manuscript/Plots")
+
+parker_child = DimPlot(parker_2024,
+                        group.by ='child_clusters',
+                        label =T,
+                        raster =T,
+                        pt.size = 6,
+                        raster.dpi = c(2400,2400))
+parker_child
+
+ggsave(plot = parker_child,
+       file = paste0('parker_child.svg'),
+       device = "svg",
+       units = "in",
+       width =8,
+       height = 8,
+       path = "Manuscript/Plots")
+
+
 
 mult_tab = table(multiome$Predicted_Parent_Cluster,
                   multiome$res0.8_50nn_40PC_45LSI)%>%
