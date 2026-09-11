@@ -52,7 +52,8 @@ change_mass = ggplot(dat_experiment, aes(x = Phase,
                 aes(x = Phase, 
                     y = mean_change_mass,
                     ymin = mean_change_mass-se_mass,
-                    ymax =mean_change_mass+se_mass),
+                    ymax =mean_change_mass+se_mass,
+                    width = 0.4),
                 inherit.aes = F)+
   geom_point(position = position_jitterdodge(),
              size = 2, 
@@ -94,7 +95,7 @@ change_length = ggplot(dat_experiment, aes(x = Phase,
                     y = mean_change_length,
                     ymin = mean_change_length-se_length,
                     ymax =mean_change_length+se_length),
-                inherit.aes = F)+
+                inherit.aes = F,width = 0.4)+
   geom_point(position = position_jitterdodge(),
              size = 2, 
              shape =1)+
@@ -163,7 +164,6 @@ volume
 #       width = 3,
 #       height = 2,
  #      path = "Manuscript/Plots/Fig.1/")
-```r
 # ============================
 # TESTICULAR VOLUME
 # ============================
@@ -224,7 +224,8 @@ testis = ggplot(
       x = Phase,
       y = mean,
       ymin = mean - se_testis,
-      ymax = mean + se_testis
+      ymax = mean + se_testis,
+      width =0.4
     ),
     inherit.aes = FALSE
   ) +
@@ -240,7 +241,7 @@ testis = ggplot(
   theme_minimal() +
   labs(
     x = 'Phase',
-    y = 'Log10 Testicular Volume'
+    y = 'Log10 Testicular Volume (px)'
   )
 
 testis
@@ -320,7 +321,8 @@ ovary = ggplot(
       x = Phase,
       y = mean,
       ymin = mean - se_ovary,
-      ymax = mean + se_ovary
+      ymax = mean + se_ovary,
+      width = 0.4
     ),
     inherit.aes = FALSE
   ) +
@@ -336,7 +338,7 @@ ovary = ggplot(
   theme_minimal() +
   labs(
     x = 'Phase',
-    y = 'Log10 Ovarian Volume'
+    y = 'Log10 Ovarian Volume (px)'
   )
 
 ovary
