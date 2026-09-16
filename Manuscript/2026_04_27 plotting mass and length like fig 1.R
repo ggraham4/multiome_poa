@@ -26,7 +26,7 @@ measures$Dominance = ifelse(measures$Phase %in%c('F','I','LI','NF'), 'Dominant',
 measures$length_final_cm = as.numeric(measures$length_final_cm)
 
 ### length_final_cm  ----
-mass_model = lm(length_final_cm~Phase, data = measures)
+mass_model = lm(mass_final_cm~Phase, data = measures)
 anova(mass_model, test = 'Chisq')
 p1 = pairs(emmeans(mass_model, 'Phase'), adjust = 'none')
 cld_mas = cld(emmeans(mass_model, 'Phase'), Letters = letters, adjust = "none", alpha = 0.05)

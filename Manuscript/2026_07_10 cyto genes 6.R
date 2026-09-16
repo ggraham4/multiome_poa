@@ -17,7 +17,10 @@ degs_6 = subset(degs, cluster == 6)
 genes_interest = c(
 'drd3',
 'tacr3a',
-'cckb'
+'cckb',
+'pgr',
+'LOC111568069' #ar-like
+
 )
 
 sub_6$cyto = CytoTRACE(sub_6@assays$RNA$data%>%as.matrix())$CytoTRACE
