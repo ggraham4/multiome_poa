@@ -242,4 +242,34 @@ statistics_table <- populate_statistics(
   raw_len_model =raw_len_model
 )
 
-write.csv(statistics_table, '/Users/ggraham/Desktop/multiome_poa/Manuscript/stat_tables/Fig.S1A-F.csv')
+#write.csv(statistics_table, '/Users/ggraham/Desktop/multiome_poa/Manuscript/stat_tables/Fig.S1A-F.csv')
+
+mean_se = function(var){
+  data%>%
+    group_by(Status,)%>%
+    summarize(mu = mean({{var}}, na.rm = T),
+              se =sd({{var}}, na.rm =T)/sqrt(n())
+              )
+}
+mean_se(raw_11kt)
+
+mean_se(Change_Mass)
+mean_se(Change_Length)
+
+options(pillar.sigfig = 5)
+
+mean_se(raw_11kt)
+
+mean_se(Percent_Testicular)
+mean_se(Percent_Ovarian)
+
+
+data$raw_11kt = 10^data$Log_11KT
+mean(data$raw_11kt[data$Status=='D'])
+mean(data$Percent_Testicular[data$Status=='D'])
+mean(data$Percent_Testicular[data$Status=='M'])
+mean(data$Percent_Ovarian[data$Status=='M'])
+mean(data$Percent_Ovarian[data$Status=='D'])
+
+mean(data$Estimated_Volume_2.5x[data$Status=='D'])
+mean(data$Estimated_Volume_2.5x[data$Status=='M'])

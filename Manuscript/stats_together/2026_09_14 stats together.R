@@ -1,4 +1,4 @@
-
+{
 library(Seurat)
 library(patchwork)
 library(tidyverse)
@@ -6,10 +6,151 @@ library(ggplot2)
 library(Polychrome)
 library(emmeans)
 library(ggsignif)
-  clown_go = readRDS("Functions/clown_go2")  
+library(CytoTRACE)
 library(clusterProfiler)
-  library(AUCell)
+library(AUCell)
+library(lme4)
+library(multcomp)
+  
+  clown_go = readRDS("Functions/clown_go2")  
 
+  go_module_aucell <- function(term, obj, subcluster = NULL) {
+set.seed(1)
+obj <- .subset_if_needed(obj, subcluster)
+
+term2gene <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
+term2name <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
+
+go_terms <- term2gene %>% left_join(term2name, by = 'go_id')
+
+term_genes        <- go_terms$aocellaris_name[go_terms$go_id == term]
+term_name         <- unique(go_terms$go_name[go_terms$go_id == term])
+term_genes_in_obj <- unique(term_genes[term_genes %in% rownames(obj)])
+
+print(paste0(length(term_genes_in_obj), ' genes found for: ', term_name))
+
+if (length(term_genes_in_obj) < 1) { return(NULL) }
+
+expr_matrix  <- obj@assays$RNA$data
+cell_rankings <- AUCell_buildRankings(expr_matrix, plotStats = FALSE, verbose = FALSE)
+
+gene_set  <- setNames(list(term_genes_in_obj), term)
+auc_scores <- AUCell_calcAUC(gene_set, cell_rankings, verbose = FALSE)
+scores     <- as.numeric(getAUC(auc_scores)[1, ])
+
+return(list(scores = scores, term_name = term_name))
+}
+
+model_go_aucell <- function(term, obj, subcluster = NULL) {
+set.seed(1)
+obj <- .subset_if_needed(obj, subcluster)
+
+result           <- go_module_aucell(term, obj)
+obj$aucell_score <- result$scores
+
+mod_df <- obj@meta.data %>%
+group_by(individual, Status) %>%
+summarize(mean_mod = mean(aucell_score), .groups = "drop") %>%
+mutate(Status = factor(Status, levels = c('NRM', 'M', 'D', 'E', 'NF', 'F'))) %>%
+subset(Status != 'NRM')
+
+lm(mean_mod ~ Status, data = mod_df)
+}
+
+.subset_if_needed <- function(obj, subcluster) {
+if (!is.null(subcluster)) {
+obj <- subset(obj, sub_res0.2 == subcluster)
+}
+obj
+}
+
+go_module_aucell <- function(term, obj, subcluster = NULL) {
+set.seed(1)
+obj <- .subset_if_needed(obj, subcluster)
+
+term2gene <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
+term2name <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
+
+go_terms <- term2gene %>% left_join(term2name, by = 'go_id')
+
+term_genes        <- go_terms$aocellaris_name[go_terms$go_id == term]
+term_name         <- unique(go_terms$go_name[go_terms$go_id == term])
+term_genes_in_obj <- unique(term_genes[term_genes %in% rownames(obj)])
+
+print(paste0(length(term_genes_in_obj), ' genes found for: ', term_name))
+
+if (length(term_genes_in_obj) < 1) { return(NULL) }
+
+expr_matrix  <- obj@assays$RNA$data
+cell_rankings <- AUCell_buildRankings(expr_matrix, plotStats = FALSE, verbose = FALSE)
+
+gene_set  <- setNames(list(term_genes_in_obj), term)
+auc_scores <- AUCell_calcAUC(gene_set, cell_rankings, verbose = FALSE)
+scores     <- as.numeric(getAUC(auc_scores)[1, ])
+
+return(list(scores = scores, term_name = term_name))
+}
+proportion_gene = function(sub_6, gene){
+
+make_summary = function(dat, numerator_col, denominator_col) {
+  dat %>%
+    group_by(Phase) %>%
+    summarise(
+      mean_prop = mean(.data[[numerator_col]] / .data[[denominator_col]], na.rm = TRUE),
+      se = sd(.data[[numerator_col]] / .data[[denominator_col]], na.rm = TRUE) / sqrt(n()),
+      .groups = 'drop'
+    )
+}
+
+format_pval = function(p) {
+  if (p >= 0.05) {
+    list(label = paste0('p = ', round(p, 3)), size = 2, adjust = 0)
+  } else if (p < 0.001) {
+    list(label = '***', size = 7, adjust = .6)
+  } else if (p < 0.01) {
+    list(label = '**', size = 7, adjust = .6)
+  } else {
+    list(label = '*', size = 7,adjust = .6)
+  }
+}
+  
+  sub_6$gene = ifelse(sub_6@assays$RNA$data[gene,] > 0, T, F)
+  
+  gex = sub_6@meta.data %>%
+    group_by(individual, Status) %>%
+    summarize(n_gene = sum(gene == T))
+  
+  tot = sub_6@meta.data %>%
+    group_by(individual, Status) %>%
+    summarize(total_cells = n())
+  
+  tog = gex %>%
+    right_join(tot, by = c('individual'))
+  
+  tog_6_gene = subset(tog, Status.x != c('NRM'))
+  
+  ### Stats ###
+  gene_glm = glm(cbind(tog_6_gene$n_gene, tog_6_gene$total_cells - tog_6_gene$n_gene) ~ Status.x,
+                 data = tog_6_gene,
+                 family = binomial('logit'))
+  return(gene_glm)
+}
+
+model_go_aucell <- function(term, obj, subcluster = NULL) {
+set.seed(1)
+obj <- .subset_if_needed(obj, subcluster)
+
+result           <- go_module_aucell(term, obj)
+obj$aucell_score <- result$scores
+
+mod_df <- obj@meta.data %>%
+group_by(individual, Status) %>%
+summarize(mean_mod = mean(aucell_score), .groups = "drop") %>%
+mutate(Status = factor(Status, levels = c('NRM', 'M', 'D', 'E', 'NF', 'F'))) %>%
+subset(Status %in% c('M','D','F'))
+
+lm(mean_mod ~ Status, data = mod_df)
+}
 obj  = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
 colors = c('#1965B0', '#4EB265', '#F7F056', '#7BAFDE', '#DC050C')
 pairwise_names <- c(
@@ -490,8 +631,6 @@ populate_statistics <- function(...) {
 
   bind_rows(results)
 }
-
-# ####fig 3 a, b#####
 status_to_phase = c(
   "D"='I',
   'M' = 'M',
@@ -500,6 +639,11 @@ status_to_phase = c(
   'NRM' = 'NRM',
   'E' = 'LI'
 )
+}
+
+### objects ####
+{
+  obj  = readRDS("~/Desktop/optimal_clustering_rna_only.rds")
 
 neurons_only <- subset(obj, 
                      #oligos
@@ -516,7 +660,18 @@ neurons_only <- subset(obj,
                     res0.8_50nn_40PC_45LSI!=15
                     &  res0.8_50nn_40PC_45LSI!=1
                     )
+obj = FindSubCluster(obj,
+                     1, 'harmony.wsnn', resolution = 0.2, subcluster.name = 'sub_res0.2')
+sub_1 = subset(obj, final_clusters ==1)
+Idents(sub_1) <- 'sub_res0.2'
+sub_1 = subset(sub_1, final_clusters ==1)
 
+sub_6 = FindSubCluster(obj, 6, graph.name = "harmony.wsnn")
+Idents(sub_6) <- "sub.cluster"
+sub_6 = subset(sub_6, final_clusters == 6 & Status %in% c('M','D','F'))
+
+}
+# ####fig 3 a, b#####
 total_cells_neuron = neurons_only@meta.data%>%
   group_by(individual, Status)%>%
   summarize(total_cells = n())
@@ -549,7 +704,6 @@ joint = total_cells%>%
 joint$Status = as.character(joint$Status)
 joint$Status = factor(joint$Status, levels = c('M','D','F'))
 
-  sub_1= subset(joint, res0.8_50nn_40PC_45LSI ==1 & Status %in% c('M','D','F'))
   mat_1 = cbind(sub_1$ncells, sub_1$total_cells-sub_1$ncells)
   
   
@@ -562,11 +716,6 @@ car::Anova(mod_1, type = 'III')
 pairs(emmeans::emmeans(mod_1, 'Status'), adjust = 'none')
 # Fig 4 gh ####
 
-obj = FindSubCluster(obj,
-                     1, 'harmony.wsnn', resolution = 0.2, subcluster.name = 'sub_res0.2')
-sub_1 = subset(obj, final_clusters ==1)
-Idents(sub_1) <- 'sub_res0.2'
-sub_1 = subset(sub_1, final_clusters ==1)
 sub_1$Status = factor(sub_1$Status, levels = c('NRM','M',"D",'E','NF','F'))
 
 DimPlot(sub_1)
@@ -602,56 +751,6 @@ pairs(emmeans(mod_11, 'Status'), adjust ='none')%>%as.data.frame()
 
 
 #### fig 4 i ####
-.subset_if_needed <- function(obj, subcluster) {
-if (!is.null(subcluster)) {
-obj <- subset(obj, sub_res0.2 == subcluster)
-}
-obj
-}
-
-go_module_aucell <- function(term, obj, subcluster = NULL) {
-set.seed(1)
-obj <- .subset_if_needed(obj, subcluster)
-
-term2gene <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
-term2name <- readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
-
-go_terms <- term2gene %>% left_join(term2name, by = 'go_id')
-
-term_genes        <- go_terms$aocellaris_name[go_terms$go_id == term]
-term_name         <- unique(go_terms$go_name[go_terms$go_id == term])
-term_genes_in_obj <- unique(term_genes[term_genes %in% rownames(obj)])
-
-print(paste0(length(term_genes_in_obj), ' genes found for: ', term_name))
-
-if (length(term_genes_in_obj) < 1) { return(NULL) }
-
-expr_matrix  <- obj@assays$RNA$data
-cell_rankings <- AUCell_buildRankings(expr_matrix, plotStats = FALSE, verbose = FALSE)
-
-gene_set  <- setNames(list(term_genes_in_obj), term)
-auc_scores <- AUCell_calcAUC(gene_set, cell_rankings, verbose = FALSE)
-scores     <- as.numeric(getAUC(auc_scores)[1, ])
-
-return(list(scores = scores, term_name = term_name))
-}
-
-model_go_aucell <- function(term, obj, subcluster = NULL) {
-set.seed(1)
-obj <- .subset_if_needed(obj, subcluster)
-
-result           <- go_module_aucell(term, obj)
-obj$aucell_score <- result$scores
-
-mod_df <- obj@meta.data %>%
-group_by(individual, Status) %>%
-summarize(mean_mod = mean(aucell_score), .groups = "drop") %>%
-mutate(Status = factor(Status, levels = c('NRM', 'M', 'D', 'E', 'NF', 'F'))) %>%
-subset(Status %in% c('M','D','F'))
-
-lm(mean_mod ~ Status, data = mod_df)
-}
-
 neuron_diff = model_go_aucell('GO:0030182', sub_1, subcluster = '1_0')
 neuron_diff%>%anova(test ='Chisq')
 pairs(emmeans::emmeans(neuron_diff, 'Status'), adjust = 'none')
@@ -659,11 +758,7 @@ pairs(emmeans::emmeans(neuron_diff, 'Status'), adjust = 'none')
 
 #fig 5 de
 ## cyto ecm 5d ####
-library(CytoTRACE)
 
-sub_6 = FindSubCluster(obj, 6, graph.name = "harmony.wsnn")
-Idents(sub_6) <- "sub.cluster"
-sub_6 = subset(sub_6, final_clusters == 6)
 
 sub_6$Status = factor(
   sub_6$Status,
@@ -780,16 +875,427 @@ for (gene in genes_interest) {
 }
 
 ###5fg####
+sub_6@meta.data$Status= factor(sub_6@meta.data$Status, 
+                               levels = c('M',
+                                          'D',
+                                          'F'))
+#brain dev
+model_braindev = model_go_aucell('GO:0007420', sub_6)
+anova(model_braindev, test= 'Chisq') 
+pairs_braindev = pairs(emmeans(model_braindev, 'Status'),adjust ='none')
 
-# fig 6 a-c
+#axon guidance
+model_axonguidance = model_go_aucell('GO:0008046', sub_6)
+anova(model_axonguidance,test= 'Chisq') ## axon guidanc
+pairs(emmeans(model_axonguidance, 'Status'),adjust ='none')
 
-#fig s6 a,b
+# fig 5 A-C middle, s6 A-E middle
+drd3_prop_6 = proportion_gene(sub_6, 'drd3')
+car::Anova(drd3_prop_6, type = 'III')
+pairs(emmeans(drd3_prop_6, 'Status.x'), adjust = 'none')
 
-#fig s7 b c,
+tacr3a_prop_6 = proportion_gene(sub_6, 'tacr3a')
+car::Anova(tacr3a_prop_6, type = 'III')
+pairs(emmeans(tacr3a_prop_6, 'Status.x'), adjust = 'none')
 
-#fig s8 a-d
+cckb_prop_6 = proportion_gene(sub_6, 'cckb')
+car::Anova(cckb_prop_6, type = 'III')
+pairs(emmeans(cckb_prop_6, 'Status.x'), adjust = 'none')
 
-#fig s9
+pgr_prop_6 = proportion_gene(sub_6, 'pgr')
+car::Anova(pgr_prop_6, type = 'III')
+pairs(emmeans(pgr_prop_6, 'Status.x'), adjust = 'none')
 
-#fig s10 a-e
+nmbr_prop_6 = proportion_gene(sub_6, 'nmbr')
+car::Anova(nmbr_prop_6, type = 'III')
+pairs(emmeans(nmbr_prop_6, 'Status.x'), adjust = 'none')
+
+npy7r_prop_6 = proportion_gene(sub_6, 'npy7r')
+car::Anova(npy7r_prop_6, type = 'III')
+pairs(emmeans(npy7r_prop_6, 'Status.x'), adjust = 'none')
+
+# gnrh1 and ar like
+arlike_prop_6 = proportion_gene(sub_6, 'LOC111568069')
+car::Anova(arlike_prop_6, type = 'III')
+pairs(emmeans(arlike_prop_6, 'Status.x'), adjust = 'none')
+
+gnrh1_prop_6 = proportion_gene(sub_6, 'LOC111571064')
+car::Anova(gnrh1_prop_6, type = 'III')
+pairs(emmeans(gnrh1_prop_6, 'Status.x'), adjust = 'none')
+
+
+#fig s7b####
+library(CytoTRACE)
+cyto = CytoTRACE(sub_1@assays$RNA$data%>%as.matrix())
+sub_1$cyto = cyto$CytoTRACE
+FeaturePlot(sub_1, 'cyto')
+DimPlot(sub_1) #woah 1 and 3
+
+cyto_plot = sub_1@meta.data%>%
+  group_by(individual, Status, sub_res0.2)%>%
+  summarize(mean_cyto = mean(cyto),
+            se_cyto = sd(cyto)/sqrt(n()))%>%
+  subset(Status!= 'NRM')
+
+av = lmer(mean_cyto~sub_res0.2+(1|individual), data = subset(cyto_plot, Status != 'NRM'))
+car::Anova(av,3)
+
+pairs(emmeans(av, 'sub_res0.2'), adjust ='none')
+
+
+#fig s7 c #fig s8 a-d #fig s9 #####
+"because the go term plot shows all the statistics I dont think GO needs a table"
+
+#need the gnrh1 expression
+
+#### 6d-f#####
+clust_6 = read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv")
+
+
+clust_6_grouped = clust_6%>%
+  group_by(individual, group)%>%
+  summarize(mean_esr2b = mean(ESR2B_score),
+            se_esr2b = sd(ESR2B_score)/sqrt(n()),
+            mean_ar = mean(AR_score),
+            se_ar = sd(AR_score)/sqrt(n()),
+            mean_pgr = mean(PGR_score),
+            se_pgr = sd(PGR_score)/sqrt(n()))
+
+clust_6_grouped$group = factor(clust_6_grouped$group, levels = c('M',
+                                                                 'I',
+                                                                 'LI',
+                                                                 'NF',
+                                                                 'F'))
+clust_6_grouped_mdf = subset(clust_6_grouped, group %in% c("M",'I',"F"))
+clust_6_grouped_mdf$group = factor(clust_6_grouped_mdf$group, levels = c('M', "I","F"))
+mod_esr2b = lm(mean_esr2b~group, data = clust_6_grouped_mdf)
+anova(mod_esr2b, test = 'Chisq')
+pairs(emmeans(mod_esr2b, 'group'), adjust = 'none')
+
+mod_ar = lm(mean_ar~group, data = clust_6_grouped_mdf)
+anova(mod_ar, test = 'Chisq')
+pairs(emmeans(mod_ar, 'group'), adjust = 'none')
+range(clust_6_grouped_mdf$mean_ar)
+
+mod_pgr = lm(mean_pgr~group, data = clust_6_grouped_mdf)
+anova(mod_pgr, test = 'Chisq')
+pairs(emmeans(mod_pgr, 'group'), adjust = 'none')
+
+
+### Fig 2C, B chisq
+# Chisq test for degs and dars
+degs =read.csv('/Users/ggraham/Desktop/multiome_poa/DEG Outputs/FINAL degs classified w singular.csv')
+dars =read.csv("Collaboration/all_clusters_DARs_peak_level_classified_with_support.csv")
+
+degs_clust = degs%>%
+  group_by(cluster)%>%
+  summarize(n = n())
+
+dars_clust = dars%>%
+  group_by(cluster_id)%>%
+  summarize(n = n())
+
+# chisq test
+dar_chisq = chisq.test(dars_clust$n)
+deg_chisq = chisq.test(degs_clust$n)
+
+
+degs_clust <- degs_clust %>%
+  mutate(
+    expected = deg_chisq$expected,
+    enrichment = n / expected,
+    residual = (n - expected) / sqrt(expected),
+    p_value = 2 * pnorm(-abs(residual)),
+    p_adj = p.adjust(p_value, method = "BH")
+  )%>%
+  mutate(signif = p_adj < 0.05 & enrichment > 1)
+
+#write.csv(degs_clust, 'Manuscript/deg_chisq.csv')
+
+dars_clust <- dars_clust %>%
+  mutate(
+    expected = dar_chisq$expected,
+    enrichment = n / expected,
+    residual = (n - expected) / sqrt(expected),
+    p_value = 2 * pnorm(-abs(residual)),
+    p_adj = p.adjust(p_value, method = "BH")
+  )%>%
+  mutate(signif = p_adj < 0.05 & enrichment > 1)
+
+#write.csv(dars_clust, 'Manuscript/dar_chisq.csv')
+
+#### Fig S6A, B ####
+
+status_to_phase <- c(
+  "D" = "I",
+  "M" = "M",
+  "F" = "F",
+  "NF" = "NF",
+  "NRM" = "NRM",
+  "E" = "LI"
+)
+
+#### Fig S6A, B ####
+neurons_only <- subset(
+  obj,
+  res0.8_50nn_40PC_45LSI != 2 &
+  res0.8_50nn_40PC_45LSI != 11 &
+  res0.8_50nn_40PC_45LSI != 13 &
+  res0.8_50nn_40PC_45LSI != 26 &
+  res0.8_50nn_40PC_45LSI != 20 &
+  res0.8_50nn_40PC_45LSI != 15 &
+  res0.8_50nn_40PC_45LSI != 1
+)
+
+status_to_phase <- c(
+  "D" = "I",
+  "M" = "M",
+  "F" = "F",
+  "NF" = "NF",
+  "NRM" = "NRM",
+  "E" = "LI"
+)
+
+run_s6_stats <- function(joint_data, cluster_col) {
+
+  dat <- lapply(unique(joint_data[[cluster_col]]), function(i) {
+
+    sub <- joint_data %>%
+      filter(
+        .data[[cluster_col]] == i,
+        Status %in% c("M", "D", "F")
+      ) %>%
+      mutate(
+        Phase = factor(
+          unname(status_to_phase[as.character(Status)]),
+          levels = c("M", "I", "F")
+        )
+      )
+
+    mat <- cbind(
+      sub$ncells,
+      sub$total_cells - sub$ncells
+    )
+
+    mod <- glm(
+      mat ~ Phase,
+      data = sub,
+      family = "binomial"
+    )
+
+    anova_type3 <- car::Anova(
+      mod,
+      type = 3
+    ) %>%
+      as.data.frame()
+
+    phase_row <- anova_type3["Phase", , drop = FALSE]
+
+    pair <- pairs(
+      emmeans(mod, ~ Phase),
+      adjust = "none"
+    ) %>%
+      as.data.frame()
+
+    pair$contrast <- case_when(
+      pair$contrast == "M - I" ~ "m_i",
+      pair$contrast == "M - F" ~ "m_f",
+      pair$contrast == "I - F" ~ "i_f",
+      TRUE ~ pair$contrast
+    )
+
+    pair_wide <- pair %>%
+      pivot_wider(
+        names_from = contrast,
+        values_from = -contrast,
+        names_glue = "{contrast}_{.value}"
+      )
+
+    tibble(
+      cluster = i,
+
+      anova_p.value = phase_row$`Pr(>Chisq)`,
+
+      anova_statistic = "likelihood_ratio_chisq",
+
+      anova_phase_statistic = phase_row$Chisq,
+
+      anova_Df = phase_row$Df,
+
+      pairwise_test_statistic = if ("z.ratio" %in% names(pair)) {
+        "z.ratio"
+      } else if ("t.ratio" %in% names(pair)) {
+        "t.ratio"
+      } else {
+        NA_character_
+      }
+    ) %>%
+      bind_cols(pair_wide)
+  }) %>%
+    bind_rows()
+
+  dat %>%
+    mutate(
+      anova_q.value = p.adjust(
+        anova_p.value,
+        method = "fdr"
+      )
+    )
+}
+
+
+### Cells ###
+
+total_cells <- obj@meta.data %>%
+  group_by(individual, Status) %>%
+  summarize(
+    total_cells = n(),
+    .groups = "drop"
+  )
+
+n_cells <- obj@meta.data %>%
+  group_by(individual, res0.8_50nn_40PC_45LSI) %>%
+  summarize(
+    ncells = n(),
+    .groups = "drop"
+  )
+
+joint <- total_cells %>%
+  left_join(
+    n_cells,
+    by = "individual"
+  )
+
+dat_cells <- run_s6_stats(
+  joint,
+  "res0.8_50nn_40PC_45LSI"
+)
+
+
+### Neurons ###
+
+total_cells_neuron <- neurons_only@meta.data %>%
+  group_by(individual, Status) %>%
+  summarize(
+    total_cells = n(),
+    .groups = "drop"
+  )
+
+n_cells_neuron <- neurons_only@meta.data %>%
+  group_by(individual, res0.8_50nn_40PC_45LSI) %>%
+  summarize(
+    ncells = n(),
+    .groups = "drop"
+  )
+
+joint_neuron <- total_cells_neuron %>%
+  left_join(
+    n_cells_neuron,
+    by = "individual"
+  )
+
+dat_neuron <- run_s6_stats(
+  joint_neuron,
+  "res0.8_50nn_40PC_45LSI"
+)
+
+
+### Combine ###
+
+dat_neuron$test <- "Neurons"
+dat_cells$test <- "All Cells"
+
+dat_prop <- rbind(
+  dat_neuron,
+  dat_cells
+)
+#write.csv(dat_prop, 'Manuscript/stat_tables/props_s6ab.csv')
+
+
+
+### fig 3 E #####
+classifier_scores =read.csv("Manuscript/Supplementary Tables/classifier_scores.csv")
+classifier_summary = classifier_scores%>%
+  subset(status == "D")%>%
+  group_by(cluster)%>%
+  summarize(mean_score = mean(prediction),
+            se_score =sd(prediction)/sqrt(n()))
+
+#write.csv(dat_prop, '/Users/ggraham/Desktop/multiome_poa/Manuscript/Manuscript v.2/Supplemental Files/ Appendix SX. Classifier Summary.csv')
+classifier_scores%>%
+  subset(status == "D")%>%
+  summarize(mean_score = mean(prediction),
+            se_score =sd(prediction)/sqrt(n()))
+
+
+##### plasticity AUCmodule #### 
+
+degs_plasticity = c(
+  "LOC111588913",
+  "cntn4",
+  "LOC111567620",
+  "pcdh10b",
+  "sdc2",
+  "LOC111585095",
+  "bcan",
+  "LOC111568896"
+)
+
+sub_6expr_matrix  <- sub_6@assays$RNA$data
+sub6cell_rankings <- AUCell_buildRankings(sub_6expr_matrix, plotStats = FALSE, verbose = FALSE)
+
+plasticity_gene_set  <- setNames(list(degs_plasticity), 'plasticity')
+plasticity_auc_scores <- AUCell_calcAUC(plasticity_gene_set, sub6cell_rankings, verbose = FALSE)
+sub6_plasticity_scores     <- as.numeric(getAUC(plasticity_auc_scores)[1, ])
+
+sub_6$plasticity_score = sub6_plasticity_scores
+
+plot_plas = sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(plas_score = mean(plasticity_score))
+
+ggplot(plot_plas, aes(x = Status, y = plas_score))+
+  geom_boxplot()+
+  geom_point()
+#wut
+
+plas_mod = lm(plas_score~Status, data = plot_plas)
+anova(plas_mod, test = 'Chisq')
+# not significnantb but close
+
+pairs(emmeans(plas_mod, 'Status'), adjust = 'none')
+
+# what about just the prop of cells expressing ecm_Degs
+sub_6$gene_pos = colSums(
+  sub_6@assays$RNA$data[degs_plasticity, ]
+) > 0
+
+plot_plas_prop= sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(plas_score = mean(gene_pos))
+
+ggplot(plot_plas_prop, aes(x = Status, y = plas_score))+
+  geom_boxplot()+
+  geom_point()
+#that makes sense
+
+# logistic
+plas_logistic = sub_6@meta.data%>%
+  group_by(individual, Status)%>%
+  summarize(n_cells = n())%>%
+  right_join(sub_6@meta.data%>%
+               group_by(individual)%>%
+               summarize(n_plas = sum(gene_pos)), 'individual')%>%
+  mutate(successes = n_plas,
+         failures = n_cells - n_plas)
+
+model = glm(cbind(plas_logistic$successes, plas_logistic$failures)~Status, 
+              data = plas_logistic,
+              family = 'binomial')  
+
+anova(model, test = 'Chisq')
+# not significant but I still think report it cause it makes the most sense to me
+
+
+
 

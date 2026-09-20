@@ -1,5 +1,13 @@
-model,figure,anova_p.value,likelihood_ratio_chisq,Df,p.value_adjustment,p.value_adjusted,pairwise_test_statistic,m_i_p.value,m_i_statistic,m_f_p.value,m_f_statistic,i_f_p.value,i_f_statistic
-"glm(cells_1_rgc~Phase, family = 'binomial'))",3A,0.0009562,13.905,2,none,0.0009562,z.ratio,0.0021,-3.082,0.907,0.117,0.0008,0.0472
-"glm(neurons_6_poa_mixed~Phase, family = 'binomial'))",3B,0.01803,8.0313,2,none,0.01803,z.ratio,0.5096,-0.659,0.0074,0.0745,0.0444,0.0733
-glm(rgc_1_NSC~Phase),4G,4.94E-03,10..621,2,none,0.004939,z.ratio,0.0018,3.125,0.3563,0.922,0.0212,-2.304
-glm(rgc_1_NP~Phase),4H,2.31E-07,30.564,2,none,2.31E-07,z.ratio,0.0322,-2.142,0.0019,3.107,<0.0001,5.478
+model,figure,anova_p.value,likelihood_ratio_chisq,Df,p.value_adjustment,pairwise_test_statistic,m_i_p.value,m_i_statistic,m_f_p.value,m_f_statistic,i_f_p.value,i_f_statistic
+"glm(cells_1_rgc~Phase, family = 'binomial'))",3A,0.0009562,13.905,2,none,z.ratio,0.0021,-3.082,0.907,0.117,0.0008,0.0472
+"glm(neurons_6_poa_mixed~Phase, family = 'binomial'))",3B,0.01803,8.0313,2,none,z.ratio,0.5096,-0.659,0.0074,0.0745,0.0444,0.0733
+glm(rgc_1_NSC~Phase),4G,4.94E-03,10.621,2,none,z.ratio,0.0018,3.125,0.3563,0.922,0.0212,-2.304
+glm(rgc_1_NP~Phase),4H,2.31E-07,30.564,2,none,z.ratio,0.0322,-2.142,0.0019,3.107,<0.0001,5.478
+"glm(drd3_6~Phase, family = 'binomial')",5A Middle,0.00465,10.742,2,none,z.ratio,0.5026,-0.67,0.0075,-2.673,0.0271,-2.21
+"glm(tacr3a~Phase, family = 'binomial')",5B Middle,1.92E-06,26.33,2,none,z.ratio,0.0264,-2.22,0.0087,2.623,<0.0001,4.772
+"glm(cckb~Phase, family = 'binomial')",5C Middle,0.02409,7.4523,2,none,z.ratio,0.6289,-0.483,0.0149,-2.436,0.0465,-1.991
+"glm(pgr~Phase, family = 'binomial')",,0.0004003,15.647,2,none,z.ratio,0.4102,0.823,0.0078,-2.659,0.0005,-3.457
+"glm(nmbr~Phase, family = 'binomial')",,0.01816,8.0165,2,none,z.ratio,0.4873,0.695,0.0071,2.693,0.0472,1.984
+"glm(npy7r~Phase, family = 'binomial')",,0.007371,9.8205,2,none,z.ratio,0.1576,1.413,0.0048,2.819,0.1136,1.582
+"glm(ar-like~Phase, family = 'binomial')",,8.56E-05,18.731,2,none,z.ratio,0.5559,-0.589,0.0005,-3.508,0.0019,-3.104
+"glm(gnrh1~Phase, family = 'binomial')",,0.2767,2.5699,2,none,z.ratio,0.514,-0.653,0.1267,-1.527,0.372,-0.893
