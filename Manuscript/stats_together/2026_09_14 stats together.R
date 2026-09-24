@@ -1299,3 +1299,51 @@ anova(model, test = 'Chisq')
 
 
 
+
+library(ggplot2)
+library(lme4)
+library(tidyverse)
+library(emmeans)
+library(ggsignif)
+library(multcomp)
+`%notin%` = Negate(`%in%`)
+set.seed(0)
+
+measures = read.csv('Measures/all_data.csv')
+measures$Time_Day_2= as.numeric(measures$Time_Day_2)
+measures$Behaviors_Day_2= as.numeric(measures$Behaviors_Day_2)
+measures$Log_11KT = as.numeric(measures$Log_11KT)
+
+status_to_phase = list('D'='I',
+                       'E' = 'LI',
+                       'EP' = 'LIP',
+                       'S' = 'IP',
+                       'M'='M',
+                       'F'='F',
+                       'NF'='NF',
+                       'NM'='NM')
+measures$Phase = unlist(status_to_phase[measures$Status])
+measures$Phase = factor(measures$Phase, levels =c('F','M','I','IP','LI','LIP','NF','NM'))
+
+### volume ----
+measures$Log10_Volume <- as.numeric(measures$Log10_Volume)
+
+
+### residualized volume #####
+ev_2.5x_model <- lm(Log10_Volume~length_final_cm, data = measures)
+
+measures_nona = subset(measures, !is.na(measures$Log10_Volume))
+measures_nona$corrected_volume = ev_2.5x_model$residuals
+
+ggplot(measures_nona, aes(x = Phase, y = corrected_volume))+
+  geom_boxplot()+
+  geom_point()
+
+measures_nona%>%
+  group_by(Phase)%>%
+  summarize(mean_cor_vol = mean(corrected_volume),
+            se_vol = sd(corrected_volume)/sqrt(n()))
+
+
+
+

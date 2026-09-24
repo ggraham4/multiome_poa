@@ -1,0 +1,28 @@
+,Dominant vs. Male Significance,Dominant vs. Female Significance,Female vs Male Significance,Pattern,Direction,Classification
+1,<,<,<,Transiently,Down,Transiently Down
+2,<,<,>,Transiently,Down,Transiently Down
+3,<,<,NS,Transiently,Down,Transiently Down
+4,<,>,<,Progressively,Down,Progressively Down
+5,<,>,>,NA,NA,NA
+6,<,>,NS,NA,NA,NA
+7,<,NS,<,Early,Down,Early Down
+8,<,NS,>,NA,NA,NA
+9,<,NS,NS,Early,Down,Early Down
+10,>,<,<,NA,NA,NA
+11,>,<,>,Progressively,Up,Progressively Up
+12,>,<,NS,NA,NA,NA
+13,>,>,<,Transiently,Up,Transiently Up
+14,>,>,>,Transiently,Up,Transiently Up
+15,>,>,NS,Transiently,Up,Transiently Up
+16,>,NS,<,NA,NA,NA
+17,>,NS,>,Early,Up,Early Up
+18,>,NS,NS,Early,Up,Early Up
+19,NS,<,<,NA,NA,NA
+20,NS,<,>,Late,Up,Late Up
+21,NS,<,NS,Late,Up,Late Up
+22,NS,>,<,Late,Down,Late Down
+23,NS,>,>,NA,NA,NA
+24,NS,>,NS,Transiently,Up,Transiently Up
+25,NS,NS,<,Transiently,Down,Transiently Down
+26,NS,NS,>,Transiently,Up,Transiently Up
+27,NS,NS,NS,None,None,None
