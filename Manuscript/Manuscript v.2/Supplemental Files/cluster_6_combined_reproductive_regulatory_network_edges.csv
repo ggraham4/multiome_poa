@@ -1,0 +1,18 @@
+tf_gene,target_gene,tf_symbol,target_gene_name,target_temporal,tf_is_DEG,tf_temporal,r,p,n,evidence_class,direction
+ar,znf385c,AR,zinc finger protein 385C-like,Late Upregulated,FALSE,NA,0.408967533,0.058775875,22,TF-associated / open chromatin,Positive
+ar,stxbp6,AR,Syntaxin Binding Protein 6,Late Downregulated,FALSE,NA,-0.583717741,0.004344529,22,TF-associated / open chromatin,Negative
+e2f6,kcnh4,E2F6,potassium voltage-gated channel subfamily H member 4-like,Late Upregulated,FALSE,NA,-0.522236814,0.012658601,22,TF-associated / open chromatin,Negative
+e2f6,kcnd3,E2F6,potassium voltage-gated channel subfamily D member 3-like,Late Downregulated,FALSE,NA,0.493690519,0.019540369,NA,Accessibility-coupled,Positive
+egr1,npy7r,EGR1,neuropeptide Y receptor Y7,Early Downregulated,FALSE,NA,0.529349778,0.011296007,22,TF-associated / open chromatin,Positive
+elk1,tacr3a,ELK1,tachykinin receptor 3a,Late Downregulated,FALSE,NA,0.48952775,0.020756881,22,TF-associated / open chromatin,Positive
+esr2b,kcnh4,ESR2,potassium voltage-gated channel subfamily H member 4-like,Late Upregulated,FALSE,NA,0.465793562,0.02890459,22,TF-associated / open chromatin,Positive
+esr2b,lrp8,ESR2,low-density lipoprotein receptor-related protein 8-like,Transiently Downregulated,FALSE,NA,0.405359636,0.061263638,NA,Accessibility-coupled,Positive
+esr2b,nxph1,ESR2,neurexophilin-1,Late Upregulated,FALSE,NA,0.485957499,0.021848054,NA,Accessibility-coupled,Positive
+fezf2,drd3,FEZF2,dopamine receptor D3,Late Upregulated,FALSE,NA,0.431189316,0.045116974,22,TF-associated / open chromatin,Positive
+pgr,cntnap4,PGR,contactin-associated protein-like 4,Transiently Upregulated,TRUE,Transiently Downregulated,-0.418021273,0.052873497,22,TF-associated / open chromatin,Negative
+pgr,kcnd3,PGR,potassium voltage-gated channel subfamily D member 3-like,Late Downregulated,TRUE,Transiently Downregulated,-0.414130359,0.055351381,NA,Accessibility-coupled,Negative
+pgr,lrp8,PGR,low-density lipoprotein receptor-related protein 8-like,Transiently Downregulated,TRUE,Transiently Downregulated,0.661728164,0.000796076,NA,Accessibility-coupled,Positive
+pgr,stxbp6,PGR,Syntaxin Binding Protein 6,Late Downregulated,TRUE,Transiently Downregulated,-0.458704255,0.031776201,22,TF-associated / open chromatin,Negative
+sox14,lrp8,SOX14,low-density lipoprotein receptor-related protein 8-like,Transiently Downregulated,FALSE,NA,-0.600996849,0.003095489,NA,Accessibility-coupled,Negative
+sox2,drd3,SOX2,dopamine receptor D3,Late Upregulated,FALSE,NA,0.464877596,0.029263574,22,TF-associated / open chromatin,Positive
+zbtb14,npy7r,ZBTB14,neuropeptide Y receptor Y7,Early Downregulated,FALSE,NA,-0.413155812,0.05598576,22,TF-associated / open chromatin,Negative

@@ -1,4 +1,7 @@
-  go_module = function(term){
+obj <- readRDS("~/Desktop/optimal_clustering_rna_only.rds")
+obj_6_only = subset(obj, final_clusters ==6)  
+
+go_module = function(term){
 term2gene = readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds")
 term2name = readRDS('/Users/ggraham/Desktop/multiome_poa/Function Scripts/Dependencies/Term2name.rds')
 
@@ -370,6 +373,17 @@ axon_guidance = plot_go_aucell_manuscript('GO:0008046', sub_6) +
 
 plot_go_aucell_manuscript('GO:0097484', sub_6)# intereesting 0 evidence for dendritogenesis
 
+
+synaptic = plot_go_aucell_manuscript('GO:0048167', obj_6_only) +
+  labs(subtitle = 'GO:0048167 regulation of synaptic plasticity')
+
+     ggsave(plot = synaptic,
+       file = paste0('synaptic plasticity','.svg'),
+       device = "svg",
+       units = "in",
+       width = 2,
+       height = 2.25,
+       path = '/Users/ggraham/Desktop/multiome_poa/Manuscript/Plots/')
 
 
 

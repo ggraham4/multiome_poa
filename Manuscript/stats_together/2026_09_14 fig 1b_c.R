@@ -9,6 +9,18 @@ library(tidyverse)
 library(multcomp)
 library(emmeans)
 
+pairwise_names <- c(
+  "m_i",
+  "m_f",
+  "i_f"
+)
+
+level_map <- c(
+  "m" = "M",
+  "i" = "I",
+  "f" = "F"
+)
+
 
 populate_statistics <- function(...) {
 
@@ -210,12 +222,20 @@ populate_statistics <- function(...) {
       # ------------------------------------------------------
 
       pw$contrast_norm <- pw$contrast %>%
+        as.character() %>%
         str_replace_all("\\s+", "") %>%
-        str_replace_all("−", "-")
+        str_replace_all("\u2212", "-")
 
 
       # ------------------------------------------------------
       # Fill pairwise columns
+      #
+      # pairs() orders contrasts by factor level order
+      # (earlier level minus later level), so a contrast may
+      # appear as "F-M" rather than "M-F". Match either
+      # orientation and flip the sign of the t-ratio when the
+      # reversed orientation is found, so the statistic always
+      # reflects group1 - group2 as named in pairwise_names.
       # ------------------------------------------------------
 
       for(pair in pairwise_names) {
@@ -226,29 +246,32 @@ populate_statistics <- function(...) {
           simplify = TRUE
         )
 
-        group1 <- level_map[parts[1]]
-        group2 <- level_map[parts[2]]
+        group1 <- level_map[[parts[1]]]
+        group2 <- level_map[[parts[2]]]
 
-        target <- paste0(
-          group1,
-          "-",
-          group2
-        )
+        fwd <- paste0(group1, "-", group2)
+        rev <- paste0(group2, "-", group1)
 
         match_row <- pw %>%
           filter(
-            contrast_norm == target
+            contrast_norm %in% c(fwd, rev)
           )
 
         if(nrow(match_row) == 0) {
           next
         }
 
+        sign_flip <- ifelse(
+          match_row$contrast_norm[1] == rev,
+          -1,
+          1
+        )
+
         out[[paste0(pair, "_p.value")]] <-
           match_row$p.value[1]
 
         out[[paste0(pair, "_statistic")]] <-
-          match_row$t.ratio[1]
+          sign_flip * match_row$t.ratio[1]
       }
 
 
@@ -336,18 +359,10 @@ beh_model = lm(Behaviors_Day_2~Phase, data = measures)
 
 statistics_table <- populate_statistics(
   beh_model = beh_model,
-  ev_2.5x_model = ev_2.5x_model,
-  ov_model= ov_model, 
+  ev_2.5x_model = ev_2.5x_model, 
+  ov_model = ov_model,
   test_model = test_model,
-  time_model=time_model ,
-  beh_model =beh_model
+  time_model = time_model
 )
 
-write.csv(statistics_table, '/Users/ggraham/Desktop/multiome_poa/Manuscript/stat_tables/Fig.1B-C.csv')
-
-
-
-
-
-
-
+#write.csv(statistics_table, '/Users/ggraham/Desktop/multiome_poa/Manuscript/stat_tables/Fig.1B-C.csv')

@@ -1,0 +1,695 @@
+---
+title: "Manuscript statistics — full output"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+classoption: landscape
+geometry: margin=0.5in
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,fontsize=\scriptsize,commandchars=\\\{\}}
+  - \makeatletter\def\verbatim@font{\scriptsize\ttfamily}\makeatother
+---
+
+<!--
+Analysis code below is copied verbatim from "2026_10_06 manuscript_statistics.R".
+The only additions are (1) the "knitting setup" chunk, which changes how output is
+displayed so nothing is truncated in the PDF, and (2) an optional export chunk at the end.
+
+Save this .Rmd in the same folder you normally run the .R script from (the one that
+contains "Measures/", "DEG Outputs/", "Function Scripts/", etc.), or set root.dir below.
+-->
+
+```{r knitting-setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE, error = TRUE,
+                      comment = "", dev = "png", dpi = 150,
+                      fig.width = 7, fig.height = 4.5)
+# REQUIRED unless this .Rmd sits in your project folder: the folder that contains "Measures/", "DEG Outputs/", etc.
+knitr::opts_knit$set(root.dir = "/Users/ggraham/Desktop/multiome_poa")
+
+# Display only: print every row and every column of every table.
+# Tibbles are printed as data.frames so wide tables wrap into column blocks
+# instead of running off the PDF page. Values are not changed.
+options(width = 150, digits = 7, max.print = 1e6,
+        tibble.print_max = Inf, tibble.print_min = Inf, tibble.width = Inf)
+registerS3method("print", "tbl_df", function(x, ...) {
+  df <- as.data.frame(x)
+  if (nrow(df) == 0) cat("<0 rows>\n") else print.data.frame(df, row.names = FALSE)
+  invisible(x)
+})
+```
+
+```{r input-check, error=FALSE}
+# Stops the knit right away if the working directory is wrong, instead of producing a partial PDF.
+cat("Working directory:", getwd(), "\n")
+inputs <- c("Function Scripts/Dependencies/Term2gene_clown_go2.rds",
+            "Function Scripts/Dependencies/Term2name.rds",
+            "Measures/2025_12_26 all_data.csv",
+            "DEG Outputs/FINAL degs classified w singular.csv",
+            "Collaboration/all_clusters_DARs_peak_level_classified_with_support.csv",
+            "Manuscript/Supplementary Tables/classifier_scores.csv",
+            "Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv",
+            paste0("DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering/cluster_", c(0, 1, 6), ".csv"),
+            "~/Desktop/optimal_clustering_rna_only.rds")
+print(data.frame(file = inputs, found = file.exists(inputs)), row.names = FALSE)
+if (!all(file.exists(inputs))) stop("Missing input files: set root.dir in the knitting-setup chunk to your project folder.")
+```
+
+# Setup
+
+```{r setup-analysis}
+#### Setup ####
+library(Seurat)
+library(tidyverse)
+library(emmeans)
+library(car)
+library(lme4)
+library(CytoTRACE)
+library(AUCell)
+set.seed(0)
+options(pillar.sigfig = 5)
+
+status_to_phase <- c(M = "M", D = "I", S = "IP", E = "LI", EP = "LIP",
+                     F = "F", NF = "NF", NM = "NM", NRM = "NRM")
+mif <- c("M", "I", "F")
+all_phases <- c("M", "I", "IP", "LI", "LIP", "F", "NF", "NM")
+
+add_phase <- function(d, keep = mif) {
+  d %>%
+    mutate(Phase = unname(status_to_phase[as.character(Status)])) %>%
+    filter(Phase %in% keep) %>%
+    mutate(Phase = factor(Phase, levels = keep))
+}
+
+model_label <- function(fit) {
+  fn <- if (inherits(fit, "merMod")) "lmer" else if (inherits(fit, "glm")) "glm" else "lm"
+  paste0(fn, "(", deparse1(formula(fit)), if (fn == "glm") ", family = binomial", ")")
+}
+
+# Table 1 format: Type-III test per term, uncorrected emmeans pairwise p-values on the grouping term
+# contrasts = NULL returns every pairwise contrast
+stat_table <- function(models, figure, group = "Phase", contrasts = c("M-F", "M-I", "I-F")) {
+  imap_dfr(models, function(fit, trait) {
+    a <- as.data.frame(Anova(fit, type = 3))
+    a <- a[!rownames(a) %in% c("(Intercept)", "Residuals"), , drop = FALSE]
+    stat <- intersect(c("F value", "LR Chisq", "Chisq"), names(a))[1]
+    pw <- as.data.frame(pairs(emmeans(fit, group), adjust = "none"))
+    lab <- gsub(" ", "", as.character(pw$contrast))
+    want <- if (is.null(contrasts)) lab else contrasts
+    pw_p <- map_dbl(want, function(x) {
+      i <- which(lab %in% c(x, paste(rev(strsplit(x, "-")[[1]]), collapse = "-")))
+      if (length(i)) pw$p.value[i[1]] else NA_real_
+    })
+    out <- tibble(Trait = trait, Model = model_label(fit), Figure = figure, Term = rownames(a),
+                  !!stat := a[[stat]], df = a$Df, `Type-III p-value` = a[[ncol(a)]])
+    if (!inherits(fit, "glm") && inherits(fit, "lm")) out$df_resid <- df.residual(fit)
+    for (k in seq_along(want)) out[[want[k]]] <- ifelse(out$Term == group, pw_p[k], NA_real_)
+    out
+  })
+}
+
+# Raw group means; fold = mean2 / mean1, pct_diff = % change from group1 to group2
+# NA when the trait is in no_ratio or either mean is <= 0
+fold_table <- function(data, traits, group = "Phase", no_ratio = character()) {
+  map_dfr(traits, function(v) {
+    m <- data %>%
+      filter(!is.na(.data[[v]]), !is.na(.data[[group]])) %>%
+      group_by(level = .data[[group]]) %>%
+      summarize(mean = mean(.data[[v]]), .groups = "drop")
+    if (nrow(m) < 2) return(NULL)
+    ij <- combn(nrow(m), 2)
+    tibble(trait = v,
+           group1 = as.character(m$level[ij[1, ]]), group2 = as.character(m$level[ij[2, ]]),
+           mean1 = m$mean[ij[1, ]], mean2 = m$mean[ij[2, ]]) %>%
+      mutate(difference = mean2 - mean1,
+             ok = !(v %in% no_ratio) & mean1 > 0 & mean2 > 0,
+             fold = ifelse(ok, mean2 / mean1, NA_real_),
+             pct_diff = ifelse(ok, 100 * (mean2 - mean1) / mean1, NA_real_)) %>%
+      dplyr::select(-ok)
+  })
+}
+
+mean_se <- function(data, traits, group = "Phase") {
+  data %>%
+    dplyr::select(all_of(c(group, traits))) %>%
+    pivot_longer(-all_of(group), names_to = "trait") %>%
+    filter(!is.na(value)) %>%
+    group_by(trait, .data[[group]]) %>%
+    summarize(mean = mean(value), se = sd(value) / sqrt(n()), n = n(), .groups = "drop")
+}
+
+# Per-individual cell counts in each cluster
+cluster_counts <- function(o, cluster_col) {
+  o@meta.data %>%
+    count(individual, Status, cluster = as.character(.data[[cluster_col]]), name = "ncells") %>%
+    group_by(individual) %>%
+    mutate(total_cells = sum(ncells)) %>%
+    ungroup() %>%
+    add_phase() %>%
+    mutate(prop = ncells / total_cells)
+}
+
+prop_glm <- function(d) glm(cbind(ncells, total_cells - ncells) ~ Phase, family = binomial, data = d)
+
+go_terms <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds") %>%
+  left_join(readRDS("Function Scripts/Dependencies/Term2name.rds"), by = "go_id")
+
+# AUCell GO module score, averaged per individual
+go_module <- function(term, o) {
+  set.seed(1)
+  genes <- intersect(go_terms$aocellaris_name[go_terms$go_id == term], rownames(o))
+  message(length(genes), " genes found for: ", unique(go_terms$go_name[go_terms$go_id == term]))
+  ranks <- AUCell_buildRankings(o@assays$RNA$data, plotStats = FALSE, verbose = FALSE)
+  o$score <- as.numeric(getAUC(AUCell_calcAUC(setNames(list(genes), term), ranks, verbose = FALSE))[1, ])
+  o@meta.data %>%
+    group_by(individual, Status) %>%
+    summarize(score = mean(score), .groups = "drop") %>%
+    add_phase()
+}
+
+measures <- read.csv("Measures/2025_12_26 all_data.csv") %>%
+  mutate(across(any_of(c("Behaviors_Day_2", "Time_Day_2", "Log_11KT", "Percent_Testicular",
+                         "Percent_Ovarian", "Log10_Volume", "length_final_cm", "mass_final_cm",
+                         "Change_Mass", "Change_Length", "Log10_Testicular_Estimate",
+                         "Log10_Ovarian_Estimate")), as.numeric)) %>%
+  add_phase(keep = all_phases)
+```
+
+# Fig. 1B-C (Table 1)
+
+```{r fig1}
+#### Fig. 1B-C (Table 1) ####
+fig1_models <- list(
+  `# parental acts` = lm(Behaviors_Day_2 ~ Phase, data = measures),
+  `time in nest`    = lm(Time_Day_2 ~ Phase, data = measures),
+  `log (11-KT)`     = lm(Log_11KT ~ Phase, data = measures),
+  `% testicular`    = lm(Percent_Testicular ~ Phase, data = measures),
+  `% ovarian`       = lm(Percent_Ovarian ~ Phase, data = measures),
+  `volume`          = lm(Log10_Volume ~ Phase + length_final_cm, data = measures)
+)
+fig1_table <- stat_table(fig1_models, "Fig. 1B-C")
+fig1_table
+
+# Length-corrected volume (Fig. 1B bottom)
+vol_len <- lm(Log10_Volume ~ length_final_cm, data = measures)
+measures$resid_volume <- residuals(vol_len)[rownames(measures)]
+
+ggplot(filter(measures, !is.na(resid_volume)), aes(Phase, resid_volume)) +
+  geom_boxplot() +
+  geom_point()
+
+fig1_traits <- c("Behaviors_Day_2", "Time_Day_2", "Log_11KT",
+                 "Percent_Testicular", "Percent_Ovarian", "resid_volume")
+fig1_summary <- mean_se(measures, fig1_traits)
+fig1_fold <- fold_table(measures, fig1_traits, no_ratio = "resid_volume")
+fig1_summary
+fig1_fold
+```
+
+# Fig. S1A-B
+
+```{r figS1ab}
+#### Fig. S1A-B ####
+figS1ab_models <- list(
+  `body mass`   = lm(mass_final_cm ~ Phase, data = measures),
+  `body length` = lm(length_final_cm ~ Phase, data = measures)
+)
+figS1ab_table <- stat_table(figS1ab_models, "Fig. S1A-B")
+figS1ab_summary <- mean_se(measures, c("mass_final_cm", "length_final_cm"))
+figS1ab_fold <- fold_table(measures, c("mass_final_cm", "length_final_cm"))
+figS1ab_table
+figS1ab_summary
+figS1ab_fold
+```
+
+# Fig. S1C-F
+
+```{r figS1cf}
+#### Fig. S1C-F ####
+dat_experiment <- filter(measures, Condition == "Experiment")
+
+figS1cf_models <- list(
+  `change in mass`      = lm(Change_Mass ~ Phase, data = dat_experiment),
+  `change in length`    = lm(Change_Length ~ Phase, data = dat_experiment),
+  `log10 testis volume` = lm(Log10_Testicular_Estimate ~ Phase, data = measures),
+  `log10 ovary volume`  = lm(Log10_Ovarian_Estimate ~ Phase, data = measures)
+)
+figS1cf_table <- stat_table(figS1cf_models, "Fig. S1C-F")
+figS1cf_summary <- bind_rows(
+  mean_se(dat_experiment, c("Change_Mass", "Change_Length")),
+  mean_se(measures, c("Log10_Testicular_Estimate", "Log10_Ovarian_Estimate"))
+)
+figS1cf_fold <- bind_rows(
+  fold_table(dat_experiment, c("Change_Mass", "Change_Length")),
+  fold_table(measures, c("Log10_Testicular_Estimate", "Log10_Ovarian_Estimate"))
+)
+figS1cf_table
+figS1cf_summary
+figS1cf_fold
+```
+
+# snMultiome objects
+
+```{r objects}
+#### snMultiome objects ####
+obj <- readRDS("~/Desktop/optimal_clustering_rna_only.rds")
+
+# non-neuronal: 1 RGC, 2 OL, 11 MG, 13 OPC, 15 EC, 20 Leuko, 26 DG
+neurons_only <- obj[, !obj$res0.8_50nn_40PC_45LSI %in% c(1, 2, 11, 13, 15, 20, 26)]
+
+obj <- FindSubCluster(obj, 1, "harmony.wsnn", resolution = 0.2, subcluster.name = "sub_res0.2")
+sub_1 <- subset(obj, final_clusters == 1)
+Idents(sub_1) <- "sub_res0.2"
+sub_1$cyto <- CytoTRACE(as.matrix(sub_1@assays$RNA$data))$CytoTRACE
+
+sub_6 <- subset(obj, final_clusters == 6 & Status %in% c("M", "D", "F"))
+sub_6$cyto <- CytoTRACE(as.matrix(sub_6@assays$RNA$data))$CytoTRACE
+expr6 <- sub_6@assays$RNA$data
+```
+
+# Fig. 3A-B, S6A-B
+
+```{r fig3ab}
+#### Fig. 3A-B, S6A-B ####
+counts_all <- cluster_counts(obj, "res0.8_50nn_40PC_45LSI")
+counts_neuron <- cluster_counts(neurons_only, "res0.8_50nn_40PC_45LSI")
+
+figS6a_table <- map(split(counts_all, counts_all$cluster), prop_glm) %>%
+  stat_table("Fig. S6A") %>%
+  mutate(q.value = p.adjust(`Type-III p-value`, "fdr"))
+figS6b_table <- map(split(counts_neuron, counts_neuron$cluster), prop_glm) %>%
+  stat_table("Fig. S6B") %>%
+  mutate(q.value = p.adjust(`Type-III p-value`, "fdr"))
+
+# Fig. 3A = 1_RGC among all cells; Fig. 3B = 6_POA_Mixed among neurons
+fig3ab_table <- bind_rows(
+  filter(figS6a_table, Trait == "1") %>% mutate(Figure = "Fig. 3A"),
+  filter(figS6b_table, Trait == "6") %>% mutate(Figure = "Fig. 3B")
+)
+
+figS6a_summary <- map_dfr(split(counts_all, counts_all$cluster), mean_se, "prop", .id = "cluster")
+figS6b_summary <- map_dfr(split(counts_neuron, counts_neuron$cluster), mean_se, "prop", .id = "cluster")
+figS6a_fold <- map_dfr(split(counts_all, counts_all$cluster), fold_table, "prop", .id = "cluster")
+figS6b_fold <- map_dfr(split(counts_neuron, counts_neuron$cluster), fold_table, "prop", .id = "cluster")
+
+fig3ab_table
+figS6a_table
+figS6b_table
+figS6a_summary
+figS6b_summary
+figS6a_fold
+figS6b_fold
+```
+
+# Fig. 3C-D
+
+```{r fig3cd}
+#### Fig. 3C-D ####
+chisq_enrichment <- function(d) {
+  chi <- chisq.test(d$n)
+  print(chi)
+  d %>%
+    mutate(expected = chi$expected,
+           enrichment = n / expected,
+           residual = (n - expected) / sqrt(expected),
+           p_value = 2 * pnorm(-abs(residual)),
+           p_adj = p.adjust(p_value, "BH"),
+           signif = p_adj < 0.05 & enrichment > 1)
+}
+
+fig3c_deg <- read.csv("DEG Outputs/FINAL degs classified w singular.csv") %>%
+  count(cluster) %>%
+  chisq_enrichment()
+fig3d_dar <- read.csv("Collaboration/all_clusters_DARs_peak_level_classified_with_support.csv") %>%
+  count(cluster = cluster_id) %>%
+  chisq_enrichment()
+fig3c_deg
+fig3d_dar
+```
+
+# Fig. 3E
+
+```{r fig3e}
+#### Fig. 3E ####
+classifier_scores <- read.csv("Manuscript/Supplementary Tables/classifier_scores.csv") %>%
+  filter(status == "D")
+
+classifier_scores %>%
+  group_by(cluster) %>%
+  summarize(mean_score = mean(prediction), se_score = sd(prediction) / sqrt(n()))
+classifier_scores %>%
+  summarize(mean_score = mean(prediction), se_score = sd(prediction) / sqrt(n()))
+```
+
+# Fig. 4C-E
+
+```{r fig4ce}
+#### Fig. 4C-E ####
+DimPlot(sub_1)
+
+counts_rgc <- cluster_counts(sub_1, "sub_res0.2")
+
+fig4de_models <- list(
+  `1_NSC (1_1)` = prop_glm(filter(counts_rgc, cluster == "1_1")),
+  `1_NP (1_0)`  = prop_glm(filter(counts_rgc, cluster == "1_0"))
+)
+fig4de_table <- stat_table(fig4de_models, "Fig. 4D-E")
+fig4de_summary <- map_dfr(split(counts_rgc, counts_rgc$cluster), mean_se, "prop", .id = "cluster")
+fig4de_fold <- map_dfr(split(counts_rgc, counts_rgc$cluster), fold_table, "prop", .id = "cluster") %>%
+  filter(cluster %in% c("1_0", "1_1"))
+fig4de_table
+fig4de_summary
+fig4de_fold
+```
+
+# Fig. 4F
+
+```{r fig4f}
+#### Fig. 4F ####
+neuron_diff <- go_module("GO:0030182", subset(sub_1, sub_res0.2 == "1_0"))
+
+fig4f_models <- list(`neuron differentiation (GO:0030182), 1_NP` = lm(score ~ Phase, data = neuron_diff))
+fig4f_table <- stat_table(fig4f_models, "Fig. 4F")
+fig4f_summary <- mean_se(neuron_diff, "score")
+fig4f_fold <- fold_table(neuron_diff, "score")
+fig4f_table
+fig4f_summary
+fig4f_fold
+```
+
+# Fig. S7B
+
+```{r figS7b}
+#### Fig. S7B ####
+FeaturePlot(sub_1, "cyto")
+
+cyto_sub1 <- sub_1@meta.data %>%
+  filter(Status != "NRM") %>%
+  group_by(individual, Status, sub_res0.2) %>%
+  summarize(mean_cyto = mean(cyto), .groups = "drop") %>%
+  mutate(sub_res0.2 = factor(sub_res0.2))
+
+figS7b_models <- list(`CytoTRACE by 1_RGC subcluster` = lm(mean_cyto ~ sub_res0.2, data = cyto_sub1))
+# previous model: lmer(mean_cyto ~ sub_res0.2 + (1 | individual), data = cyto_sub1)
+figS7b_table <- stat_table(figS7b_models, "Fig. S7B", group = "sub_res0.2", contrasts = NULL)
+figS7b_summary <- mean_se(cyto_sub1, "mean_cyto", group = "sub_res0.2")
+figS7b_fold <- fold_table(cyto_sub1, "mean_cyto", group = "sub_res0.2")
+figS7b_table
+figS7b_summary
+figS7b_fold
+```
+
+# Fig. 5B
+
+```{r fig5b}
+#### Fig. 5B ####
+cyto_6 <- sub_6@meta.data %>%
+  group_by(individual, Status) %>%
+  summarize(cyto = mean(cyto), .groups = "drop") %>%
+  add_phase()
+
+fig5b_models <- list(`CytoTRACE, 6_POA_Mixed` = lm(cyto ~ Phase, data = cyto_6))
+fig5b_table <- stat_table(fig5b_models, "Fig. 5B")
+fig5b_summary <- mean_se(cyto_6, "cyto")
+fig5b_fold <- fold_table(cyto_6, "cyto")
+fig5b_table
+fig5b_summary
+fig5b_fold
+```
+
+# Fig. 5C-D
+
+```{r fig5cd}
+#### Fig. 5C-D ####
+brain_dev <- go_module("GO:0007420", sub_6)
+axon_guid <- go_module("GO:0008046", sub_6)
+# axon_guid_alt <- go_module("GO:0097484", sub_6)  # GO term cited in the text
+
+fig5cd_models <- list(
+  `brain development (GO:0007420)` = lm(score ~ Phase, data = brain_dev),
+  `axon guidance (GO:0008046)`     = lm(score ~ Phase, data = axon_guid)
+  # , `axon guidance receptor activity (GO:0097484)` = lm(score ~ Phase, data = axon_guid_alt)
+)
+fig5cd_table <- stat_table(fig5cd_models, "Fig. 5C-D")
+fig5cd_summary <- bind_rows(`GO:0007420` = mean_se(brain_dev, "score"),
+                            `GO:0008046` = mean_se(axon_guid, "score"), .id = "go_term")
+fig5cd_fold <- bind_rows(`GO:0007420` = fold_table(brain_dev, "score"),
+                         `GO:0008046` = fold_table(axon_guid, "score"), .id = "go_term")
+fig5cd_table
+fig5cd_summary
+fig5cd_fold
+```
+
+# Fig. 5G
+
+```{r fig5g}
+#### Fig. 5G ####
+#### GO:0048167 regulation of synaptic plasticity, 6_POA_Mixed ####
+syn_plas <- go_module("GO:0048167", sub_6)
+
+ggplot(syn_plas, aes(Phase, score)) +
+  geom_boxplot() +
+  geom_point()
+
+syn_plas_models <- list(`regulation of synaptic plasticity (GO:0048167)` = lm(score ~ Phase, data = syn_plas))
+syn_plas_table <- stat_table(syn_plas_models, "6_POA_Mixed")
+syn_plas_summary <- mean_se(syn_plas, "score")
+syn_plas_fold <- fold_table(syn_plas, "score")
+syn_plas_table
+syn_plas_summary
+syn_plas_fold
+```
+
+# Fig. 6A-C, S10A-E
+
+```{r fig6ac}
+#### Fig. 6A-C, S10A-E ####
+genes_6 <- c(drd3 = "drd3", tacr3a = "tacr3a", cckb = "cckb", npy7r = "npy7r", nmbr = "nmbr",
+             pgr = "pgr", gnrh1 = "LOC111571064", ar_like = "LOC111568069")
+
+# Proportion of gene+ cells
+gene_counts <- imap_dfr(genes_6, function(g, nm) {
+  sub_6@meta.data %>%
+    mutate(pos = expr6[g, ] > 0) %>%
+    group_by(individual, Status) %>%
+    summarize(n_pos = sum(pos), n_cells = n(), .groups = "drop") %>%
+    mutate(gene = nm)
+}) %>%
+  add_phase() %>%
+  mutate(prop = n_pos / n_cells)
+gene_split <- split(gene_counts, factor(gene_counts$gene, levels = names(genes_6)))
+
+fig6_prop_table <- map(gene_split, ~ glm(cbind(n_pos, n_cells - n_pos) ~ Phase,
+                                         family = binomial, data = .x)) %>%
+  stat_table("Fig. 6A-C, S10A-E")
+fig6_prop_summary <- map_dfr(gene_split, mean_se, "prop", .id = "gene")
+fig6_prop_fold <- map_dfr(gene_split, fold_table, "prop", .id = "gene")
+
+# CytoTRACE of gene+ cells
+cyto_genes <- c("drd3", "tacr3a", "cckb", "pgr", "ar_like")
+cyto_pos <- map_dfr(cyto_genes, function(g) {
+  sub_6@meta.data[expr6[genes_6[g], ] > 0, ] %>% mutate(gene = g)
+}) %>%
+  add_phase()
+cyto_split <- split(cyto_pos, factor(cyto_pos$gene, levels = cyto_genes))
+
+fig6_cyto_table <- map(cyto_split, ~ lmer(cyto ~ nCount_RNA + Phase + (1 | individual), data = .x)) %>%
+  stat_table("Fig. 6A-C, S10A-E")
+cyto_pos_ind <- cyto_pos %>%
+  group_by(gene, individual, Phase) %>%
+  summarize(cyto = mean(cyto), .groups = "drop")
+fig6_cyto_summary <- map_dfr(split(cyto_pos_ind, cyto_pos_ind$gene), mean_se, "cyto", .id = "gene")
+fig6_cyto_fold <- map_dfr(split(cyto_pos_ind, cyto_pos_ind$gene), fold_table, "cyto", .id = "gene")
+
+fig6_prop_table
+fig6_prop_summary
+fig6_prop_fold
+fig6_cyto_table
+fig6_cyto_summary
+fig6_cyto_fold
+```
+
+# Fig. 6D-F
+
+```{r fig6df}
+#### Fig. 6D-F ####
+steroid <- read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv") %>%
+  group_by(individual, Phase = group) %>%
+  summarize(mean_esr2b = mean(ESR2B_score), mean_ar = mean(AR_score),
+            mean_pgr = mean(PGR_score), .groups = "drop") %>%
+  filter(Phase %in% mif) %>%
+  mutate(Phase = factor(Phase, levels = mif))
+
+fig6df_models <- list(
+  `ESR2B-associated expression` = lm(mean_esr2b ~ Phase, data = steroid),
+  `AR-associated expression`    = lm(mean_ar ~ Phase, data = steroid),
+  `PGR-associated expression`   = lm(mean_pgr ~ Phase, data = steroid)
+)
+fig6df_table <- stat_table(fig6df_models, "Fig. 6D-F")
+fig6df_summary <- mean_se(steroid, c("mean_esr2b", "mean_ar", "mean_pgr"))
+fig6df_fold <- fold_table(steroid, c("mean_esr2b", "mean_ar", "mean_pgr"),
+                          no_ratio = c("mean_esr2b", "mean_ar", "mean_pgr"))
+fig6df_table
+fig6df_summary
+fig6df_fold
+```
+
+# Named DEGs: inline statistics
+
+```{r deg-inline}
+#### Named DEGs: inline statistics ####
+deg_genes <- list(
+  `0` = c(igf2bp1 = "igf2bp1"),
+  `1` = c(cyp19a1b = "LOC111577263"),
+  # `1` = c(cyp19a1b = "cyp19a1b", gli1 = "gli1", uncx = "uncx", zic3 = "zic3", nfia = "nfia"),
+  `6` = c(drd3 = "drd3", tacr3a = "tacr3a", npy7r = "npy7r", nmbr = "nmbr",
+          cckb = "cckb", gnrh1 = "LOC111571064", pgr = "pgr")
+)
+cluster_names <- c(`0` = "0_Spall_Mixed", `1` = "1_RGC", `6` = "6_POA_Mixed")
+
+deg_stats <- function(obj, cluster, genes, clustering = "res0.8_50nn_40PC_45LSI") {
+  keep <- obj@meta.data[[clustering]] == cluster & obj$Status %in% c("M", "D", "F")
+  counts <- obj@assays$RNA$counts[, keep]
+  counts <- as.matrix(counts[Matrix::rowSums(counts) > 0, ])
+  meta <- data.frame(subject = factor(obj$individual[keep]),
+                     Status = factor(as.character(obj$Status[keep])))
+
+  # size factors and dispersions from all genes in the cluster, as in the full DEG run
+  sf <- scran::calculateSumFactors(counts, max.cluster.size = ncol(counts), positive = TRUE)
+  disp <- glmGamPoi::glm_gp(counts, col_data = meta["Status"], size_factors = sf,
+                            design = ~ Status, on_disk = FALSE)$overdispersion_shrinkage_list$ql_disp_estimate
+  meta$log_sf <- log(sf)
+
+  missing <- setdiff(genes, rownames(counts))
+  if (length(missing)) warning("Cluster ", cluster, ": not found or all zero: ", paste(missing, collapse = ", "))
+  genes <- genes[genes %in% rownames(counts)]
+
+  lv <- levels(meta$Status)
+  w <- function(a, b) as.numeric(lv == a) - as.numeric(lv == b)
+
+  imap_dfr(genes, function(g, nm) {
+    d <- mutate(meta, outcome = counts[g, ])
+    m <- tryCatch(
+      glmer(outcome ~ Status + (1 | subject), data = d, offset = log_sf,
+            family = MASS::negative.binomial(theta = 1 / disp[match(g, rownames(counts))])),
+      error = function(e) NULL)
+    if (is.null(m)) return(tibble(cluster = cluster, Gene = nm, Symbol = g, error = TRUE))
+    av <- Anova(m, type = 3)
+    ct <- as.data.frame(contrast(emmeans(m, ~ Status),
+                                 list(`I/M` = w("D", "M"), `F/M` = w("F", "M"), `F/I` = w("F", "D")),
+                                 type = "response"))
+    out <- tibble(cluster = cluster, Cluster = cluster_names[cluster], Gene = nm, Symbol = g,
+                  Model = "glmer(counts ~ Phase + (1 | individual), NB, offset = log(size factor))",
+                  `Wald Chisq` = av["Status", "Chisq"], df = av["Status", "Df"],
+                  `Type-III p-value` = av["Status", "Pr(>Chisq)"])
+    for (k in seq_len(nrow(ct))) {
+      out[[paste(ct$contrast[k], "fold")]] <- ct$ratio[k]
+      out[[paste(ct$contrast[k], "log2FC")]] <- log2(ct$ratio[k])
+      out[[paste(ct$contrast[k], "p")]] <- ct$p.value[k]
+    }
+    out$converged <- is.null(m@optinfo$conv$lme4$messages)
+    out$singular <- isSingular(m)
+    out
+  })
+}
+
+# q-values come from the full-cluster runs (FDR across all genes in the cluster)
+saved_q <- map_dfr(names(deg_genes), function(cl) {
+  read.csv(paste0("DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering/cluster_", cl, ".csv")) %>%
+    transmute(cluster = cl, Symbol = gene, saved_p = av_p.value,
+              q.value = suppressWarnings(as.numeric(av_q.value)))
+})
+
+deg_table <- imap_dfr(deg_genes, ~ deg_stats(obj, .y, .x)) %>%
+  left_join(saved_q, by = c("cluster", "Symbol")) %>%
+  relocate(q.value, saved_p, .after = `Type-III p-value`)
+deg_table
+```
+
+# Named DEGs: mean expression by phase
+
+```{r deg-means}
+#### Named DEGs: mean expression by phase ####
+expr_by_ind <- imap_dfr(deg_genes, function(genes, cl) {
+  keep <- obj$res0.8_50nn_40PC_45LSI == cl & obj$Status %in% c("M", "D", "F")
+  genes <- genes[genes %in% rownames(obj)]
+  ex <- obj@assays$RNA$data[genes, keep, drop = FALSE]
+  imap_dfr(genes, function(g, nm) {
+    tibble(individual = obj$individual[keep], Status = as.character(obj$Status[keep]), expr = ex[g, ]) %>%
+      group_by(individual, Status) %>%
+      summarize(expr = mean(expr), .groups = "drop") %>%
+      add_phase() %>%
+      mutate(Cluster = cluster_names[cl], Gene = nm)
+  })
+})
+
+expr_summary <- expr_by_ind %>%
+  group_by(Cluster, Gene, Phase) %>%
+  summarize(mean = mean(expr), se = sd(expr) / sqrt(n()), n = n(), .groups = "drop")
+
+expr_inline <- expr_summary %>%
+  mutate(label = sprintf("%.3f ± %.3f", mean, se)) %>%
+  dplyr::select(Cluster, Gene, Phase, label) %>%
+  pivot_wider(names_from = Phase, values_from = label)
+
+expr_fold <- expr_by_ind %>%
+  group_by(Cluster, Gene) %>%
+  group_modify(~ fold_table(.x, "expr")) %>%
+  ungroup()
+
+expr_summary
+expr_inline
+expr_fold
+```
+
+# gnrh1 (6_POA_Mixed)
+
+```{r gnrh1}
+#### gnrh1 (6_POA_Mixed): lm on per-individual mean expression ####
+gnrh1_ind <- filter(expr_by_ind, Gene == "gnrh1")
+
+gnrh1_models <- list(`gnrh1 expression, 6_POA_Mixed` = lm(expr ~ Phase, data = gnrh1_ind))
+gnrh1_table <- stat_table(gnrh1_models, "Fig. S10C")
+gnrh1_summary <- mean_se(gnrh1_ind, "expr")
+gnrh1_fold <- fold_table(gnrh1_ind, "expr")
+gnrh1_table
+gnrh1_summary
+gnrh1_fold
+```
+
+# Export (optional, not part of the analysis)
+
+Writes every result table above to one Excel workbook (one sheet per table) next to this file, at full precision. If `writexl` isn't installed, it writes one CSV per table into a folder instead.
+
+```{r export}
+out_names <- ls(pattern = "(_table|_summary|_fold)$")
+out_names <- c(out_names, intersect(c("fig3c_deg", "fig3d_dar", "expr_inline"), ls()))
+out_list <- mget(out_names)
+out_list <- out_list[vapply(out_list, is.data.frame, logical(1))]
+# the two Fig. 3E summaries are printed above but not saved to objects; recompute them for export
+if (exists("classifier_scores")) {
+  out_list$fig3e_by_cluster <- classifier_scores %>% group_by(cluster) %>%
+    summarize(mean_score = mean(prediction), se_score = sd(prediction) / sqrt(n()))
+  out_list$fig3e_overall <- classifier_scores %>%
+    summarize(mean_score = mean(prediction), se_score = sd(prediction) / sqrt(n()))
+}
+names(out_list) <- substr(names(out_list), 1, 31)
+
+if (requireNamespace("writexl", quietly = TRUE)) {
+  writexl::write_xlsx(out_list, "manuscript_statistics_outputs.xlsx")
+  cat("Wrote manuscript_statistics_outputs.xlsx with", length(out_list), "sheets\n")
+} else {
+  dir.create("manuscript_statistics_outputs", showWarnings = FALSE)
+  iwalk(out_list, ~ write.csv(.x, file.path("manuscript_statistics_outputs", paste0(.y, ".csv")),
+                              row.names = FALSE))
+  cat("Wrote", length(out_list), "CSVs to manuscript_statistics_outputs/\n")
+}
+```
+
+# Session info
+
+```{r session-info}
+sessionInfo()
+```
