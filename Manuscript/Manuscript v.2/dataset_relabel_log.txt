@@ -1,0 +1,37 @@
+Appendix S14  ->  SI Appendix, Table S9
+Supplementary Table xx  ->  SI Appendix, Table S8
+Appendix S16  ->  Dataset S9
+Appendix S15  ->  SI Appendix, Table S7
+Appendix S15  ->  SI Appendix, Table S7
+Appendix S13  ->  Dataset S7
+Appendix S13  ->  Dataset S7
+Appendix S14  ->  Dataset S8
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S12  ->  Dataset S6
+Appendix S10, S11  ->  Dataset S5; SI Appendix, Table S6
+Appendix S8, S9  ->  Dataset S4; SI Appendix, Table S5
+Appendix S7  ->  Dataset S3
+Appendix S1  ->  Dataset S1
+Appendix S6  ->  Dataset S2
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S1  ->  Dataset S1
+Appendix S4 and S5  ->  SI Appendix, Tables S3 and S4
+Appendix S2 for all cell type labels and S3 for abbreviations  ->  SI Appendix, Table S1 for all cell type labels and Table S2 for abbreviations
+Appendix Sxx  ->  Dataset S1
+Appendix Sxx  ->  Dataset S1
+Appendix sxx  ->  Dataset S1
+Appendix sxx  ->  Dataset S1

@@ -1,6 +1,7 @@
 #### Reproduces every statistic in Appendix S1 ####
 # Run from the project root (the folder containing "Measures/", "DEG Outputs/", "Manuscript/", ...).
-# Output: "Manuscript/Supplementary Tables/Appendix S1. Statistics.xlsx" (one sheet per figure).
+# Output: "Manuscript/Supplementary Tables/Appendix S1. Statistics.xlsx" (one sheet per figure),
+#         plus the analysis data frames behind every test in "Manuscript/Supplementary Tables/Appendix S1 source data/".
 #
 # Sections 1-16 are the analyses; section 17 assembles the workbook.
 # Phase codes: M male, I intermediate, IP intermediate partner, LI late intermediate,
@@ -20,10 +21,23 @@ options(pillar.sigfig = 5)
 
 # setwd("/path/to/multiome_poa")   # uncomment and edit if not already in the project root
 
+# The negative-binomial DEG glmer (section 14) is slow. With RUN_DEG <- FALSE the saved results are read from
+# manuscript_statistics_outputs.xlsx (sheet "deg_table") instead of being refit.
+RUN_DEG <- FALSE
+
+# Analysis data frames are saved so every statistic can be reproduced and published.
+source_dir <- "Manuscript/Supplementary Tables/Appendix S1 source data"
+dir.create(source_dir, showWarnings = FALSE, recursive = TRUE)
+save_df <- function(d, name) {
+  write.csv(as.data.frame(d), file.path(source_dir, paste0(name, ".csv")), row.names = FALSE)
+  invisible(d)
+}
+
 status_to_phase <- c(M = "M", D = "I", S = "IP", E = "LI", EP = "LIP",
                      F = "F", NF = "NF", NM = "NM", NRM = "NRM")
 mif <- c("M", "I", "F")
 all_phases <- c("M", "I", "IP", "LI", "LIP", "F", "NF", "NM")
+desc_phases <- c("M", "I", "LI", "NF", "F")   # saved source data include LI and NF (descriptive only; never tested)
 
 add_phase <- function(d, keep = mif) {
   d %>%
@@ -69,13 +83,13 @@ mean_se <- function(data, traits, group = "Phase") {
 }
 
 # Per-individual cell counts in each cluster
-cluster_counts <- function(o, cluster_col) {
+cluster_counts <- function(o, cluster_col, keep = mif) {
   o@meta.data %>%
     count(individual, Status, cluster = as.character(.data[[cluster_col]]), name = "ncells") %>%
     group_by(individual) %>%
     mutate(total_cells = sum(ncells)) %>%
     ungroup() %>%
-    add_phase() %>%
+    add_phase(keep = keep) %>%
     mutate(prop = ncells / total_cells)
 }
 
@@ -85,7 +99,7 @@ go_terms <- readRDS("Function Scripts/Dependencies/Term2gene_clown_go2.rds") %>%
   left_join(readRDS("Function Scripts/Dependencies/Term2name.rds"), by = "go_id")
 
 # AUCell GO module score, averaged per individual
-go_module <- function(term, o) {
+go_module <- function(term, o, keep = mif) {
   set.seed(1)
   genes <- intersect(go_terms$aocellaris_name[go_terms$go_id == term], rownames(o))
   message(length(genes), " genes found for: ", unique(go_terms$go_name[go_terms$go_id == term]))
@@ -94,7 +108,7 @@ go_module <- function(term, o) {
   o@meta.data %>%
     group_by(individual, Status) %>%
     summarize(score = mean(score), .groups = "drop") %>%
-    add_phase()
+    add_phase(keep = keep)
 }
 
 measures <- read.csv("Measures/2025_12_26 all_data.csv") %>%
@@ -115,6 +129,7 @@ fig1_models <- list(
   `volume`          = lm(Log10_Volume ~ Phase + length_final_cm, data = measures)
 )
 fig1_table <- stat_table(fig1_models, "Fig. 1B-C")
+save_df(measures, "fig1_S1_measures_all_phases")
 
 # Length-corrected gonad volume (residual of log10 volume on final length)
 vol_len <- lm(Log10_Volume ~ length_final_cm, data = measures)
@@ -132,12 +147,17 @@ figS1ab_table <- stat_table(list(
 figS1ab_summary <- mean_se(measures, c("mass_final_cm", "length_final_cm"))
 
 dat_experiment <- filter(measures, Condition == "Experiment")
-figS1cf_table <- stat_table(list(
-  `change in mass`      = lm(Change_Mass ~ Phase, data = dat_experiment),
-  `change in length`    = lm(Change_Length ~ Phase, data = dat_experiment),
-  `log10 testis volume` = lm(Log10_Testicular_Estimate ~ Phase, data = measures),
-  `log10 ovary volume`  = lm(Log10_Ovarian_Estimate ~ Phase, data = measures)
-), "Fig. S1C-F")
+# change in mass/length: experimental fish only (no M or F), so the post-hoc contrast is intermediate vs intermediate partner
+figS1cf_table <- bind_rows(
+  stat_table(list(
+    `change in mass`   = lm(Change_Mass ~ Phase, data = dat_experiment),
+    `change in length` = lm(Change_Length ~ Phase, data = dat_experiment)
+  ), "Fig. S1C-D", contrasts = "I-IP"),
+  stat_table(list(
+    `log10 testis volume` = lm(Log10_Testicular_Estimate ~ Phase, data = measures),
+    `log10 ovary volume`  = lm(Log10_Ovarian_Estimate ~ Phase, data = measures)
+  ), "Fig. S1E-F")
+)
 figS1cf_summary <- bind_rows(
   mean_se(dat_experiment, c("Change_Mass", "Change_Length")),
   mean_se(measures, c("Log10_Testicular_Estimate", "Log10_Ovarian_Estimate"))
@@ -208,6 +228,7 @@ qc_pass <- validation$cluster[validation$val_m < 0.10 & validation$val_f > 0.90]
 classifier_scores <- read.csv("Manuscript/Supplementary Tables/classifier_scores.csv") %>%
   filter(status == "D")   # intermediates only
 
+save_df(classifier_scores, "fig3E_classifier_scores_intermediates")
 fig3e_by_cluster <- classifier_scores %>%
   group_by(cluster) %>%
   summarize(n_features = first(n_degs), mean_score = mean(prediction),
@@ -242,6 +263,7 @@ cyto_sub1 <- sub_1@meta.data %>%
   group_by(individual, Status, sub_res0.2) %>%
   summarize(mean_cyto = mean(cyto), .groups = "drop") %>%
   mutate(sub_res0.2 = factor(sub_res0.2))
+save_df(cyto_sub1, "figS7B_cytotrace_by_rgc_subcluster_per_individual")
 figS7b_table <- stat_table(list(`CytoTRACE by 1_RGC subcluster` = lm(mean_cyto ~ sub_res0.2, data = cyto_sub1)),
                            "Fig. S7B", group = "sub_res0.2", contrasts = NULL)
 figS7b_summary <- mean_se(cyto_sub1, "mean_cyto", group = "sub_res0.2")
@@ -309,6 +331,55 @@ cyto_pos_ind <- cyto_pos %>%
 fig6_cyto_summary <- map_dfr(split(cyto_pos_ind, cyto_pos_ind$gene), mean_se, "cyto", .id = "gene")
 
 
+#### 12b. Source data with LI and NF (descriptive only; every statistic above uses M, I, F only) ####
+# Counts, AUCell module scores and gene+ proportions of a cell do not depend on which other cells are present, so
+# M/I/F rows are identical to the analysed data. CytoTRACE does depend on the cell set: M/I/F rows keep the scores
+# from the M/I/F analysis; LI/NF rows come from a CytoTRACE run on M, I, LI, NF and F cells together (cyto_basis column).
+save_df(cluster_counts(obj, "res0.8_50nn_40PC_45LSI", keep = desc_phases), "fig3A_S6A_cell_counts_per_individual_cluster")
+save_df(cluster_counts(neurons_only, "res0.8_50nn_40PC_45LSI", keep = desc_phases), "fig3B_S6B_neuron_counts_per_individual_cluster")
+save_df(cluster_counts(sub_1, "sub_res0.2", keep = desc_phases), "fig4DE_rgc_subcluster_counts_per_individual")
+save_df(go_module("GO:0030182", subset(sub_1, sub_res0.2 == "1_0"), keep = desc_phases), "fig4F_neuron_differentiation_module_per_individual")
+
+sub_6_desc <- subset(obj, final_clusters == 6 & Status %in% c("M", "D", "E", "NF", "F"))
+sub_6_desc$cyto <- CytoTRACE(as.matrix(sub_6_desc@assays$RNA$data))$CytoTRACE
+expr6_desc <- sub_6_desc@assays$RNA$data
+save_df(go_module("GO:0007420", sub_6_desc, keep = desc_phases), "fig5C_brain_development_module_per_individual")
+save_df(go_module("GO:0008046", sub_6_desc, keep = desc_phases), "fig5D_axon_guidance_module_per_individual")
+save_df(go_module("GO:0048167", sub_6_desc, keep = desc_phases), "fig5G_synaptic_plasticity_module_per_individual")
+
+cyto_6_desc <- sub_6_desc@meta.data %>%
+  group_by(individual, Status) %>%
+  summarize(cyto = mean(cyto), .groups = "drop") %>%
+  add_phase(keep = desc_phases)
+save_df(bind_rows(mutate(cyto_6, cyto_basis = "M/I/F analysis set"),
+                  cyto_6_desc %>% filter(Phase %in% c("LI", "NF")) %>% mutate(cyto_basis = "all-phase set (descriptive)")),
+        "fig5B_cytotrace_6_POA_Mixed_per_individual")
+
+gene_counts_desc <- imap_dfr(genes_6, function(g, nm) {
+  sub_6_desc@meta.data %>%
+    mutate(pos = expr6_desc[g, ] > 0) %>%
+    group_by(individual, Status) %>%
+    summarize(n_pos = sum(pos), n_cells = n(), .groups = "drop") %>%
+    mutate(gene = nm)
+}) %>%
+  add_phase(keep = desc_phases) %>%
+  mutate(prop = n_pos / n_cells)
+save_df(gene_counts_desc, "fig6ABC_S10_gene_positive_counts_per_individual")
+
+cyto_pos_desc <- map_dfr(cyto_genes, function(g) {
+  sub_6_desc@meta.data[expr6_desc[genes_6[g], ] > 0, ] %>% mutate(gene = g)
+}) %>%
+  add_phase(keep = desc_phases)
+cyto_cols <- c("gene", "individual", "Status", "Phase", "cyto", "nCount_RNA")
+cyto_pos_save <- bind_rows(cyto_pos %>% dplyr::select(all_of(cyto_cols)) %>% mutate(cyto_basis = "M/I/F analysis set"),
+                           cyto_pos_desc %>% filter(Phase %in% c("LI", "NF")) %>% dplyr::select(all_of(cyto_cols)) %>%
+                             mutate(cyto_basis = "all-phase set (descriptive)"))
+save_df(cyto_pos_save, "fig6ABC_S10_cytotrace_gene_positive_cells")
+save_df(cyto_pos_save %>% group_by(gene, individual, Phase, cyto_basis) %>% summarize(cyto = mean(cyto), .groups = "drop"),
+        "fig6ABC_S10_cytotrace_gene_positive_per_individual")
+rm(sub_6_desc, expr6_desc)
+
+
 #### 13. Fig. 6D-F: steroid receptor-associated expression ####
 steroid <- read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv") %>%
   group_by(individual, Phase = group) %>%
@@ -316,6 +387,7 @@ steroid <- read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMO
             mean_pgr = mean(PGR_score), .groups = "drop") %>%
   filter(Phase %in% mif) %>%
   mutate(Phase = factor(Phase, levels = mif))
+save_df(read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv"), "fig6DF_steroid_expression_scores_per_individual")
 
 fig6df_table <- stat_table(list(
   `ESR2B-associated expression` = lm(mean_esr2b ~ Phase, data = steroid),
@@ -324,13 +396,29 @@ fig6df_table <- stat_table(list(
 ), "Fig. 6D-F")
 fig6df_summary <- mean_se(steroid, c("mean_esr2b", "mean_ar", "mean_pgr"))
 
+# Fig. 6G-I: promoter accessibility of the same receptor-specific gene sets (z-scored accessibility, one row per individual)
+steroid_acc_raw <- read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ACCESSIBILITY_ZSCORES.csv")
+save_df(steroid_acc_raw, "fig6GI_steroid_accessibility_scores_per_individual")
+steroid_acc <- steroid_acc_raw %>%
+  transmute(individual, Phase = group, mean_esr2b_acc = ESR2B_accessibility_score,
+            mean_ar_acc = AR_accessibility_score, mean_pgr_acc = PGR_accessibility_score) %>%
+  filter(Phase %in% mif) %>%
+  mutate(Phase = factor(Phase, levels = mif))
+
+fig6gi_table <- stat_table(list(
+  `ESR2B-associated accessibility` = lm(mean_esr2b_acc ~ Phase, data = steroid_acc),
+  `AR-associated accessibility`    = lm(mean_ar_acc ~ Phase, data = steroid_acc),
+  `PGR-associated accessibility`   = lm(mean_pgr_acc ~ Phase, data = steroid_acc)
+), "Fig. 6G-I")
+fig6gi_summary <- mean_se(steroid_acc, c("mean_esr2b_acc", "mean_ar_acc", "mean_pgr_acc"))
+
 
 #### 14. Named DEGs: negative binomial GLMM ####
 deg_genes <- list(
   `0` = c(igf2bp1 = "igf2bp1"),
   `1` = c(cyp19a1b = "LOC111577263"),
   `6` = c(drd3 = "drd3", tacr3a = "tacr3a", npy7r = "npy7r", nmbr = "nmbr",
-          cckb = "cckb", pgr = "pgr")   # gnrh1 is analysed with lm (section 16)
+          cckb = "cckb", pgr = "pgr", ar_like = "LOC111568069")   # gnrh1 is analysed with lm (section 16)
 )
 cluster_names <- c(`0` = "0_Spall_Mixed", `1` = "1_RGC", `6` = "6_POA_Mixed")
 
@@ -378,8 +466,34 @@ saved_q <- map_dfr(names(deg_genes), function(cl) {
     transmute(cluster = cl, Symbol = gene, q.value = suppressWarnings(as.numeric(av_q.value)))
 })
 
-deg_table <- imap_dfr(deg_genes, ~ deg_stats(obj, .y, .x)) %>%
-  left_join(saved_q, by = c("cluster", "Symbol"))
+if (RUN_DEG) {
+  deg_table <- imap_dfr(deg_genes, ~ deg_stats(obj, .y, .x)) %>%
+    left_join(saved_q, by = c("cluster", "Symbol"))
+} else {
+  # precomputed results of the run above (gnrh1 is analysed with lm in section 16, so its glmer row is dropped)
+  deg_table <- openxlsx::read.xlsx("manuscript_statistics_outputs.xlsx", sheet = "deg_table", sep.names = " ") %>%
+    as_tibble() %>%
+    filter(Symbol %in% unlist(deg_genes)) %>%
+    mutate(cluster = as.character(cluster)) %>%
+    dplyr::select(cluster, Cluster, Gene, Symbol, `Wald Chisq`, df, `Type-III p-value`,
+                  `I/M fold`, `I/M p`, `F/M fold`, `F/M p`, `F/I fold`, `F/I p`, converged, singular) %>%
+    left_join(saved_q, by = c("cluster", "Symbol"))
+
+  # ar-like (LOC111568069) is not in the precomputed table; its row is rebuilt from the saved full-cluster DEG run.
+  # Pairwise p-values are the saved contrasts, folds = exp(saved log estimates), and for a df = 2 Wald test the
+  # chi-squared follows exactly from the Type-III p-value (this reproduces the drd3 and tacr3a rows).
+  ar_saved <- read.csv("DEG Outputs/05_11_2025 Neg Bin w Doms New_clustering/cluster_6.csv") %>% filter(gene == "LOC111568069")
+  ar_row <- tibble(cluster = "6", Cluster = "6_POA_Mixed", Gene = "ar_like", Symbol = "LOC111568069",
+                   `Wald Chisq` = qchisq(ar_saved$av_p.value, df = 2, lower.tail = FALSE), df = 2,
+                   `Type-III p-value` = ar_saved$av_p.value,
+                   `I/M fold` = exp(ar_saved$d_m_estimate), `I/M p` = ar_saved$d_m_p.value,
+                   `F/M fold` = exp(ar_saved$f_m_estimate), `F/M p` = ar_saved$f_m_p.value,
+                   `F/I fold` = exp(-ar_saved$d_f_estimate), `F/I p` = ar_saved$d_f_p.value,
+                   converged = is.na(ar_saved$warning), singular = ar_saved$singular) %>%
+    left_join(saved_q, by = c("cluster", "Symbol"))
+  deg_table <- bind_rows(deg_table, ar_row)
+}
+save_df(deg_table, "named_DEGs_negative_binomial_results")
 
 
 #### 15. Named DEGs: mean normalized expression per individual ####
@@ -387,26 +501,54 @@ expr_genes <- deg_genes
 expr_genes$`6` <- c(expr_genes$`6`, gnrh1 = "LOC111571064")
 
 expr_by_ind <- imap_dfr(expr_genes, function(genes, cl) {
-  keep <- obj$res0.8_50nn_40PC_45LSI == cl & obj$Status %in% c("M", "D", "F")
+  keep <- obj$res0.8_50nn_40PC_45LSI == cl & obj$Status %in% c("M", "D", "E", "NF", "F")
   genes <- genes[genes %in% rownames(obj)]
   ex <- obj@assays$RNA$data[genes, keep, drop = FALSE]
   imap_dfr(genes, function(g, nm) {
     tibble(individual = obj$individual[keep], Status = as.character(obj$Status[keep]), expr = ex[g, ]) %>%
       group_by(individual, Status) %>%
       summarize(expr = mean(expr), .groups = "drop") %>%
-      add_phase() %>%
+      add_phase(keep = desc_phases) %>%
       mutate(Cluster = cluster_names[cl], Gene = nm)
   })
 })
 
-expr_summary <- expr_by_ind %>%
+save_df(expr_by_ind, "named_DEGs_mean_expression_per_individual")
+expr_by_ind_mif <- expr_by_ind %>% filter(Phase %in% mif) %>% mutate(Phase = droplevels(Phase))
+expr_summary <- expr_by_ind_mif %>%
   group_by(Cluster, Gene, Phase) %>%
   summarize(mean = mean(expr), se = sd(expr) / sqrt(n()), n = n(), .groups = "drop")
 
 
 #### 16. gnrh1 (Fig. S10C): lm on per-individual mean expression ####
-gnrh1_table <- stat_table(list(`gnrh1 expression, 6_POA_Mixed` = lm(expr ~ Phase, data = filter(expr_by_ind, Gene == "gnrh1"))),
+gnrh1_table <- stat_table(list(`gnrh1 expression, 6_POA_Mixed` = lm(expr ~ Phase, data = filter(expr_by_ind_mif, Gene == "gnrh1"))),
                           "Fig. S10C")
+
+
+#### 16b. Pairwise p-values in one tidy file (read by the omnibus plotting script) ####
+# One row per source table x measure x contrast. Pairwise p-values are the unadjusted emmeans contrasts in Appendix S1.
+pairwise_long <- function(tab, source) {
+  pair_cols <- grep("^[^ ]+-[^ ]+$", names(tab), value = TRUE)
+  tab %>%
+    filter(if_any(all_of(pair_cols), ~ !is.na(.x))) %>%
+    mutate(omnibus_p = `Type-III p-value`, q = if ("q.value" %in% names(.)) q.value else NA_real_) %>%
+    dplyr::select(Trait, omnibus_p, q, all_of(pair_cols)) %>%
+    pivot_longer(all_of(pair_cols), names_to = "contrast", values_to = "p") %>%
+    filter(!is.na(p)) %>%
+    mutate(source = source, .before = 1)
+}
+deg_pairs <- deg_table %>%
+  transmute(source = "named_DEGs", Trait = paste(Cluster, Gene, sep = " | "), omnibus_p = `Type-III p-value`, q = q.value,
+            `M-I` = `I/M p`, `M-F` = `F/M p`, `I-F` = `F/I p`) %>%
+  pivot_longer(c(`M-I`, `M-F`, `I-F`), names_to = "contrast", values_to = "p")
+pairwise_p_table <- bind_rows(
+  pairwise_long(fig1_table, "fig1"), pairwise_long(figS1ab_table, "figS1ab"), pairwise_long(figS1cf_table, "figS1cf"),
+  pairwise_long(figS6a_table, "figS6a"), pairwise_long(figS6b_table, "figS6b"), pairwise_long(fig4de_table, "fig4de"),
+  pairwise_long(fig4f_table, "fig4f"), pairwise_long(figS7b_table, "figS7b"), pairwise_long(fig5b_table, "fig5b"),
+  pairwise_long(fig5cd_table, "fig5cd"), pairwise_long(syn_plas_table, "fig5g"), pairwise_long(fig6_prop_table, "fig6_prop"),
+  pairwise_long(fig6_cyto_table, "fig6_cyto"), pairwise_long(fig6df_table, "fig6df"), pairwise_long(fig6gi_table, "fig6gi"),
+  pairwise_long(gnrh1_table, "gnrh1_expression"), deg_pairs)
+save_df(pairwise_p_table, "pairwise_pvalues_for_plots")
 
 
 #### 17. Write Appendix S1 ####
@@ -418,7 +560,9 @@ trait_labels <- c(Behaviors_Day_2 = "# parental acts", Time_Day_2 = "Time in nes
                   Change_Mass = "Final mass (% of initial)", Change_Length = "Final length (% of initial)",
                   Log10_Testicular_Estimate = "log10 testis volume", Log10_Ovarian_Estimate = "log10 ovary volume",
                   mean_esr2b = "ESR2B-associated expression", mean_ar = "AR-associated expression",
-                  mean_pgr = "PGR-associated expression", score = "Module score", cyto = "CytoTRACE",
+                  mean_pgr = "PGR-associated expression",
+                  mean_esr2b_acc = "ESR2B-associated accessibility", mean_ar_acc = "AR-associated accessibility",
+                  mean_pgr_acc = "PGR-associated accessibility", score = "Module score", cyto = "CytoTRACE",
                   mean_cyto = "CytoTRACE")
 gene_labels <- c(ar_like = "ar-like (LOC111568069)", gnrh1 = "gnrh1 (LOC111571064)")
 deg_note <- "glmer negative binomial: counts ~ Phase + (1 | individual), offset = log(size factor); folds are model-based ratios."
@@ -437,7 +581,7 @@ tests_tbl <- function(d, stat_label) {
   }
   out$`p-value (Type III)` <- d$`Type-III p-value`
   if ("q.value" %in% names(d)) out$`q-value (FDR)` <- d$q.value
-  for (k in c("M-F", "M-I", "I-F")) if (k %in% names(d)) out[[paste0("p (", sub("-", " vs ", k), ")")]] <- d[[k]]
+  for (k in c("M-F", "M-I", "I-F", "I-IP")) if (k %in% names(d)) out[[paste0("p (", sub("-", " vs ", k), ")")]] <- d[[k]]
   out
 }
 
@@ -572,7 +716,7 @@ sheet_index <- tibble(
                "Fig. S7B: CytoTRACE by 1_RGC subcluster",
                "Fig. 5B-D, G: CytoTRACE and GO module scores in 6_POA_Mixed",
                "Fig. 6A-C, S10A-E: candidate neuroendocrine populations in 6_POA_Mixed",
-               "Fig. 6D-F: steroid receptor-associated expression in 6_POA_Mixed",
+               "Fig. 6D-I: steroid receptor-associated expression and promoter accessibility in 6_POA_Mixed",
                "Other DEGs cited in the text (igf2bp1, 0_Spall_Mixed)"))
 writeData(wb, "README", readme, startRow = 1)
 addStyle(wb, "README", st_sheet, rows = 1, cols = 1)
@@ -634,12 +778,12 @@ add_table("Fig4", "Fig. 4A: cyp19a1b differential expression (1_RGC)", deg_tbl(f
 add_table("Fig4", "Fig. 4A: cyp19a1b mean normalized expression", expr_tbl("cyp19a1b", "1_RGC"))
 add_table("Fig4", "Fig. 4D-E: subcluster abundance within 1_RGC",
           tests_tbl(fig4de_table, paste("LR", chi2)) %>%
-            mutate(Measure = recode(Measure, `1_NSC (1_1)` = "1_NSC (subcluster 1_1)", `1_NP (1_0)` = "1_NP (subcluster 1_0)")) %>%
+            mutate(Measure = dplyr::recode(Measure, `1_NSC (1_1)` = "1_NSC (subcluster 1_1)", `1_NP (1_0)` = "1_NP (subcluster 1_0)")) %>%
             dplyr::select(-Term),
           "Binomial GLM on per-individual subcluster counts relative to all 1_RGC cells.")
 add_table("Fig4", "Fig. 4D-E: mean subcluster proportion",
           fig4de_summary %>% filter(cluster %in% c("1_0", "1_1")) %>%
-            mutate(cluster = recode(cluster, `1_0` = "1_NP (1_0)", `1_1` = "1_NSC (1_1)")) %>%
+            mutate(cluster = dplyr::recode(cluster, `1_0` = "1_NP (1_0)", `1_1` = "1_NSC (1_1)")) %>%
             wide_mif("cluster", "Subcluster"))
 add_table("Fig4", "Fig. 4F: neuron differentiation module (GO:0030182) in 1_NP", dplyr::select(tests_tbl(fig4f_table, "F"), -Term),
           "AUCell module score averaged per individual.")
@@ -688,10 +832,14 @@ add_table("Fig6A-C_S10", "Mean normalized expression",
           expr_tbl(c(names(deg_genes$`6`), "gnrh1"), "6_POA_Mixed"))
 
 # --- Fig6D-F ---
-new_sheet("Fig6D-F", "Fig. 6D-F. Steroid receptor-associated expression in 6_POA_Mixed",
+new_sheet("Fig6D-F", "Fig. 6D-I. Steroid receptor-associated expression (D-F) and promoter accessibility (G-I) in 6_POA_Mixed",
           "lm on per-individual mean z-scored expression of genes with ESR2B, AR or PGR motifs in their promoters.")
 add_table("Fig6D-F", "Omnibus tests", dplyr::select(tests_tbl(fig6df_table, "F"), -Term))
 add_table("Fig6D-F", "Means by phase", means_long(fig6df_summary))
+add_table("Fig6D-F", "Fig. 6G-I: promoter accessibility of the same receptor-specific gene sets",
+          dplyr::select(tests_tbl(fig6gi_table, "F"), -Term),
+          "lm on per-individual mean z-scored promoter accessibility (updatedcluster_6_..._ACCESSIBILITY_ZSCORES.csv).")
+add_table("Fig6D-F", "Fig. 6G-I: means by phase", means_long(fig6gi_summary))
 
 # --- Other DEGs ---
 new_sheet("Other_DEGs", "Other DEGs cited in the text")
