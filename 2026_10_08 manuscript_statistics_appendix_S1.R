@@ -119,7 +119,7 @@ measures <- read.csv("Measures/2025_12_26 all_data.csv") %>%
   add_phase(keep = all_phases)
 
 
-#### 1. Fig. 1B-C (Table 1) ####
+#### 1. Fig. 1B-C ####
 fig1_models <- list(
   `# parental acts` = lm(Behaviors_Day_2 ~ Phase, data = measures),
   `time in nest`    = lm(Time_Day_2 ~ Phase, data = measures),
@@ -380,25 +380,25 @@ save_df(cyto_pos_save %>% group_by(gene, individual, Phase, cyto_basis) %>% summ
 rm(sub_6_desc, expr6_desc)
 
 
-#### 13. Fig. 6D-F: steroid receptor-associated expression ####
+#### 13. Fig. 6D-I: steroid receptor-associated expression and promoter accessibility ####
 steroid <- read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv") %>%
   group_by(individual, Phase = group) %>%
   summarize(mean_esr2b = mean(ESR2B_score), mean_ar = mean(AR_score),
             mean_pgr = mean(PGR_score), .groups = "drop") %>%
   filter(Phase %in% mif) %>%
   mutate(Phase = factor(Phase, levels = mif))
-save_df(read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv"), "fig6DF_steroid_expression_scores_per_individual")
+save_df(read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ZSCORES.csv"), "fig6_steroid_expression_scores_per_individual")
 
 fig6df_table <- stat_table(list(
   `ESR2B-associated expression` = lm(mean_esr2b ~ Phase, data = steroid),
   `AR-associated expression`    = lm(mean_ar ~ Phase, data = steroid),
   `PGR-associated expression`   = lm(mean_pgr ~ Phase, data = steroid)
-), "Fig. 6D-F")
+), "Fig. 6D,F,H")
 fig6df_summary <- mean_se(steroid, c("mean_esr2b", "mean_ar", "mean_pgr"))
 
-# Fig. 6G-I: promoter accessibility of the same receptor-specific gene sets (z-scored accessibility, one row per individual)
+# Fig. 6E,G,I: promoter accessibility of the same receptor-specific gene sets (z-scored accessibility, one row per individual)
 steroid_acc_raw <- read.csv("Manuscript/updatedcluster_6_steroid_receptor_SPECIFIC_PROMOTER_ACCESSIBILITY_ZSCORES.csv")
-save_df(steroid_acc_raw, "fig6GI_steroid_accessibility_scores_per_individual")
+save_df(steroid_acc_raw, "fig6_steroid_accessibility_scores_per_individual")
 steroid_acc <- steroid_acc_raw %>%
   transmute(individual, Phase = group, mean_esr2b_acc = ESR2B_accessibility_score,
             mean_ar_acc = AR_accessibility_score, mean_pgr_acc = PGR_accessibility_score) %>%
@@ -409,7 +409,7 @@ fig6gi_table <- stat_table(list(
   `ESR2B-associated accessibility` = lm(mean_esr2b_acc ~ Phase, data = steroid_acc),
   `AR-associated accessibility`    = lm(mean_ar_acc ~ Phase, data = steroid_acc),
   `PGR-associated accessibility`   = lm(mean_pgr_acc ~ Phase, data = steroid_acc)
-), "Fig. 6G-I")
+), "Fig. 6E,G,I")
 fig6gi_summary <- mean_se(steroid_acc, c("mean_esr2b_acc", "mean_ar_acc", "mean_pgr_acc"))
 
 
@@ -694,7 +694,7 @@ add_table <- function(name, title, df, note = NULL, highlight = NULL) {
 
 # --- README ---
 addWorksheet(wb, "README")
-readme <- c("Appendix S1. Statistical results", "",
+readme <- c("Dataset S1. Statistical results", "",
             "Each sheet corresponds to a main or supplementary figure. Values are reported at full precision; the manuscript text rounds them.", "",
             "Phase codes",
             "M = male; I = intermediate; IP = intermediate partner; LI = late intermediate; LIP = late intermediate partner; F = female; NF = new female; NM = new male.", "",
@@ -703,11 +703,11 @@ readme <- c("Appendix S1. Statistical results", "",
             "Pairwise p-values (M vs F, M vs I, I vs F) are uncorrected emmeans contrasts on the phase term.",
             "q-values are Benjamini-Hochberg FDR across clusters (cell abundance, enrichment) or across all genes tested in the cluster (DEGs).",
             "Cell-abundance proportions, module scores, CytoTRACE scores and gene expression are averaged per individual before summarizing; n = number of individuals.",
-            "snMultiome analyses compare M, I and F only. Cluster labels are given in Appendix S2.",
+            "snMultiome analyses compare M, I and F only. Cluster labels are given in SI Appendix Table S1.",
             "Rows highlighted in yellow are the specific results shown in the main-text figure panel.", "", "Sheets")
 sheet_index <- tibble(
-  Sheet = c("Fig1", "FigS1", "Fig3A-B_S6", "Fig3C-D", "Fig3E", "Fig4", "FigS7B", "Fig5", "Fig6A-C_S10", "Fig6D-F", "Other_DEGs"),
-  Contents = c("Fig. 1B-C: behavior, 11-KT, gonadal histology and volume (Table 1)",
+  Sheet = c("Fig1", "FigS1", "Fig3A-B_S6", "Fig3C-D", "Fig3E", "Fig4", "FigS7B", "Fig5", "Fig6A-C_S10", "Fig6D-I"),
+  Contents = c("Fig. 1B-C: behavior, 11-KT, gonadal histology and volume",
                "Fig. S1A-F: body size, growth, gonad volume estimates",
                "Fig. 3A-B, S6A-B: cell-type abundance (all cells; neurons only)",
                "Fig. 3C-D: enrichment of DEGs and DARs by cluster",
@@ -716,8 +716,7 @@ sheet_index <- tibble(
                "Fig. S7B: CytoTRACE by 1_RGC subcluster",
                "Fig. 5B-D, G: CytoTRACE and GO module scores in 6_POA_Mixed",
                "Fig. 6A-C, S10A-E: candidate neuroendocrine populations in 6_POA_Mixed",
-               "Fig. 6D-I: steroid receptor-associated expression and promoter accessibility in 6_POA_Mixed",
-               "Other DEGs cited in the text (igf2bp1, 0_Spall_Mixed)"))
+               "Fig. 6D-I: steroid receptor-associated expression and promoter accessibility in 6_POA_Mixed"))
 writeData(wb, "README", readme, startRow = 1)
 addStyle(wb, "README", st_sheet, rows = 1, cols = 1)
 addStyle(wb, "README", st_title, rows = which(readme %in% c("Phase codes", "Conventions", "Sheets")), cols = 1)
@@ -726,7 +725,7 @@ addStyle(wb, "README", st_bold, rows = length(readme) + seq_len(nrow(sheet_index
 setColWidths(wb, "README", cols = 1:2, widths = c(16, 100))
 
 # --- Fig1 ---
-new_sheet("Fig1", "Fig. 1B-C. Behavior, 11-KT, gonadal histology and gonad volume (Table 1)",
+new_sheet("Fig1", "Fig. 1B-C. Behavior, 11-KT, gonadal histology and gonad volume",
           "All eight phases. Gonad volume model includes final body length as a covariate.")
 add_table("Fig1", "Omnibus tests", tests_tbl(fig1_table, "F"))
 add_table("Fig1", "Means by phase", means_long(fig1_summary),
@@ -831,20 +830,17 @@ add_table("Fig6A-C_S10", "gnrh1 expression (Fig. S10C)", dplyr::select(tests_tbl
 add_table("Fig6A-C_S10", "Mean normalized expression",
           expr_tbl(c(names(deg_genes$`6`), "gnrh1"), "6_POA_Mixed"))
 
-# --- Fig6D-F ---
-new_sheet("Fig6D-F", "Fig. 6D-I. Steroid receptor-associated expression (D-F) and promoter accessibility (G-I) in 6_POA_Mixed",
-          "lm on per-individual mean z-scored expression of genes with ESR2B, AR or PGR motifs in their promoters.")
-add_table("Fig6D-F", "Omnibus tests", dplyr::select(tests_tbl(fig6df_table, "F"), -Term))
-add_table("Fig6D-F", "Means by phase", means_long(fig6df_summary))
-add_table("Fig6D-F", "Fig. 6G-I: promoter accessibility of the same receptor-specific gene sets",
-          dplyr::select(tests_tbl(fig6gi_table, "F"), -Term),
-          "lm on per-individual mean z-scored promoter accessibility (updatedcluster_6_..._ACCESSIBILITY_ZSCORES.csv).")
-add_table("Fig6D-F", "Fig. 6G-I: means by phase", means_long(fig6gi_summary))
-
-# --- Other DEGs ---
-new_sheet("Other_DEGs", "Other DEGs cited in the text")
-add_table("Other_DEGs", "igf2bp1 (0_Spall_Mixed)", deg_tbl(filter(deg_table, Gene == "igf2bp1")), deg_note)
-add_table("Other_DEGs", "Mean normalized expression", expr_tbl("igf2bp1", "0_Spall_Mixed"))
+# --- Fig6D-I ---
+# Panels alternate expression and accessibility for each receptor: 6D,E = ESR2B; 6F,G = AR; 6H,I = PGR
+fig6_panel <- c("ESR2B-associated expression" = "Fig. 6D", "ESR2B-associated accessibility" = "Fig. 6E",
+                "AR-associated expression" = "Fig. 6F",    "AR-associated accessibility" = "Fig. 6G",
+                "PGR-associated expression" = "Fig. 6H",   "PGR-associated accessibility" = "Fig. 6I")
+add_panel <- function(d) { d <- mutate(d, Panel = unname(fig6_panel[Measure]), .before = 1); arrange(d, Panel) }
+new_sheet("Fig6D-I", "Fig. 6D-I. Steroid receptor-associated expression and promoter accessibility in 6_POA_Mixed",
+          "lm on per-individual mean z-scores of genes with ESR2B, AR or PGR motifs in their promoters: expression (6D, 6F, 6H) and promoter accessibility (6E, 6G, 6I).")
+add_table("Fig6D-I", "Omnibus tests",
+          add_panel(bind_rows(dplyr::select(tests_tbl(fig6df_table, "F"), -Term), dplyr::select(tests_tbl(fig6gi_table, "F"), -Term))))
+add_table("Fig6D-I", "Means by phase", add_panel(bind_rows(means_long(fig6df_summary), means_long(fig6gi_summary))))
 
 saveWorkbook(wb, "Manuscript/Supplementary Tables/Appendix S1. Statistics.xlsx", overwrite = TRUE)
 message("Wrote Manuscript/Supplementary Tables/Appendix S1. Statistics.xlsx")

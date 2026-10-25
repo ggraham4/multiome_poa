@@ -21,7 +21,7 @@
 #  CONTENTS (text order)
 #   Fig 1A | S1A,B | 1B | 1C | S1C-F | 1D | S2 | 2A-D | S3-S5 | S6A | 3A | S6B | 3B | 3C | 3D |
 #   3E | 4A | 4B | S7A | 4C | S7B | S8 | 4D | 4E | 4F | 5A | 5B | 5C | 5D | S9 | 5E,F | 5G |
-#   6A-C | S10A-E | 6D-F | 6G-I | S11 | 7
+#   6A-C | S10A-E | S11 | 6D-I | S12 | 7
 ##########################################################################################
 
 
@@ -407,19 +407,64 @@ fig_S10C <- gene_row("gnrh1")
 fig_S10D <- gene_row("pgr")
 fig_S10E <- gene_row("ar_like")
 
-# ---- Fig 6D-F: steroid receptor-associated expression, 6G-I: promoter accessibility ------------------------------
-steroid_expression    <- read_src("fig6DF_steroid_expression_scores_per_individual")
-steroid_accessibility <- read_src("fig6GI_steroid_accessibility_scores_per_individual")
+# ---- Fig S11: the five marker genes across the four 6_POA_Mixed subclusters (descriptive; no statistics) -------------
+# Data: one row per M/I/F nucleus with its subcluster, UMAP position and marker expression. The subclusters come from
+# Seurat's FindSubCluster with default parameters; to regenerate that CSV from the Seurat object (needs the object) use:
+#   obj <- readRDS("~/Desktop/optimal_clustering_rna_only.rds"); Idents(obj) <- obj$final_clusters
+#   obj <- FindSubCluster(obj, 6, "harmony.wsnn")                       # default parameters (resolution 0.5)
+#   sub6 <- subset(obj, final_clusters == 6 & Status %in% c("M", "D", "F"))
+#   # keep: individual, Status, sub.cluster, harmony_wnn.umap coordinates, and the normalized expression of the five markers
+sub6 <- read_src("figS11_6_POA_Mixed_subclusters_per_nucleus")
+s11_genes <- c("drd3", "tacr3a", "npy7r", "nmbr", "cckb")
+sub6$Phase <- factor(sub6$Phase, c("M", "I", "F"))
+
+s11_long <- sub6 %>% pivot_longer(all_of(s11_genes), names_to = "gene", values_to = "expr") %>%
+  mutate(gene = factor(gene, s11_genes), positive = expr > 0)
+s11_dots <- function(by) s11_long %>% group_by(across(all_of(c("gene", by)))) %>%
+  summarize(pct = 100 * mean(positive), mean_expr = mean(expr), .groups = "drop") %>%
+  group_by(gene) %>% mutate(scaled = as.numeric(scale(mean_expr))) %>% ungroup()
+
+s11_dotplot <- function(dots, facet = FALSE) {
+  p <- ggplot(dots, aes(gene, fct_rev(factor(subcluster)), size = pct, colour = scaled)) + geom_point() +
+    scale_colour_gradient2(low = "#1965B0", mid = "grey85", high = "#DC050C", midpoint = 0, name = "Scaled\nexpression") +
+    scale_size_area(max_size = 6, name = "% nuclei") + labs(x = NULL, y = "Subcluster") + theme_bw(base_size = 10) +
+    theme(panel.grid.minor = element_blank(), axis.text.x = element_text(face = "italic", angle = 45, hjust = 1))
+  if (facet) p <- p + facet_wrap(~Phase, nrow = 1)
+  p
+}
+fig_S11A <- s11_dotplot(s11_dots("subcluster"))
+fig_S11B <- s11_dotplot(s11_dots(c("subcluster", "Phase")), facet = TRUE)
+
+# UMAPs; a few distant nuclei are cropped (0.5th to 99.5th percentile of each axis)
+s11_zoom <- coord_cartesian(xlim = quantile(sub6$UMAP_1, c(0.005, 0.995)), ylim = quantile(sub6$UMAP_2, c(0.005, 0.995)))
+s11_umap_theme <- theme_void(base_size = 10) + theme(plot.title = element_text(size = 10, hjust = 0.5))
+s11_sub_cols <- c("6_0" = "#1965B0", "6_1" = "#F7F056", "6_2" = "#4EB265", "6_3" = "#DC050C")
+fig_S11C <- ggplot(sub6, aes(UMAP_1, UMAP_2, colour = subcluster)) + geom_point(size = 0.4) + scale_colour_manual(values = s11_sub_cols) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) + s11_zoom + s11_umap_theme + ggtitle("Subcluster")
+fig_S11D <- ggplot(sub6, aes(UMAP_1, UMAP_2, colour = Phase)) + geom_point(size = 0.4) + scale_colour_manual(values = phase_colors[c("M", "I", "F")]) +
+  guides(colour = guide_legend(override.aes = list(size = 2))) + s11_zoom + s11_umap_theme + ggtitle("Phase")
+s11_marker_umap <- function(gene) {
+  d <- sub6 %>% mutate(positive = .data[[gene]] > 0) %>% arrange(positive)          # positive nuclei drawn on top
+  ggplot(d, aes(UMAP_1, UMAP_2, colour = positive, size = positive)) + geom_point() +
+    scale_colour_manual(values = c(`FALSE` = "grey85", `TRUE` = "#DC050C")) + scale_size_manual(values = c(`FALSE` = 0.3, `TRUE` = 1)) +
+    s11_zoom + s11_umap_theme + theme(legend.position = "none", plot.title = element_text(face = "italic", size = 10, hjust = 0.5)) + ggtitle(paste0(gene, "+"))
+}
+fig_S11E <- s11_marker_umap("drd3");  fig_S11F <- s11_marker_umap("tacr3a"); fig_S11G <- s11_marker_umap("npy7r")
+fig_S11H <- s11_marker_umap("nmbr");  fig_S11I <- s11_marker_umap("cckb")
+
+# ---- Fig 6D-I: steroid receptor-associated expression and promoter accessibility (6D,E ESR2B; 6F,G AR; 6H,I PGR) ----
+steroid_expression    <- read_src("fig6_steroid_expression_scores_per_individual")
+steroid_accessibility <- read_src("fig6_steroid_accessibility_scores_per_individual")
 steroid_expression$Phase    <- steroid_expression$group
 steroid_accessibility$Phase <- steroid_accessibility$group
 steroid_panel <- function(df, column, trait, source, receptor)
   box_plot(df, column, paste(receptor, "Specific Gene Z-Score"), get_pvals(source, trait))
-fig_6D <- steroid_panel(steroid_expression, "ESR2B_score", "ESR2B-associated expression", "fig6df", "ESR2B")
-fig_6E <- steroid_panel(steroid_expression, "AR_score",    "AR-associated expression",    "fig6df", "AR")
-fig_6F <- steroid_panel(steroid_expression, "PGR_score",   "PGR-associated expression",   "fig6df", "PGR")
-fig_6G <- steroid_panel(steroid_accessibility, "ESR2B_accessibility_score", "ESR2B-associated accessibility", "fig6gi", "ESR2B")
-fig_6H <- steroid_panel(steroid_accessibility, "AR_accessibility_score",    "AR-associated accessibility",    "fig6gi", "AR")
-fig_6I <- steroid_panel(steroid_accessibility, "PGR_accessibility_score",   "PGR-associated accessibility",   "fig6gi", "PGR")
+fig_6D <- steroid_panel(steroid_expression,    "ESR2B_score",                "ESR2B-associated expression",    "fig6df", "ESR2B")
+fig_6E <- steroid_panel(steroid_accessibility, "ESR2B_accessibility_score",  "ESR2B-associated accessibility", "fig6gi", "ESR2B")
+fig_6F <- steroid_panel(steroid_expression,    "AR_score",                   "AR-associated expression",       "fig6df", "AR")
+fig_6G <- steroid_panel(steroid_accessibility, "AR_accessibility_score",     "AR-associated accessibility",    "fig6gi", "AR")
+fig_6H <- steroid_panel(steroid_expression,    "PGR_score",                  "PGR-associated expression",      "fig6df", "PGR")
+fig_6I <- steroid_panel(steroid_accessibility, "PGR_accessibility_score",    "PGR-associated accessibility",   "fig6gi", "PGR")
 
 # ---- Fig S11A,B: regulatory networks; Fig 7: model schematic -- drawn outside R ---------------------------------
 
@@ -471,11 +516,21 @@ export_panels <- function() {
   for (figure in names(gene_rows)) for (panel in names(gene_rows[[figure]])) for (k in names(gene_rows[[figure]][[panel]]))
     one(figure, paste0("Fig", panel, "_", panel_names[[k]]), gene_rows[[figure]][[panel]][[k]])
 
+  one("Fig S11", "FigS11A_dotplot_all_phases",  fig_S11A, 3.2, 2.6)
+  one("Fig S11", "FigS11B_dotplot_by_phase",    fig_S11B, 6.6, 2.6)
+  one("Fig S11", "FigS11C_umap_subclusters",    fig_S11C, 3, 2.4)
+  one("Fig S11", "FigS11D_umap_phase",          fig_S11D, 3, 2.4)
+  one("Fig S11", "FigS11E_umap_drd3_positive",  fig_S11E)
+  one("Fig S11", "FigS11F_umap_tacr3a_positive", fig_S11F)
+  one("Fig S11", "FigS11G_umap_npy7r_positive", fig_S11G)
+  one("Fig S11", "FigS11H_umap_nmbr_positive",  fig_S11H)
+  one("Fig S11", "FigS11I_umap_cckb_positive",  fig_S11I)
+
   one("Fig 6", "Fig6D_ESR2B_expression_score",         fig_6D)
-  one("Fig 6", "Fig6E_AR_expression_score",            fig_6E)
-  one("Fig 6", "Fig6F_PGR_expression_score",           fig_6F)
-  one("Fig 6", "Fig6G_ESR2B_accessibility_score",      fig_6G)
-  one("Fig 6", "Fig6H_AR_accessibility_score",         fig_6H)
+  one("Fig 6", "Fig6E_ESR2B_accessibility_score",      fig_6E)
+  one("Fig 6", "Fig6F_AR_expression_score",            fig_6F)
+  one("Fig 6", "Fig6G_AR_accessibility_score",         fig_6G)
+  one("Fig 6", "Fig6H_PGR_expression_score",           fig_6H)
   one("Fig 6", "Fig6I_PGR_accessibility_score",        fig_6I)
 }
 # export_panels()     # remove the leading # to write all svgs

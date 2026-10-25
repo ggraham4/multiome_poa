@@ -33,3 +33,25 @@ cluster_1_steroid_receptor_activity_scores_WITH_SPECIFIC.csv  ->  cluster_1_ster
 cluster_6_steroid_receptor_SPECIFIC_PROMOTER_ACCESSIBILITY_STATS.csv  ->  cluster_6_steroid_receptor_SPECIFIC_PROMOTER_ACCESSIBILITY_STATS.csv
 cluster_6_steroid_receptor_SPECIFIC_PROMOTER_STATS.csv  ->  cluster_6_steroid_receptor_SPECIFIC_PROMOTER_STATS.csv
 cluster_6_steroid_receptor_activity_scores_WITH_SPECIFIC.csv  ->  cluster_6_steroid_receptor_activity_scores_WITH_SPECIFIC.csv
+
+
+Update (v.2.51 numbering): SI Appendix Tables S5, S6, S7 became Datasets, so datasets were renumbered by first citation in the text.
+Dataset S5. DAR Gene correlations.csv  ->  Dataset S6. DAR Gene correlations.csv
+Dataset S6. FIX Machine Learning Classifier Scores.csv  ->  Dataset S8. FIX Machine Learning Classifier Scores.csv
+Dataset S7. Cluster 1 TFs.xlsx  ->  Dataset S9. Cluster 1 TFs.xlsx
+Dataset S8. Cluster 6 TFs.xlsx  ->  Dataset S10. Cluster 6 TFs.xlsx
+Dataset S9. Physiology and Behavioral Measurements.xlsx  ->  Dataset S12. Physiology and Behavioral Measurements.xlsx
+SI Appendix Table S5. DEG Peak Correlations Summary.csv  ->  Dataset S5. DEG Peak Correlations Summary.csv
+SI Appendix Table S6. DAR Gene Correlations Summary.csv  ->  Dataset S7. DAR Gene Correlations Summary.csv
+SI Appendix Table S7. Cluster 6 Combined Reproductive Regulatory Network Edges.csv  ->  Dataset S11. Cluster 6 Combined Reproductive Regulatory Network Edges.csv
+SI Appendix Table S8. Body measurements of VisiumHD fish.xlsx  ->  SI Appendix Table S5. Body measurements of VisiumHD fish.xlsx
+SI Appendix Table S9. DEG and DAR Classification.csv  ->  SI Appendix Table S6. DEG and DAR Classification.csv
+
+Update: Dataset S1 script-output workbook regenerated with Fig 6 panels lettered 6D,E (ESR2B), 6F,G (AR), 6H,I (PGR) on sheet Fig6D-I; file renamed Dataset S1. Statistics (script output).xlsx.
+
+Update (gene names): added SI Appendix Table S3 (Gene Names; previously 'Table SX'), so the later tables moved up by one: parent/child mutual best hits are Tables S4 and S5, body measurements S6, DEG and DAR classification S7. Gene Lookup Table and GO Terms is now Dataset S13.
+SI Appendix Table S6. DEG and DAR Classification.csv  ->  SI Appendix Table S7. DEG and DAR Classification.csv
+SI Appendix Table S5. Body measurements of VisiumHD fish.xlsx  ->  SI Appendix Table S6. Body measurements of VisiumHD fish.xlsx
+SI Appendix Table S4. Multiome Parker Child Clusters Mutual Best Hits.csv  ->  SI Appendix Table S5. Multiome Parker Child Clusters Mutual Best Hits.csv
+SI Appendix Table S3. Multiome Parker Parent Clusters Mutual Best Hits.csv  ->  SI Appendix Table S4. Multiome Parker Parent Clusters Mutual Best Hits.csv
+Dataset SX. Gene Lookup Table and GO Terms.csv  ->  Dataset S13. Gene Lookup Table and GO Terms.csv

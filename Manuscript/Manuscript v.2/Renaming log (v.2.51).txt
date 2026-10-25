@@ -1,0 +1,48 @@
+[manuscript] Fig. S1 C, D  ->  Fig. S1C,D
+[manuscript] Fig.  ->  Fig. 
+[manuscript] Fig.  ->  Fig. 
+[manuscript] Fig. S2 A, B  ->  Fig. S2A,B
+[manuscript] Figure 2B  ->  Fig. 2B
+[manuscript] Fig   ->  Fig. 
+[manuscript] Fig   ->  Fig. 
+[manuscript] Dataset S4; SI Appendix, Table S5  ->  Datasets S4 and S5
+[manuscript] Dataset S5; SI Appendix, Table S6  ->  Datasets S6 and S7
+[manuscript] Dataset S6  ->  Dataset S8
+[manuscript] Figs. S7B, C  ->  Figs. S7B,C
+[manuscript] Fig.  ->  Fig. 
+[manuscript] Fig.  ->  Fig. 
+[manuscript] Fig. 5E, F  ->  Fig. 5E,F
+[manuscript] Supplementary Fig. 10  ->  Fig. S10
+[manuscript] Fig. 6A, B  ->  Fig. 6A,B
+[manuscript] Fig. S11 A,B  ->  Fig. S11A,B
+[manuscript] Dataset S8  ->  Dataset S10
+[manuscript] Dataset S7  ->  Dataset S9
+[manuscript] Dataset S7  ->  Dataset S9
+[manuscript] SI Appendix, Table S7  ->  Dataset S11
+[manuscript] SI Appendix, Table S7  ->  Dataset S11
+[manuscript] Dataset S9  ->  Dataset S12
+[manuscript] Figure 1C  ->  Fig. 1C
+[manuscript] SI Appendix, Table S8  ->  SI Appendix, Table S5
+[manuscript] Figure S3  ->  Fig. S3
+[manuscript] Figure 2B  ->  Fig. 2B
+[manuscript] SI Appendix, Table S9  ->  SI Appendix, Table S6
+[manuscript] Figure 5B  ->  Fig. 5B
+[manuscript] Figure S7B  ->  Fig. S7B
+[SI Appendix] Supplementary Table 1  ->  Table S1
+[SI Appendix] Supplementary Table 2  ->  Table S2
+[SI Appendix] Supplementary Table 3  ->  Table S3
+[SI Appendix] Supplementary Table 4  ->  Table S4
+[SI Appendix] Supplementary Table xx. Weights and lengths  ->  Table S5. Weights and lengths
+[SI Appendix] Supplementary Table xx. DEG and DAR classification  ->  Table S6. DEG and DAR classification
+[SI Appendix] Supplementary Fig.1  ->  Fig. S1
+[SI Appendix] Supplementary Fig.2  ->  Fig. S2
+[SI Appendix] Supplementary Fig.3  ->  Fig. S3
+[SI Appendix] Supplementary Fig.4  ->  Fig. S4
+[SI Appendix] Supplementary Fig.5  ->  Fig. S5
+[SI Appendix] Supplementary Fig.6  ->  Fig. S6
+[SI Appendix] Supplementary Fig.7  ->  Fig. S7
+[SI Appendix] Supplementary Fig.8  ->  Fig. S8
+[SI Appendix] Supplementary Fig.9  ->  Fig. S9
+[SI Appendix] Supplementary Fig.10  ->  Fig. S10
+[SI Appendix] Supplementary Fig. 11  ->  Fig. S11
+[SI Appendix] Supplementary Fig. 11  ->  Fig. S11
